@@ -1,0 +1,40 @@
+#!/bin/sh
+#
+# Open a pull request using `hub`, put the url into the clipboard,
+# and open the url in a browser.
+#
+# Usage:
+# 
+# $ git pr master
+# # Pull request of {current_branch} created against master
+#
+# $ git pr master feature-some-cool-thing
+# # Pull request of {current_branch} created against master
+
+base=$1
+head=$2
+
+copy_and_open() {
+  if [ -z "$1" ]; then return; fi
+
+  echo "Created at '$1'"
+
+  echo $1 | tr -d '\n' | pbcopy
+  open $1
+}
+
+if [ -z "$base" ]; then
+  base="master"
+fi
+
+if [ -z "$head" ]; then
+  echo "Creating pull request..."
+  merge_url=`hub pull-request -b $base`
+
+  copy_and_open $merge_url
+else
+  echo "Creating pull request..."
+  merge_url=`hub pull-request -b $base -h $head`
+
+  copy_and_open $merge_url
+fi

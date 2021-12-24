@@ -1,0 +1,162 @@
+[user]
+	name = Sean Dunn
+	email = sean@attamusc.com
+[alias]
+  # Add
+  aa = add --all
+
+  # Commit
+  ci = commit -m
+  ce = commit -e
+  cia = commit -a -m
+  doh = commit --amend --no-edit
+  oops = !"git commit --amend --no-edit && git push origin +HEAD"
+
+  # Checkout
+  co = checkout
+  cb = checkout -b
+  com = checkout main
+  coma = checkout master
+
+  # Diff
+  d = !"git diff --no-color | tig"
+  dc = !"git diff --cached --no-color | tig"
+  di = difftool
+  dic = difftool --cached
+  dh1 = !"git diff HEAD~1 --no-color | tig"
+
+  # Merge
+  m = merge --no-ff
+  me = mergetool
+  mff = merge --ff
+
+  # Push
+  pp = pull --prune
+  pre = pull --rebase
+
+  # Fetch
+  fu = fetch upstream
+
+  # Pull
+  p = push
+  poh = push origin HEAD
+  pof = push origin +HEAD
+  pom = push origin main
+  poma = push origin master
+  puh = push upstream HEAD
+
+  # tig shims
+  l = !tig
+  r = !tig -20
+  h = !tig show HEAD
+
+  # Logging/Status
+  lo = log --graph --pretty=format:'%C(bold red)%h%Creset%C(yellow)%d%Creset %s %Cgreen(%C(magenta)%an%Creset%Cgreen, %cr)%Creset' --abbrev-commit --date=relative
+  la = !git l --all
+  ra = !git r --all
+
+  # Resetting
+  undo-last = reset --soft HEAD~1
+
+  # Stashing and popping
+  s = stash
+  sp = stash pop
+
+  wip = for-each-ref --sort='authordate:iso8601' --format=' %(color:green)%(authordate:relative)%09%(color:white)%(refname:short)' refs/heads
+
+  # Grabbing SHA of latest commit (osx only)
+  sha = !"echo 'Copying HEAD SHA...' && git rev-parse HEAD | tr -d '\n' | pbcopy"
+
+  # For the lolz
+  yolo = !git reset --hard HEAD^
+
+  in = incoming
+  out = outgoing
+
+  # Find FIXME, TODO, etc
+  # Taken from @pengwynn
+  n = !"git ls-files | xargs notes | awk -F: '{ print $1,$2; print $3,$4; print $5}' | grcat conf.notes"
+
+  # GitHub Workflow stuff
+  f = workflow -p feature
+  bug = workflow -p bugfix
+  hotfix = workflow -p hotfix
+  release = workflow -p release
+
+  # Helper to fork a repo after cloning it locally
+  own = !"hub fork && git remote rename origin upstream && git remote rename Attamusc origin"
+[core]
+  editor = "nvim"
+  excludesfile = ~/.gitignore
+  pager= delta --plus-color="#012800" --minus-color="#340001" --theme='Dracula'
+[interactive]
+  diffFilter = delta --color-only
+[github]
+  user = Attamusc
+[hub]
+  protocol = https
+[credential]
+	helper = 
+	helper = /usr/local/share/gcm-core/git-credential-manager-core
+  # Just gonna commit both versions, but will eventually use chezmoi to handle this
+  # helper = /c/Program\\ Files/Git/mingw64/libexec/git-core/git-credential-manager.exe
+[color]
+  ui = auto
+[color "branch"]
+  current = magenta
+  local = blue
+  remote = green
+[color "diff"]
+  meta = yellow bold
+  frag = magenta bold
+  old = red bold
+  new = green bold
+[color "status"]
+  added = green
+  changed = cyan
+  untracked = red
+[push]
+  default = simple
+[difftool "Kaleidoscope"]
+  cmd = ksdiff --partial-changeset --relative-path "$MERGED" -- "$LOCAL" "$REMOTE"
+[difftool "smerge"]
+  cmd = smerge "$BASE"
+[diff]
+  tool = smerge
+[difftool]
+  prompt = false
+[mergetool "Kaleidoscope"]
+  cmd = ksdiff --merge --output "$MERGED" --base "$BASE" -- "$LOCAL" --snapshot "$REMOTE" --snapshot
+  trustExitCode = true
+[mergetool "smerge"]
+  cmd = smerge mergetool "$BASE" "$LOCAL" "$REMOTE" -o "$MERGED"
+  trustExitCode = true
+[mergetool]
+  prompt = false
+[merge]
+  tool = smerge
+[tig "color"]
+  cursor = black green bold
+[flow "prefix"]
+  feature = feature
+  hotfix = hotfix
+  refactor = refactor
+[filter "media"]
+	required = true
+	clean = git media clean %f
+	smudge = git media smudge %f
+[filter "lfs"]
+	required = true
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+[url "https://"]
+	insteadOf = git://
+[http]
+	postBuffer = 524288000
+[pull]
+	rebase = true
+[init]
+	defaultBranch = main
+[credential "https://dev.azure.com"]
+	useHttpPath = true

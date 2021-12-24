@@ -1,0 +1,31 @@
+umask 002
+
+# shortcut to this dotfiles path is $ZSH
+export ZSH=$HOME/.config/zsh
+export SHELL=/bin/zsh
+
+# your project folder that we can `c [tab]` to
+export PROJECTS=$HOME/projects
+
+# source core zsh configuration files
+for config_file ($ZSH/*.zsh) source $config_file
+
+# source zsh config for tools, etc.
+for config_file ($ZSH/config/*.zsh) source $config_file
+
+if [[ -a ~/.localrc ]]
+then
+  source ~/.localrc
+fi
+
+# initialize autocomplete here, otherwise functions won't be loaded
+autoload -U compinit && compinit
+
+# load every completion after autocomplete loads
+# for config_file ($ZSH/config/**/completion.sh) source $config_file
+
+eval "$(starship init zsh)"
+
+# Load fzf if it's installed
+# Need to have this come last so that it doesn't get overridden
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
