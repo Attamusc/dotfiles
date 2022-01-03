@@ -1,0 +1,61 @@
+{{- if (eq .chezmoi.os "darwin") -}}
+#!/bin/sh
+
+source /tmp/chezmoi-utils.sh
+
+printf "${green}[01 - Homebrew Dependencies] ${reset}"
+{{ if or (lt 0 (atoi (env "SCRIPTS_START_AT"))) (env "SKIP_INSTALL_HOMEBREW_DEPS") -}}
+echo "Skip installing homebrew dependencies"
+exit 0
+{{ else }}
+echo "Installing Homebrew Dependencies"
+{{- end }}
+
+set -eufo pipefail
+
+{{ $taps := list
+  "homebrew/cask"
+-}}
+
+{{ $brews := list
+  "asdf"
+  "bat"
+  "chezmoi"
+  "exa"
+  "gh"
+  "git"
+  "git-delta"
+  "mas"
+  "reattach-to-user-namespace"
+  "jq"
+  "fd"
+  "fzf"
+  "fzy"
+  "ripgrep"
+  "starship"
+  "tig"
+  "tmux"
+  "tree"
+  "tree-sitter"
+  "zoxide"
+  "zsh"
+-}}
+
+{{ $casks := list
+  "git-credential-manager-core"
+-}}
+
+brew bundle --no-lock --file=/dev/stdin <<EOF || :
+{{ range ($taps | sortAlpha | uniq) -}}
+tap "{{ . }}"
+{{ end }}
+{{ range ($brews | sortAlpha | uniq) -}}
+brew "{{ . }}"
+{{ end }}
+{{ range ($casks | sortAlpha | uniq) -}}
+cask "{{ . }}"
+{{ end }}
+EOF
+
+echo "Homebrew Dependencies Installed!"
+{{ end -}}
