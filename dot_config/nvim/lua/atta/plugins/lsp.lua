@@ -7,6 +7,7 @@ local kind = require("lspkind")
 local saga = require("lspsaga")
 local cmp = require("cmp")
 local cmp_under = require("cmp-under-comparator")
+local rust_tools = require("rust-tools")
 local utils = require("atta.utils")
 
 local cmd = vim.cmd
@@ -36,9 +37,9 @@ local server_configs = {
 	jsonls = {},
 	yamlls = {},
 	bashls = {},
-	intelephense = {},
 	solargraph = {},
 	omnisharp = {},
+	pyright = {},
 	sumneko_lua = {
 		settings = {
 			Lua = {
@@ -59,12 +60,6 @@ local server_configs = {
 		},
 	},
 	tsserver = {
-		on_attach = function(client)
-			client.resolved_capabilities.document_formatting = false
-			on_attach(client)
-		end,
-	},
-	rust_analyzer = {
 		on_attach = function(client)
 			client.resolved_capabilities.document_formatting = false
 			on_attach(client)
@@ -100,6 +95,7 @@ local server_configs = {
 			"lua",
 			"go",
 			"rust",
+			"python",
 			"javascript",
 			"javascriptreact",
 			"javascript.jsx",
@@ -122,6 +118,9 @@ local server_configs = {
 						formatStdin = true,
 					},
 				},
+				python = {
+					{ formatCommand = "black --quiet --stdin-filename ${INPUT} -", formatStdin = true },
+				},
 				rust = {
 					{ formatCommand = "rustfmt --emit=stdout --edition=2018", formatStdin = true },
 				},
@@ -140,7 +139,23 @@ local function setup_servers()
 	lsp_installer.on_server_ready(function(server)
 		local config = server_configs[server.name] or {}
 
-		server:setup(config)
+		if server.name == "rust_analyzer" then
+			rust_tools.setup({
+				tools = {
+					autoSetHints = true,
+				},
+				server = vim.tbl_deep_extend("force", server:get_default_options(), {}, {
+					on_attach = function(client)
+						client.resolved_capabilities.document_formatting = false
+						on_attach(client)
+					end,
+				}),
+			})
+			server:attach_buffers()
+		else
+			server:setup(config)
+		end
+
 		cmd([[do User LspAttachBuffer]])
 	end)
 end

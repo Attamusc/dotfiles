@@ -2,6 +2,7 @@ local telescope = require("telescope")
 local sorters = require("telescope.sorters")
 local previewers = require("telescope.previewers")
 local actions = require("telescope.actions")
+local themes = require("telescope.themes")
 local utils = require("atta.utils")
 
 local noremap = utils.noremap
@@ -38,6 +39,11 @@ local function telescope_settings()
 				override_generic_sorter = true,
 				override_file_sorter = true,
 				case_mode = "smart_case",
+			},
+			["ui-select"] = {
+				themes.get_dropdown({
+					-- even more opts
+				}),
 			},
 		},
 	})

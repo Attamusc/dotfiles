@@ -1,6 +1,9 @@
 [user]
-	name = Sean Dunn
-	email = sean@attamusc.com
+  name = {{ .name }}
+  email = {{ .email }}
+  signingkey = {{ .signingkey }}
+[commit]
+  gpgsign = true
 [alias]
   # Add
   aa = add --all
@@ -160,3 +163,5 @@
 	defaultBranch = main
 [credential "https://dev.azure.com"]
 	useHttpPath = true
+[gpg]
+  program = /opt/homebrew/bin/gpg

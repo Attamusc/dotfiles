@@ -1,4 +1,3 @@
-{{- if (eq .chezmoi.os "darwin") -}}
 #!/bin/sh
 
 source /tmp/chezmoi-utils.sh
@@ -20,13 +19,10 @@ set -eufo pipefail
 {{ $brews := list
   "asdf"
   "bat"
-  "chezmoi"
   "exa"
   "gh"
   "git"
   "git-delta"
-  "mas"
-  "reattach-to-user-namespace"
   "jq"
   "fd"
   "fzf"
@@ -41,9 +37,17 @@ set -eufo pipefail
   "zsh"
 -}}
 
-{{ $casks := list
-  "git-credential-manager-core"
--}}
+{{ $casks := list -}}
+
+{{ if (eq .chezmoi.os "darwin") -}}
+{{ $brews = concat $brews (list
+    "chezmoi"
+    "mas"
+    "reattach-to-user-namespace") -}}
+
+{{ $casks := concat $casks (list
+    "git-credential-manager-core") -}}
+{{ end -}}
 
 brew bundle --no-lock --file=/dev/stdin <<EOF || :
 {{ range ($taps | sortAlpha | uniq) -}}
@@ -58,4 +62,3 @@ cask "{{ . }}"
 EOF
 
 echo "Homebrew Dependencies Installed!"
-{{ end -}}
