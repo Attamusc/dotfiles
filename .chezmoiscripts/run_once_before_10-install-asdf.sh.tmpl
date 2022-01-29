@@ -1,0 +1,17 @@
+#!/bin/sh
+
+# Install/upgrade asdf
+
+source /tmp/chezmoi-utils.sh
+
+printf "${green}[10 - asdf] ${reset}"
+{{- if or (lt 10 (atoi (env "SCRIPTS_START_AT"))) (env "SKIP_ASDF") }}
+echo "Skip installing asdf"
+exit 0
+{{ else }}
+echo "Install asdf"
+{{- end }}
+
+if [[ ! $(command -v asdf) ]]; then
+  git clone https://github.com/asdf-vm/asdf.git ~/.asdf
+fi

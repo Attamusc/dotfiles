@@ -61,6 +61,7 @@ local function install_packages()
 
 			-- Fuzzy Finder(s)
 			use({ "nvim-telescope/telescope.nvim" })
+			use({ "nvim-telescope/telescope-ui-select.nvim" })
 			use({ "nvim-telescope/telescope-fzf-native.nvim", run = "make" })
 
 			-- Diagnostics
@@ -95,6 +96,7 @@ local function install_packages()
 			use({ "pangloss/vim-javascript" })
 			use({ "HerringtonDarkholme/yats.vim" })
 			use({ "rust-lang/rust.vim" })
+			use({ "simrat39/rust-tools.nvim" })
 			use({ "vim-ruby/vim-ruby" })
 			use({ "maxmellon/vim-jsx-pretty" })
 			use({ "bakpakin/fennel.vim" })
@@ -106,8 +108,15 @@ local function install_packages()
 			use({ "StanAngeloff/php.vim" })
 			use({ "2072/PHP-Indenting-for-VIm" })
 			use({ "niftylettuce/vim-jinja" })
+			use({ "ron-rs/ron.vim" })
 			-- Make sure chezmoi files highlight like the actual files they represent
 			use({ "alker0/chezmoi.vim", opt = true })
+
+			-- Dash: mac documentation viewer app
+			use({
+				"mrjones2014/dash.nvim",
+				run = "make install",
+			})
 
 			-- Colors
 			use({ "folke/tokyonight.nvim", branch = "main" })

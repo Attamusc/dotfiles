@@ -14,7 +14,7 @@ fi
 # replace dots (.) with dash (-) since tmuxinator doesn't like dots
 current_directory=$(sed s/\\./_/g <<< $current_directory)
 
-if [ "$(tmuxinator list | grep ^$current_directory$ | wc -l)" -gt 0 ]; then
+if [ "$(tmuxinator list -n | grep ^$current_directory$ | wc -l)" -gt 0 ]; then
   tmuxinator start $current_directory
 else
   tmuxinator new $current_directory
