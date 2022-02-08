@@ -3,6 +3,7 @@
 -- too large.
 
 local lsp_installer = require("nvim-lsp-installer")
+local null_ls = require("null-ls")
 local kind = require("lspkind")
 local saga = require("lspsaga")
 local cmp = require("cmp")
@@ -28,10 +29,6 @@ local function on_attach(client)
 		cmd([[augroup END]])
 	end
 end
-
-local jsconfigs = {
-	{ formatCommand = "./node_modules/.bin/prettier --stdin-filepath ${INPUT}", formatStdin = true },
-}
 
 local server_configs = {
 	jsonls = {},
@@ -86,50 +83,6 @@ local server_configs = {
 					vendor = true,
 				},
 				usePlaceholders = true,
-			},
-		},
-	},
-	efm = {
-		on_attach = on_attach,
-		filetypes = {
-			"lua",
-			"go",
-			"rust",
-			"python",
-			"javascript",
-			"javascriptreact",
-			"javascript.jsx",
-			"typescript",
-			"typescriptreact",
-			"typescript.jsx",
-		},
-		init_options = { documentFormatting = true },
-		settings = {
-			rootMarkers = { ".git/" },
-			languages = {
-				go = {
-					{ formatCommand = "goimports", formatStdin = true },
-					{ formatCommand = "gofmt", formatStdin = true },
-					{ formatCommand = "golines", formatStdin = true },
-				},
-				lua = {
-					{
-						formatCommand = "stylua --search-parent-directories --stdin-filepath ${INPUT} -",
-						formatStdin = true,
-					},
-				},
-				python = {
-					{ formatCommand = "black --quiet --stdin-filename ${INPUT} -", formatStdin = true },
-				},
-				rust = {
-					{ formatCommand = "rustfmt --emit=stdout --edition=2018", formatStdin = true },
-				},
-				javascript = jsconfigs,
-				javascriptreact = jsconfigs,
-				["javascript.jsx"] = jsconfigs,
-				typescript = jsconfigs,
-				typescriptreact = jsconfigs,
-				["typescript.jsx"] = jsconfigs,
 			},
 		},
 	},
@@ -276,6 +229,45 @@ local function setup_kind()
 	})
 end
 
+local function setup_null_ls()
+	null_ls.setup({
+		on_attach = on_attach,
+		sources = {
+			-- js
+			null_ls.builtins.formatting.prettier,
+			null_ls.builtins.diagnostics.eslint_d,
+			null_ls.builtins.code_actions.eslint_d,
+
+			-- python
+			null_ls.builtins.formatting.black,
+
+			-- go
+			null_ls.builtins.formatting.gofmt,
+			null_ls.builtins.formatting.goimports,
+
+			-- protobuf
+			null_ls.builtins.formatting.protolint,
+
+			-- ruby
+			null_ls.builtins.formatting.rubocop,
+			null_ls.builtins.diagnostics.rubocop,
+
+			-- rust
+			null_ls.builtins.formatting.rustfmt,
+
+			-- css
+			null_ls.builtins.formatting.stylelint,
+			null_ls.builtins.diagnostics.stylelint,
+
+			-- lua
+			null_ls.builtins.formatting.stylua,
+
+			-- markdown
+			null_ls.builtins.diagnostics.proselint,
+		},
+	})
+end
+
 local function bind_keymaps()
 	utils.noremap("n", "K", "<cmd>lua require('lspsaga.hover').render_hover_doc()<CR>", { silent = true })
 
@@ -331,6 +323,8 @@ function M.setup()
 	setup_kind()
 	setup_completions()
 	setup_diagnostics()
+	setup_null_ls()
+
 	bind_keymaps()
 end
 

@@ -76,6 +76,10 @@ local function install_packages()
 			use({ "williamboman/nvim-lsp-installer" })
 			use({ "tami5/lspsaga.nvim" })
 			use({ "onsails/lspkind-nvim" })
+      use({
+        "jose-elias-alvarez/null-ls.nvim",
+        requires = { "nvim-lua/plenary.nvim" },
+      })
 
 			-- Autocomplete
 			use({ "hrsh7th/nvim-cmp" })
