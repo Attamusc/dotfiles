@@ -10,7 +10,7 @@ local cmp = require("cmp")
 local cmp_under = require("cmp-under-comparator")
 local rust_tools = require("rust-tools")
 local utils = require("atta.utils")
-
+local luasnip = require("luasnip")
 local cmd = vim.cmd
 local lsp = vim.lsp
 local fn = vim.fn
@@ -31,12 +31,22 @@ local function on_attach(client)
 end
 
 local server_configs = {
-	jsonls = {},
 	yamlls = {},
 	bashls = {},
 	solargraph = {},
 	omnisharp = {},
-	pyright = {},
+	jsonls = {
+		on_attach = function(client)
+			client.resolved_capabilities.document_formatting = false
+			on_attach(client)
+		end,
+	},
+	pyright = {
+		on_attach = function(client)
+			client.resolved_capabilities.document_formatting = false
+			on_attach(client)
+		end,
+	},
 	sumneko_lua = {
 		settings = {
 			Lua = {
@@ -118,7 +128,10 @@ local function setup_completions()
 		mapping = {
 			["<c-d>"] = cmp.mapping.scroll_docs(-4),
 			["<c-f>"] = cmp.mapping.scroll_docs(4),
-			["<c-e>"] = cmp.mapping.close(),
+			["<c-e>"] = cmp.mapping({
+				i = cmp.mapping.abort(),
+				c = cmp.mapping.close(),
+			}),
 			["<CR>"] = cmp.mapping(
 				cmp.mapping.confirm({
 					behavior = cmp.ConfirmBehavior.Insert,
@@ -144,15 +157,15 @@ local function setup_completions()
 
 		snippet = {
 			expand = function(args)
-				fn["vsnip#anonymous"](args.body)
+				luasnip.lsp_expand(args.body)
 			end,
 		},
 
 		sources = {
 			{ name = "nvim_lua" },
 			{ name = "nvim_lsp" },
+			{ name = "luasnip" },
 			{ name = "path" },
-			{ name = "vsnip" },
 			{ name = "buffer", keyword_length = 4 },
 		},
 
@@ -263,7 +276,7 @@ local function setup_null_ls()
 			null_ls.builtins.formatting.stylua,
 
 			-- markdown
-			null_ls.builtins.diagnostics.proselint,
+			null_ls.builtins.diagnostics.vale,
 		},
 	})
 end

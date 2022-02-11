@@ -1,5 +1,9 @@
-{{- if (and (eq .chezmoi.os "linux") (not .ephemeral)) -}}
+{{- if (and (eq .chezmoi.os "linux")) -}}
 #!/bin/bash
+
+source /tmp/chezmoi-utils.sh
+
+printf "${green}[00 - Configuring linux] ${reset}"
 
 set -eufo pipefail
 
@@ -8,39 +12,4 @@ if ! grep -q "$(whoami).*/bin/zsh" /etc/passwd
 then
   sudo chsh -s /bin/zsh $(whoami)
 fi
-
-# Install needed devtools
-# -- zoxide
-curl -sS https://webinstall.dev/zoxide | bash
-
-# -- zplug
-curl -sL --proto-redir -all,https https://raw.githubusercontent.com/zplug/installer/master/installer.zsh | zsh
-
-# -- Starship
-sh -c "$(curl -fsSL https://starship.rs/install.sh)"
-
-# -- apt packages
-apt-get install -y \
-  exa \
-  ripgrep \
-
-  "bat"
-  "exa"
-  "gh"
-  "git"
-  "git-delta"
-  "reattach-to-user-namespace"
-  "jq"
-  "fd"
-  "fzf"
-  "fzy"
-  "ripgrep"
-  "starship"
-  "tig"
-  "tmux"
-  "tree"
-  "tree-sitter"
-  "zoxide"
-  "zsh"
-
 {{ end -}}

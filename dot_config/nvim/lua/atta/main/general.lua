@@ -146,7 +146,7 @@ local function general_settings()
 	opt.autowrite = true
 end
 
-local function number_toggle_autocmd()
+local function autocmd_number_toggle()
 	-- Relative line numbers are nice to move around, but not so helpful in
 	-- insert mode. This autocmd switches between them
 	cmd([[
@@ -158,7 +158,7 @@ local function number_toggle_autocmd()
   ]])
 end
 
-local function highlight_yank_autocmd()
+local function autocmd_highlight_yank()
 	cmd([[
     augroup highlight_yank
         autocmd!
@@ -167,12 +167,23 @@ local function highlight_yank_autocmd()
   ]])
 end
 
+local function autocmd_chezmoi_apply()
+	cmd([[
+    augroup chezmoi_apply
+      autocmd!
+      autocmd BufWritePost ~/.local/share/chezmoi/* !chezmoi apply --source-path "%"
+    augroup END
+  ]])
+end
+
 function M.setup()
 	disable_default_plugins()
 	mapleader()
 	general_settings()
-	number_toggle_autocmd()
-	highlight_yank_autocmd()
+
+	autocmd_number_toggle()
+	autocmd_highlight_yank()
+	autocmd_chezmoi_apply()
 end
 
 return M

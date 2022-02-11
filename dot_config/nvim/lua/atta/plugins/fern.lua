@@ -43,10 +43,8 @@ end
 -- end
 
 function M.fern_init()
-	-- Bailing out of lua for this since for some reason I can't get the nvim.wo.* version of these
-	-- to actually work properly for only the buffer, and these don't exists as nvim.bo.* versions.
-	cmd("setlocal nornu")
-	cmd("setlocal nonu")
+	vim.api.nvim_set_option_value("rnu", false, { scope = "local" })
+	vim.api.nvim_set_option_value("nu", false, { scope = "local" })
 
 	-- Can't get this lua version to work, so bail out to vimscript to register the command
 	-- map_buffer("<Plug>(fern-my-open-expand-collapse)", fern_smart_leaf(), { expr = true })

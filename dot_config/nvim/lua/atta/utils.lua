@@ -1,6 +1,21 @@
 local api = vim.api
-local nvim_map = vim.api.nvim_set_keymap
+local nvim_map = vim.keymap.set
 local M = {}
+
+-- Global utils
+P = function(v)
+	print(vim.inspect(v))
+	return v
+end
+
+if pcall(require, "plenary") then
+	RELOAD = require("plenary.reload").reload_module
+
+	R = function(name)
+		RELOAD(name)
+		return require(name)
+	end
+end
 
 -- Utils
 function M.dump(...)
