@@ -171,7 +171,6 @@ local function setup_completions()
 
 		formatting = {
 			format = kind.cmp_format({
-				with_text = true,
 				menu = {
 					buffer = "[buffer]",
 					nvim_lsp = "[LSP]",
@@ -210,8 +209,6 @@ end
 
 local function setup_kind()
 	kind.init({
-		with_text = true,
-		preset = "default",
 		symbol_map = {
 			Text = "",
 			Method = "",

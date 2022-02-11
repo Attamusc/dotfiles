@@ -33,6 +33,7 @@ set -eufo pipefail
   "tmux"
   "tree"
   "tree-sitter"
+  "zplug"
   "zoxide"
   "zsh"
 -}}
@@ -48,6 +49,16 @@ set -eufo pipefail
 {{ $casks := concat $casks (list
     "git-credential-manager-core") -}}
 {{ end -}}
+
+if [ -d /opt/homebrew/bin ]; then
+  echo "M1 installation found"
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+fi
+
+if [ -d /home/linuxbrew/.linuxbrew/bin ]; then
+  echo "linuxbrew installation found"
+  eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+fi
 
 brew bundle --no-lock --file=/dev/stdin <<EOF || :
 {{ range ($taps | sortAlpha | uniq) -}}

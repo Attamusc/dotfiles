@@ -1,29 +1,16 @@
 # Homebrew
-# if we're using linuxbrew, then setup some special vars
-if [[ -d "/home/linuxbrew/.linuxbrew" ]]
-then
-  export HOMEBREW_PREFIX=/home/linuxbrew/.linuxbrew
-  export HOMEBREW_CELLAR=$HOMEBREW_PREFIX/Cellar
-  export HOMEBREW_REPOSITORY=$HOMEBREW_PREFIX/Homebrew
+if [ -d /opt/homebrew/bin ]; then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
 
-if [[ -d "/opt/homebrew" ]]
-then
-  export HOMEBREW_PREFIX="/opt/homebrew"
-  export HOMEBREW_CELLAR="/opt/homebrew/Cellar"
-  export HOMEBREW_REPOSITORY="/opt/homebrew"
+if [ -d /home/linuxbrew/.linuxbrew/bin ]; then
+  eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 fi
 
 export USER_BIN=$HOME/.config/bin
 
 # Languages
-if [[ -d "$HOMEBREW_PREFIX" ]]
-then
-  export GO_HOME=$($HOMEBREW_PREFIX/bin/brew --prefix go)/libexec
-else
-  export GO_HOME=$(brew --prefix go)/libexec
-fi
-
+export GO_HOME=$(brew --prefix go)/libexec
 export CARGO_HOME=$HOME/.cargo
 export GOPATH=$PROJECTS/go-space
 
