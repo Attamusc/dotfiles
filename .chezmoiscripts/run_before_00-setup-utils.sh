@@ -3,6 +3,7 @@
 
 cat <<EOF >/tmp/chezmoi-utils.sh
 #!/bin/sh
+
 # Ansi color code variables
 export red="\e[0;91m"
 export blue="\e[0;94m"

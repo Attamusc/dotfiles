@@ -76,24 +76,24 @@ local function install_packages()
 			use({ "williamboman/nvim-lsp-installer" })
 			use({ "tami5/lspsaga.nvim" })
 			use({ "onsails/lspkind-nvim" })
-      use({
-        "jose-elias-alvarez/null-ls.nvim",
-        requires = { "nvim-lua/plenary.nvim" },
-      })
+			use({
+				"jose-elias-alvarez/null-ls.nvim",
+				requires = { "nvim-lua/plenary.nvim" },
+			})
 
 			-- Autocomplete
 			use({ "hrsh7th/nvim-cmp" })
 			use({ "hrsh7th/cmp-cmdline" })
 			use({ "hrsh7th/cmp-buffer" })
 			use({ "hrsh7th/cmp-path" })
-			use({ "hrsh7th/cmp-vsnip" })
 			use({ "hrsh7th/cmp-nvim-lua" })
 			use({ "hrsh7th/cmp-nvim-lsp" })
 			use({ "hrsh7th/cmp-nvim-lsp-document-symbol" })
 			use({ "lukas-reineke/cmp-under-comparator" })
 
 			-- Snippets
-			use({ "hrsh7th/vim-vsnip" })
+			use({ "L3MON4D3/LuaSnip" })
+			use({ "saadparwaiz1/cmp_luasnip" })
 
 			-- Languages
 			use({ "cespare/vim-toml" })
@@ -147,6 +147,7 @@ local function load_plugin_configs()
 	require("atta.plugins.kanagawa").setup()
 	require("atta.plugins.lsp").setup()
 	require("atta.plugins.lualine").setup()
+	require("atta.plugins.luasnip").setup()
 	require("atta.plugins.nerdcommenter").setup()
 	require("atta.plugins.nvim-treesitter").setup()
 	require("atta.plugins.sexp").setup()
@@ -163,6 +164,11 @@ end
 
 function M.setup_plugins()
 	load_plugin_configs()
+end
+
+function M.setup()
+	M.setup_packer()
+	M.setup_plugins()
 end
 
 return M

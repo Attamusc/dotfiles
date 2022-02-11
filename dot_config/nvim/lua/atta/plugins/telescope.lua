@@ -51,6 +51,35 @@ local function telescope_settings()
 	telescope.load_extension("fzf")
 end
 
+function M.reload()
+	local function get_module_name(s)
+		return s:gsub("%.lua", ""):gsub("%/", "."):gsub("%.init", "")
+	end
+
+	local prompt_title = "~ neovim modules ~"
+	local path = "~/.local/share/chezmoi/dot_config/nvim/lua"
+	local opts = {
+		prompt_title = prompt_title,
+		cwd = path,
+
+		attach_mappings = function(_, map)
+			map("i", "<c-e>", function(_)
+				local entry = require("telescope.actions.state").get_selected_entry()
+				local name = get_module_name(entry.value)
+
+				local mod = R(name)
+				mod.setup()
+				P("[reloaded]: " .. name)
+			end)
+
+			return true
+		end,
+	}
+
+	-- call the builtin method to list files
+	require("telescope.builtin").find_files(opts)
+end
+
 local function telescope_mappings()
 	noremap("n", "<leader>ff", "<cmd>lua require('telescope.builtin').find_files()<cr>")
 	noremap("n", "<leader>fb", "<cmd>lua require('telescope.builtin').buffers()<cr>")
@@ -58,6 +87,7 @@ local function telescope_mappings()
 	noremap("n", "<leader>fss", "<cmd>lua require('telescope.builtin').grep_string()<cr>")
 	noremap("n", "<leader>fgs", "<cmd>lua require('telescope.builtin').git_status()<cr>")
 	noremap("n", "<leader>fgc", "<cmd>lua require('telescope.builtin').git_commits()<cr>")
+	noremap("n", "<leader>frc", "<cmd>lua require('atta.plugins.telescope').reload()<cr>")
 end
 
 function M.setup()
