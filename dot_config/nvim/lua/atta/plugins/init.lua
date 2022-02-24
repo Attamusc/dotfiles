@@ -120,6 +120,9 @@ local function install_packages()
 			use({
 				"mrjones2014/dash.nvim",
 				run = "make install",
+				cond = function()
+					return vim.loop.os_uname().sysname == "Darwin"
+				end,
 			})
 
 			-- Colors
