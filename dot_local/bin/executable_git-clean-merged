@@ -17,25 +17,32 @@ else
 	INTERACTIVE=""
 fi
 
-for BRANCH in $(git branch --merged master | grep -v '\<master\>\|^\*'); do
-	if [ -n "$INTERACTIVE" ]; then
-		read -p "$(basename $0): remove branch '$BRANCH'? (y)" RESPONSE
-		if [  "$RESPONSE" != 'y' ] && [ "$RESPONSE" != '' ]; then
-			continue
-		fi
-	fi
-	ST=$(git branch -d "$BRANCH" 2>&1)
-	if [ $? -eq 0 ]; then
-		echo "Pruned \"$BRANCH\"; removing from origin...\c"
-		RST=$(git push origin ":$BRANCH" 2>&1)
-		if [ $? -eq 0 ]; then
-			echo " Removed."
-		else
-			echo
-			echo "Branch \"$BRANCH\" not removed from origin: $RST"
-		fi
-	else
-		ST=$(echo "$ST" | head -n 1 | sed 's/error: //')
-		echo "Branch \"$BRANCH\" not removed: $ST"
-	fi
+HAS_MAIN_BRANCH=$(git branch | grep main | wc -l)
+if [ "$HAS_MAIN_BRANCH" -eq 0 ]; then
+  MAINLINE_BRANCH="master"
+else
+  MAINLINE_BRANCH="main"
+fi
+
+for BRANCH in $(git branch --merged $MAINLINE_BRANCH | grep -v "\<$MAINLINE_BRANCH\>\|^\*"); do
+  if [ -n "$INTERACTIVE" ]; then
+    read -p "$(basename $0): remove branch '$BRANCH'? (y)" RESPONSE
+    if [  "$RESPONSE" != 'y' ] && [ "$RESPONSE" != '' ]; then
+      continue
+    fi
+  fi
+  ST=$(git branch -d "$BRANCH" 2>&1)
+  if [ $? -eq 0 ]; then
+    echo "Pruned \"$BRANCH\"; removing from origin...\c"
+    RST=$(git push origin ":$BRANCH" 2>&1)
+    if [ $? -eq 0 ]; then
+      echo " Removed."
+    else
+      echo
+      echo "Branch \"$BRANCH\" not removed from origin: $RST"
+    fi
+  else
+    ST=$(echo "$ST" | head -n 1 | sed 's/error: //')
+    echo "Branch \"$BRANCH\" not removed: $ST"
+  fi
 done
