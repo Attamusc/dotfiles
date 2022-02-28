@@ -69,7 +69,7 @@ module GitWorkflow
     end
 
     def mainline_branch
-      `git branch | grep main | wc -l`.to_i != 0 ? "main" : "master"
+      `git branch | grep main | wc -l`.to_i != 0 ? 'main' : 'master'
     end
 
     def upstream?
