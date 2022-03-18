@@ -1,44 +1,52 @@
 local lualine = require("lualine")
-local lspstatus = require("lsp-status")
 
 local M = {}
 
+local function telescope_label()
+	return [[Telescope]]
+end
+
+local telescope = {
+	sections = {
+		lualine_a = { telescope_label },
+	},
+	filetypes = { "TelescopePrompt" },
+}
+
 function M.setup()
-	lspstatus.register_progress()
-
-	local fern = {
-		sections = {
-			lualine_a = { "[[Fern]]" },
-		},
-		filetypes = { "fern" },
-	}
-
 	lualine.setup({
 		options = {
+			globalstatus = true,
 			icons_enabled = true,
-			theme = "rose-pine",
-			component_separators = { "", "" },
-			section_separators = { "", "" },
+			-- theme = "rose-pine",
+			theme = "auto",
+			component_separators = { left = "", right = "" },
+			section_separators = { left = "", right = "" },
 			disabled_filetypes = {},
 		},
 		sections = {
-			lualine_a = { "mode" },
-			lualine_b = { "branch", "diff" },
-			lualine_c = { "filename", "require('lsp-status').status()" },
-			lualine_x = { "encoding", "fileformat", "filetype" },
-			lualine_y = { "progress" },
+			lualine_a = { {
+				"mode",
+				fmt = function(str)
+					return str:sub(1, 1)
+				end,
+			} },
+			lualine_b = { "branch", "diff", { "diagnostics", sources = { "nvim_lsp" } } },
+			lualine_c = { "filename" },
+			lualine_x = {},
+			lualine_y = { "filetype", "progress" },
 			lualine_z = { "location" },
 		},
-		inactive_sections = {
-			lualine_a = {},
-			lualine_b = {},
-			lualine_c = { "filename" },
-			lualine_x = { "location" },
-			lualine_y = {},
-			lualine_z = {},
-		},
+		-- inactive_sections = {
+		-- lualine_a = {},
+		-- lualine_b = {},
+		-- lualine_c = { "filename" },
+		-- lualine_x = { "location" },
+		-- lualine_y = {},
+		-- lualine_z = {},
+		-- },
 		tabline = {},
-		extensions = { fern, "fugitive" },
+		extensions = { telescope, "fern", "fugitive" },
 	})
 end
 

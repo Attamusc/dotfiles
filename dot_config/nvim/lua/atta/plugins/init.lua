@@ -56,8 +56,7 @@ local function install_packages()
 			use({ "mhinz/vim-signify" })
 
 			-- Status Line
-			use({ "hoob3rt/lualine.nvim" })
-			use({ "nvim-lua/lsp-status.nvim" })
+			use({ "hoob3rt/lualine.nvim", requires = { "kyazdani42/nvim-web-devicons", opt = true } })
 
 			-- Fuzzy Finder(s)
 			use({ "nvim-telescope/telescope.nvim" })

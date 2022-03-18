@@ -129,6 +129,9 @@ local function general_settings()
 	-- Dark background for colorschemes that provide both
 	opt.background = "dark"
 
+	-- Show only only global status line
+	opt.laststatus = 3
+
 	-- Don't remember what these do but leaving them for now...
 	opt.hidden = true
 	opt.smartindent = true
@@ -138,7 +141,6 @@ local function general_settings()
 	opt.modelines = 1
 	opt.synmaxcol = 400
 	opt.formatoptions = "qrn1"
-	opt.laststatus = 2
 	opt.backspace = "indent,eol,start"
 	opt.tags = "./tags;/"
 	opt.clipboard = "unnamed"
@@ -171,7 +173,7 @@ local function autocmd_chezmoi_apply()
 	cmd([[
     augroup chezmoi_apply
       autocmd!
-      autocmd BufWritePost ~/.local/share/chezmoi/* !chezmoi apply --source-path "%"
+      autocmd BufWritePost ~/.local/share/chezmoi/* silent! !chezmoi apply --source-path "%"
     augroup END
   ]])
 end
