@@ -19,6 +19,7 @@ end
 local function fern_variables()
 	g["fern#renderer"] = "nerdfont"
 	g["fern#disable_default_mappings"] = 1
+	g["fern#default_hidden"] = 1
 end
 
 local function fern_mappings()
