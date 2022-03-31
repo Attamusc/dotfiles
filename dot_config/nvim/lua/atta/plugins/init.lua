@@ -80,6 +80,9 @@ local function install_packages()
 				requires = { "nvim-lua/plenary.nvim" },
 			})
 
+			-- Improved splits ergonomics
+			use({ "mrjones2014/smart-splits.nvim" })
+
 			-- Autocomplete
 			use({ "hrsh7th/nvim-cmp" })
 			use({ "hrsh7th/cmp-cmdline" })
@@ -128,6 +131,7 @@ local function install_packages()
 			use({ "folke/tokyonight.nvim", branch = "main" })
 			use({ "rose-pine/neovim" })
 			use({ "rebelot/kanagawa.nvim" })
+			use({ "EdenEast/nightfox.nvim" })
 		end,
 		config = {
 			display = {
@@ -146,11 +150,12 @@ local function load_plugin_configs()
 	require("atta.plugins.fern").setup()
 	require("atta.plugins.glyph_palette").setup()
 	require("atta.plugins.indent-blankline").setup()
-	require("atta.plugins.kanagawa").setup()
+	-- require("atta.plugins.kanagawa").setup()
 	require("atta.plugins.lsp").setup()
 	require("atta.plugins.lualine").setup()
 	require("atta.plugins.luasnip").setup()
 	require("atta.plugins.nerdcommenter").setup()
+	require("atta.plugins.nightfox").setup()
 	require("atta.plugins.nvim-treesitter").setup()
 	require("atta.plugins.sexp").setup()
 	require("atta.plugins.telescope").setup()
