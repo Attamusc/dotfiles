@@ -18,7 +18,6 @@ function M.setup()
 		options = {
 			globalstatus = true,
 			icons_enabled = true,
-			-- theme = "rose-pine",
 			theme = "auto",
 			component_separators = { left = "", right = "" },
 			section_separators = { left = "", right = "" },
@@ -37,14 +36,6 @@ function M.setup()
 			lualine_y = { "filetype", "progress" },
 			lualine_z = { "location" },
 		},
-		-- inactive_sections = {
-		-- lualine_a = {},
-		-- lualine_b = {},
-		-- lualine_c = { "filename" },
-		-- lualine_x = { "location" },
-		-- lualine_y = {},
-		-- lualine_z = {},
-		-- },
 		tabline = {},
 		extensions = { telescope, "fern", "fugitive" },
 	})
