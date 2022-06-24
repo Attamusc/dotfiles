@@ -7,6 +7,7 @@ local null_ls = require("null-ls")
 local kind = require("lspkind")
 local saga = require("lspsaga")
 local cmp = require("cmp")
+local ufo = require("ufo")
 local cmp_under = require("cmp-under-comparator")
 local rust_tools = require("rust-tools")
 local utils = require("atta.utils")
@@ -18,11 +19,11 @@ local fn = vim.fn
 local M = {}
 
 function M.format()
-	vim.lsp.buf.formatting()
+	vim.lsp.buf.format({ async = true })
 end
 
 local function on_attach(client)
-	if client.resolved_capabilities.document_formatting then
+	if client.server_capabilities.document_formatting then
 		cmd([[augroup Format]])
 		cmd([[autocmd! * <buffer>]])
 		cmd([[autocmd BufWritePost <buffer> lua require('atta.plugins.lsp').format()]])
@@ -37,13 +38,13 @@ local server_configs = {
 	omnisharp = {},
 	jsonls = {
 		on_attach = function(client)
-			client.resolved_capabilities.document_formatting = false
+			client.server_capabilities.document_formatting = false
 			on_attach(client)
 		end,
 	},
 	pyright = {
 		on_attach = function(client)
-			client.resolved_capabilities.document_formatting = false
+			client.server_capabilities.document_formatting = false
 			on_attach(client)
 		end,
 	},
@@ -68,13 +69,13 @@ local server_configs = {
 	},
 	tsserver = {
 		on_attach = function(client)
-			client.resolved_capabilities.document_formatting = false
+			client.server_capabilities.document_formatting = false
 			on_attach(client)
 		end,
 	},
 	gopls = {
 		on_attach = function(client)
-			client.resolved_capabilities.document_formatting = false
+			client.server_capabilities.document_formatting = false
 			on_attach(client)
 		end,
 		settings = {
@@ -102,6 +103,16 @@ local function setup_servers()
 	lsp_installer.on_server_ready(function(server)
 		local config = server_configs[server.name] or {}
 
+    local capabilities = vim.lsp.protocol.make_client_capabilities()
+    capabilities.textDocument.foldingRange = {
+      dynamicRegistration = false,
+      lineFoldingOnly = true,
+    }
+
+    vim.tbl_deep_extend("force", {
+      capabilities = capabilities,
+    }, config)
+
 		if server.name == "rust_analyzer" then
 			rust_tools.setup({
 				tools = {
@@ -109,7 +120,7 @@ local function setup_servers()
 				},
 				server = vim.tbl_deep_extend("force", server:get_default_options(), {}, {
 					on_attach = function(client)
-						client.resolved_capabilities.document_formatting = false
+						client.server_capabilities.document_formatting = false
 						on_attach(client)
 					end,
 				}),
@@ -196,8 +207,11 @@ local function setup_completions()
 			},
 		},
 
+    view = {
+      entries = "native",
+    },
+
 		experimental = {
-			native_menu = false,
 			ghost_text = true,
 		},
 	})
@@ -205,6 +219,10 @@ end
 
 local function setup_saga()
 	saga.init_lsp_saga()
+end
+
+local function setup_ufo()
+  ufo.setup()
 end
 
 local function setup_kind()
@@ -342,6 +360,7 @@ function M.setup()
 	setup_completions()
 	setup_diagnostics()
 	setup_null_ls()
+  setup_ufo()
 
 	bind_keymaps()
 end

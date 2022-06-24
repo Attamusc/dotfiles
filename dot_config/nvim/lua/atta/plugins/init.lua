@@ -80,6 +80,9 @@ local function install_packages()
 				requires = { "nvim-lua/plenary.nvim" },
 			})
 
+      -- Fold Improvements
+      use({'kevinhwang91/nvim-ufo', requires = 'kevinhwang91/promise-async'})
+
 			-- Improved splits ergonomics
 			use({ "mrjones2014/smart-splits.nvim" })
 
@@ -113,19 +116,19 @@ local function install_packages()
 			use({ "habamax/vim-godot" })
 			use({ "StanAngeloff/php.vim" })
 			use({ "2072/PHP-Indenting-for-VIm" })
-			use({ "niftylettuce/vim-jinja" })
+			-- use({ "niftylettuce/vim-jinja" })
 			use({ "ron-rs/ron.vim" })
 			-- Make sure chezmoi files highlight like the actual files they represent
 			use({ "alker0/chezmoi.vim", opt = true })
 
 			-- Dash: mac documentation viewer app
-			use({
-				"mrjones2014/dash.nvim",
-				run = "make install",
-				cond = function()
-					return vim.loop.os_uname().sysname == "Darwin"
-				end,
-			})
+			-- use({
+			-- "mrjones2014/dash.nvim",
+			-- run = "make install",
+			-- cond = function()
+			-- return vim.loop.os_uname().sysname == "Darwin"
+			-- end,
+			-- })
 
 			-- Colors
 			use({ "folke/tokyonight.nvim", branch = "main" })
@@ -150,12 +153,12 @@ local function load_plugin_configs()
 	require("atta.plugins.fern").setup()
 	require("atta.plugins.glyph_palette").setup()
 	require("atta.plugins.indent-blankline").setup()
-	-- require("atta.plugins.kanagawa").setup()
+	require("atta.plugins.kanagawa").setup()
 	require("atta.plugins.lsp").setup()
 	require("atta.plugins.lualine").setup()
 	require("atta.plugins.luasnip").setup()
 	require("atta.plugins.nerdcommenter").setup()
-	require("atta.plugins.nightfox").setup()
+	-- require("atta.plugins.nightfox").setup()
 	require("atta.plugins.nvim-treesitter").setup()
 	require("atta.plugins.sexp").setup()
 	require("atta.plugins.telescope").setup()
