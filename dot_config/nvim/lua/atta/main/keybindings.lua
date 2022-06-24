@@ -8,10 +8,10 @@ local function keymaps()
 	-- General Keybindings
 	-- Keybindings not related to a specific plugin or language
 	-- Enforce good habits
-	map("", "<left>", "<nop>")
-	map("", "<right>", "<nop>")
-	map("", "<up>", "<nop>")
-	map("", "<down>", "<nop>")
+	-- map("", "<left>", "<nop>")
+	-- map("", "<right>", "<nop>")
+	-- map("", "<up>", "<nop>")
+	-- map("", "<down>", "<nop>")
 
 	-- jj | escaping
 	noremap("i", "jj", "<esc>")

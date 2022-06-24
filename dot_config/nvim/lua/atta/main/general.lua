@@ -93,15 +93,20 @@ local function general_settings()
 	-- Automatically indent inside of blocks per the language rules
 	opt.autoindent = true
 
-	-- Maximum fold levels
-	opt.foldlevel = 20
+	-- fold settings
+  opt.foldcolumn = '1'
+	opt.foldlevel = 99
+  opt.foldenable = true
 
 	-- Use tree-sitter for folding
-	opt.foldmethod = "expr"
-	opt.foldexpr = fn["nvim_treesitter#foldexpr"]()
+	-- opt.foldmethod = "expr"
+	-- opt.foldexpr = fn["nvim_treesitter#foldexpr"]()
 
 	-- Use the same symbols as TextMate for tabstops and EOLs
-	opt.listchars = "tab:▸\\ ,eol:¬,trail:·"
+	opt.listchars = [[tab:▸ ,eol:¬,trail:·]]
+
+  -- fillchars
+  opt.fillchars = [[eob: ,fold: ,foldopen:,foldsep: ,foldclose:]]
 
 	-- Set a default tab width as use spaces as tabs
 	opt.ts = 2

@@ -120,6 +120,8 @@
   untracked = red
 [push]
   default = simple
+[remote]
+  pushDefault = origin
 [difftool "Kaleidoscope"]
   cmd = ksdiff --partial-changeset --relative-path "$MERGED" -- "$LOCAL" "$REMOTE"
 [difftool "smerge"]
@@ -165,3 +167,5 @@
 	useHttpPath = true
 [gpg]
   program = /opt/homebrew/bin/gpg
+[credential "https://ghe.io"]
+	provider = github
