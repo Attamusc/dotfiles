@@ -48,7 +48,7 @@ local function install_packages()
 			use({ "pwntester/octo.nvim" })
 
 			-- File Drawer
-			use({ "lambdalisue/fern.vim" })
+			use({ "lambdalisue/fern.vim", branch = "main" })
 			use({ "lambdalisue/fern-renderer-nerdfont.vim" })
 			use({ "lambdalisue/fern-hijack.vim" })
 
@@ -72,7 +72,8 @@ local function install_packages()
 
 			-- Native LSP
 			use({ "neovim/nvim-lspconfig" })
-			use({ "williamboman/nvim-lsp-installer" })
+			use({ "williamboman/mason.nvim" })
+			use({ "williamboman/mason-lspconfig.nvim" })
 			use({ "tami5/lspsaga.nvim" })
 			use({ "onsails/lspkind-nvim" })
 			use({
@@ -116,22 +117,11 @@ local function install_packages()
 			use({ "habamax/vim-godot" })
 			use({ "StanAngeloff/php.vim" })
 			use({ "2072/PHP-Indenting-for-VIm" })
-			-- use({ "niftylettuce/vim-jinja" })
 			use({ "ron-rs/ron.vim" })
 			-- Make sure chezmoi files highlight like the actual files they represent
 			use({ "alker0/chezmoi.vim", opt = true })
 
-			-- Dash: mac documentation viewer app
-			-- use({
-			-- "mrjones2014/dash.nvim",
-			-- run = "make install",
-			-- cond = function()
-			-- return vim.loop.os_uname().sysname == "Darwin"
-			-- end,
-			-- })
-
 			-- Colors
-			use({ "folke/tokyonight.nvim", branch = "main" })
 			use({ "rose-pine/neovim" })
 			use({ "rebelot/kanagawa.nvim" })
 			use({ "EdenEast/nightfox.nvim" })
@@ -150,15 +140,17 @@ local function install_packages()
 end
 
 local function load_plugin_configs()
+  -- Set colorscheme first to ensure any variables are present for plugins
+  -- require("atta.plugins.kanagawa").setup()
+  require("atta.plugins.nightfox").setup()
+
 	require("atta.plugins.fern").setup()
 	require("atta.plugins.glyph_palette").setup()
 	require("atta.plugins.indent-blankline").setup()
-	require("atta.plugins.kanagawa").setup()
 	require("atta.plugins.lsp").setup()
 	require("atta.plugins.lualine").setup()
 	require("atta.plugins.luasnip").setup()
 	require("atta.plugins.nerdcommenter").setup()
-	-- require("atta.plugins.nightfox").setup()
 	require("atta.plugins.nvim-treesitter").setup()
 	require("atta.plugins.sexp").setup()
 	require("atta.plugins.telescope").setup()

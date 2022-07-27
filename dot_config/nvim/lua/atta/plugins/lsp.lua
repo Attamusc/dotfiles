@@ -2,7 +2,9 @@
 -- in a specific order. I might split them apart if this files ends up
 -- too large.
 
-local lsp_installer = require("nvim-lsp-installer")
+local mason = require("mason")
+local mason_lsp_config = require("mason-lspconfig")
+local lspconfig = require("lspconfig")
 local null_ls = require("null-ls")
 local kind = require("lspkind")
 local saga = require("lspsaga")
@@ -100,38 +102,31 @@ local server_configs = {
 }
 
 local function setup_servers()
-	lsp_installer.on_server_ready(function(server)
-		local config = server_configs[server.name] or {}
+  local servers_to_install = {}
+  for k, _ in pairs(server_configs) do
+    table.insert(servers_to_install, k)
+  end
 
-    local capabilities = vim.lsp.protocol.make_client_capabilities()
-    capabilities.textDocument.foldingRange = {
-      dynamicRegistration = false,
-      lineFoldingOnly = true,
-    }
+  mason.setup()
+  mason_lsp_config.setup({
+    ensure_installed = servers_to_install
+  })
 
-    vim.tbl_deep_extend("force", {
-      capabilities = capabilities,
-    }, config)
+  mason_lsp_config.setup_handlers({
+    function(server_name)
+      local config = server_configs[server_name] or {}
 
-		if server.name == "rust_analyzer" then
-			rust_tools.setup({
-				tools = {
-					autoSetHints = true,
-				},
-				server = vim.tbl_deep_extend("force", server:get_default_options(), {}, {
-					on_attach = function(client)
-						client.server_capabilities.document_formatting = false
-						on_attach(client)
-					end,
-				}),
-			})
-			server:attach_buffers()
-		else
-			server:setup(config)
-		end
+      lspconfig[server_name].setup(config)
+    end,
 
-		cmd([[do User LspAttachBuffer]])
-	end)
+    ["rust_analyzer"] = function()
+      rust_tools.setup({
+        tools = {
+          autoSetHints = true,
+        }
+      })
+    end
+  })
 end
 
 local function setup_completions()
