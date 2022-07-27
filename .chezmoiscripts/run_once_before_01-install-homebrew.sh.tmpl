@@ -19,7 +19,17 @@ fi
 
 echo "Installing Homebrew..."
 
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+{{ if (env "CODESPACES") }}
+  sudo mkdir -p /home/linuxbrew/.linuxbrew
+  sudo chown --reference $HOME /home/linuxbrew/.linuxbrew
+  docker pull ghcr.io/attamusc/linuxbrew-cache:latest
+  docker rm -f linuxbrew-cache || true
+  docker create --name linuxbrew-cache ghcr.io/attamusc/linuxbrew-cache:latest true
+  docker cp linuxbrew-cache:/.linuxbrew /home/linuxbrew/
+  docker rm -f linuxbrew-cache || true
+{{ else }}
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+{{- end}}
 
 # Add to path immediately to ensure that all the brew install steps execute
 if [ -d /opt/homebrew/bin ]; then
