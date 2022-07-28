@@ -25,7 +25,3 @@ autoload -U compinit && compinit
 # for config_file ($ZSH/config/**/completion.sh) source $config_file
 
 eval "$(starship init zsh)"
-
-# Load fzf if it's installed
-# Need to have this come last so that it doesn't get overridden
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
