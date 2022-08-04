@@ -9,7 +9,6 @@ local null_ls = require("null-ls")
 local kind = require("lspkind")
 local saga = require("lspsaga")
 local cmp = require("cmp")
-local ufo = require("ufo")
 local cmp_under = require("cmp-under-comparator")
 local rust_tools = require("rust-tools")
 local utils = require("atta.utils")
@@ -216,10 +215,6 @@ local function setup_saga()
 	saga.init_lsp_saga()
 end
 
-local function setup_ufo()
-  ufo.setup()
-end
-
 local function setup_kind()
 	kind.init({
 		symbol_map = {
@@ -309,7 +304,7 @@ local function bind_keymaps()
 	)
 
 	-- diagnostics
-	vim.cmd([[autocmd CursorHold * lua require('lspsaga.diagnostic').show_cursor_diagnostics()]])
+  vim.cmd([[autocmd CursorHold * lua require('lspsaga.diagnostic').show_cursor_diagnostics()]])
 
 	utils.noremap(
 		"n",
@@ -355,7 +350,6 @@ function M.setup()
 	setup_completions()
 	setup_diagnostics()
 	setup_null_ls()
-  setup_ufo()
 
 	bind_keymaps()
 end

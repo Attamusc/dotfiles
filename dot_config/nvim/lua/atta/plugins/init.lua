@@ -74,15 +74,12 @@ local function install_packages()
 			use({ "neovim/nvim-lspconfig" })
 			use({ "williamboman/mason.nvim" })
 			use({ "williamboman/mason-lspconfig.nvim" })
-			use({ "tami5/lspsaga.nvim" })
+			use({ "glepnir/lspsaga.nvim", branch = "main" })
 			use({ "onsails/lspkind-nvim" })
 			use({
 				"jose-elias-alvarez/null-ls.nvim",
 				requires = { "nvim-lua/plenary.nvim" },
 			})
-
-      -- Fold Improvements
-      use({'kevinhwang91/nvim-ufo', requires = 'kevinhwang91/promise-async'})
 
 			-- Improved splits ergonomics
 			use({ "mrjones2014/smart-splits.nvim" })

@@ -94,9 +94,9 @@ local function general_settings()
 	opt.autoindent = true
 
 	-- fold settings
-  opt.foldcolumn = '1'
-	opt.foldlevel = 99
-  opt.foldenable = true
+  -- opt.foldcolumn = '1'
+	-- opt.foldlevel = 99
+  -- opt.foldenable = true
 
 	-- Use tree-sitter for folding
 	-- opt.foldmethod = "expr"

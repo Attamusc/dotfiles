@@ -29,12 +29,12 @@ fi
 
 if [ -z "$head" ]; then
   echo "Creating pull request..."
-  merge_url=`gh pr create -b $base --web`
+  merge_url=`gh pr create --base $base --web`
 
   copy_and_open $merge_url
 else
   echo "Creating pull request..."
-  merge_url=`gh pr create -b $base -h $head --web`
+  merge_url=`gh pr create --base $base --head $head --web`
 
   copy_and_open $merge_url
 fi
