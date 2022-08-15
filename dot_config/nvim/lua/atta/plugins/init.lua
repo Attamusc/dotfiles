@@ -112,9 +112,8 @@ local function install_packages()
 			use({ "jparise/vim-graphql" })
 			use({ "martinda/Jenkinsfile-vim-syntax" })
 			use({ "habamax/vim-godot" })
-			use({ "StanAngeloff/php.vim" })
-			use({ "2072/PHP-Indenting-for-VIm" })
 			use({ "ron-rs/ron.vim" })
+      use({ "wuelnerdotexe/vim-astro" })
 			-- Make sure chezmoi files highlight like the actual files they represent
 			use({ "alker0/chezmoi.vim", opt = true })
 

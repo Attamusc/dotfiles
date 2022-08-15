@@ -33,6 +33,7 @@ local function on_attach(client)
 end
 
 local server_configs = {
+  astro_language_server = {},
 	yamlls = {},
 	bashls = {},
 	solargraph = {},
