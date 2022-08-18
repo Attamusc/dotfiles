@@ -37,6 +37,7 @@ local server_configs = {
 	yamlls = {},
 	bashls = {},
 	solargraph = {},
+  sorbet = {},
 	omnisharp = {},
 	jsonls = {
 		on_attach = function(client)
