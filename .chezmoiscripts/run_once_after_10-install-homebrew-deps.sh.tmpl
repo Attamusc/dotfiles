@@ -14,6 +14,7 @@ set -eufo pipefail
 
 {{ $taps := list
   "homebrew/cask"
+  "microsoft/git"
 -}}
 
 {{ $brews := list
@@ -40,7 +41,9 @@ set -eufo pipefail
   "zsh"
 -}}
 
-{{ $casks := list -}}
+{{ $casks := list 
+  "git-credential-manager-core"
+-}}
 
 {{ if (eq .chezmoi.os "darwin") -}}
 {{ $brews = concat $brews (list
