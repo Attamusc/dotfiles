@@ -19,39 +19,41 @@ local fn = vim.fn
 
 local M = {}
 
-function M.format()
-	vim.lsp.buf.format({ async = true })
-end
+local augroup = vim.api.nvim_create_augroup("LspFormatting", {})
 
-local function on_attach(client)
-	if client.server_capabilities.document_formatting then
-		cmd([[augroup Format]])
-		cmd([[autocmd! * <buffer>]])
-		cmd([[autocmd BufWritePost <buffer> lua require('atta.plugins.lsp').format()]])
-		cmd([[augroup END]])
+local function on_attach(client, bufnr)
+	if client.supports_method("textDocument/formatting") then
+		vim.api.nvim_clear_autocmds({ group = augroup, buffer = bufnr })
+		vim.api.nvim_create_autocmd("BufWritePre", {
+			group = augroup,
+			buffer = bufnr,
+			callback = function()
+				vim.lsp.buf.format({
+					bufnr = bufnr,
+					filter = function(c)
+						return c.name == "null-ls"
+					end,
+				})
+			end,
+		})
 	end
 end
 
 local server_configs = {
-  astro_language_server = {},
+	astro_language_server = {},
 	yamlls = {},
 	bashls = {},
 	solargraph = {},
-  sorbet = {},
+	sorbet = {},
 	omnisharp = {},
 	jsonls = {
-		on_attach = function(client)
-			client.server_capabilities.document_formatting = false
-			on_attach(client)
-		end,
+		on_attach = on_attach,
 	},
 	pyright = {
-		on_attach = function(client)
-			client.server_capabilities.document_formatting = false
-			on_attach(client)
-		end,
+		on_attach = on_attach,
 	},
 	sumneko_lua = {
+		on_attach = on_attach,
 		settings = {
 			Lua = {
 				runtime = {
@@ -71,16 +73,10 @@ local server_configs = {
 		},
 	},
 	tsserver = {
-		on_attach = function(client)
-			client.server_capabilities.document_formatting = false
-			on_attach(client)
-		end,
+		on_attach = on_attach,
 	},
 	gopls = {
-		on_attach = function(client)
-			client.server_capabilities.document_formatting = false
-			on_attach(client)
-		end,
+		on_attach = on_attach,
 		settings = {
 			gopls = {
 				analyses = {
@@ -103,31 +99,31 @@ local server_configs = {
 }
 
 local function setup_servers()
-  local servers_to_install = {}
-  for k, _ in pairs(server_configs) do
-    table.insert(servers_to_install, k)
-  end
+	local servers_to_install = {}
+	for k, _ in pairs(server_configs) do
+		table.insert(servers_to_install, k)
+	end
 
-  mason.setup()
-  mason_lsp_config.setup({
-    ensure_installed = servers_to_install
-  })
+	mason.setup()
+	mason_lsp_config.setup({
+		ensure_installed = servers_to_install,
+	})
 
-  mason_lsp_config.setup_handlers({
-    function(server_name)
-      local config = server_configs[server_name] or {}
+	mason_lsp_config.setup_handlers({
+		function(server_name)
+			local config = server_configs[server_name] or {}
 
-      lspconfig[server_name].setup(config)
-    end,
+			lspconfig[server_name].setup(config)
+		end,
 
-    ["rust_analyzer"] = function()
-      rust_tools.setup({
-        tools = {
-          autoSetHints = true,
-        }
-      })
-    end
-  })
+		["rust_analyzer"] = function()
+			rust_tools.setup({
+				tools = {
+					autoSetHints = true,
+				},
+			})
+		end,
+	})
 end
 
 local function setup_completions()
@@ -203,9 +199,9 @@ local function setup_completions()
 			},
 		},
 
-    view = {
-      entries = "native",
-    },
+		view = {
+			entries = "native",
+		},
 
 		experimental = {
 			ghost_text = true,
@@ -289,38 +285,18 @@ local function setup_null_ls()
 end
 
 local function bind_keymaps()
-	utils.noremap("n", "K", "<cmd>lua require('lspsaga.hover').render_hover_doc()<CR>", { silent = true })
-
-	-- scroll down hover doc
-	utils.noremap("n", "<C-f>", "<cmd>lua require('lspsaga.action').smart_scroll_with_saga(1)<CR>", { silent = true })
-	-- scroll up hover doc
-	utils.noremap("n", "<C-b>", "<cmd>lua require('lspsaga.action').smart_scroll_with_saga(-1)<CR>", { silent = true })
+	-- hover docs
+	utils.noremap("n", "K", "<cmd>Lspsaga hover_doc<CR>", { silent = true })
 
 	-- code action
-	utils.noremap("n", "<leader>ca", "<cmd>lua require('lspsaga.codeaction').code_action()<CR>", { silent = true })
-	utils.noremap(
-		"v",
-		"<leader>ca",
-		":<C-U>lua require('lspsaga.codeaction').range_code_action()<CR>",
-		{ silent = true }
-	)
+	utils.noremap({ "n", "v" }, "<leader>ca", "<cmd>Lspsaga code_action<CR>", { silent = true })
 
 	-- diagnostics
-  vim.cmd([[autocmd CursorHold * lua require('lspsaga.diagnostic').show_cursor_diagnostics()]])
+	utils.noremap("n", "<leader>cd", "<cmd>Lspsaga show_line_diagnostics<CR>", { silent = true })
+	utils.noremap("n", "[e", "<cmd>Lspsaga diagnostic_jump_prev<CR>", { silent = true })
+	utils.noremap("n", "]e", "<cmd>Lspsaga diagnostic_jump_next<CR>", { silent = true })
 
-	utils.noremap(
-		"n",
-		"<leader>cd",
-		"<cmd>lua require('lspsaga.diagnostic').show_line_diagnostics()<CR>",
-		{ silent = true }
-	)
-
-	utils.noremap("n", "[e", "<cmd>lua require('lspsaga.diagnostic').lsp_jump_diagnostic_prev()<CR>", {
-		silent = true,
-	})
-	utils.noremap("n", "]e", "<cmd>lua require('lspsaga.diagnostic').lsp_jump_diagnostic_next()<CR>", {
-		silent = true,
-	})
+	vim.cmd([[autocmd CursorHold * Lspsaga show_cursor_diagnostics]])
 end
 
 local function setup_diagnostics()
