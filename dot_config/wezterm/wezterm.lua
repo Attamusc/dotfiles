@@ -9,8 +9,10 @@ return {
   },
   use_fancy_tab_bar = false,
   color_scheme = "carbonfox",
-  font = wezterm.font("MonoLisa NF", {
-    weight = "Light"
+  font = wezterm.font({
+    family = "MonoLisa NF",
+    weight = "Light",
+    harfbuzz_features = { 'calt=0', 'clig=0', 'liga=0' },
   }),
   font_size = 16.0
 }

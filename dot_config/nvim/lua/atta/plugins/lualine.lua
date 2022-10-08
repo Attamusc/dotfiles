@@ -36,6 +36,7 @@ function M.setup()
 			lualine_y = { "filetype", "progress" },
 			lualine_z = { "location" },
 		},
+		winbar = {},
 		tabline = {},
 		extensions = { telescope, "fern", "fugitive" },
 	})
