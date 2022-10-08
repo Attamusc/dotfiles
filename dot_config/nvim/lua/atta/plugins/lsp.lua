@@ -44,8 +44,12 @@ local server_configs = {
 	yamlls = {},
 	bashls = {},
 	solargraph = {},
-	sorbet = {},
-	omnisharp = {},
+	sorbet = {
+		on_attach = on_attach,
+	},
+	omnisharp = {
+		on_attach = on_attach,
+	},
 	jsonls = {
 		on_attach = on_attach,
 	},
@@ -165,6 +169,7 @@ local function setup_completions()
 		},
 
 		sources = {
+			{ name = "copilot" },
 			{ name = "nvim_lua" },
 			{ name = "nvim_lsp" },
 			{ name = "luasnip" },
@@ -182,6 +187,9 @@ local function setup_completions()
 					vsnip = "[snippet]",
 					gh_issues = "[issues]",
 					tn = "[TabNine]",
+				},
+				symbol_map = {
+					Copilot = "",
 				},
 			}),
 		},
@@ -210,7 +218,11 @@ local function setup_completions()
 end
 
 local function setup_saga()
-	saga.init_lsp_saga()
+	saga.init_lsp_saga({
+		symbol_in_winbar = {
+			enable = false,
+		},
+	})
 end
 
 local function setup_kind()

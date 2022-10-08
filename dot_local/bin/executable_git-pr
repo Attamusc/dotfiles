@@ -24,17 +24,17 @@ copy_and_open() {
 }
 
 if [ -z "$base" ]; then
-  base="master"
+  base=`git symbolic-ref refs/remotes/origin/HEAD | cut -d'/' -f4`
 fi
 
 if [ -z "$head" ]; then
   echo "Creating pull request..."
-  merge_url=`gh pr create --base $base --web`
+  merge_url=`gh pr create --base $base --web --fill`
 
   copy_and_open $merge_url
 else
   echo "Creating pull request..."
-  merge_url=`gh pr create --base $base --head $head --web`
+  merge_url=`gh pr create --base $base --head $head --web --fill`
 
   copy_and_open $merge_url
 fi

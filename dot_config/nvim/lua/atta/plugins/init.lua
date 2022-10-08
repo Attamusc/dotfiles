@@ -62,6 +62,8 @@ local function install_packages()
 			use({ "nvim-telescope/telescope.nvim" })
 			use({ "nvim-telescope/telescope-ui-select.nvim" })
 			use({ "nvim-telescope/telescope-fzf-native.nvim", run = "make" })
+			use({ "nvim-telescope/telescope-live-grep-args.nvim" })
+			use({ "ptethng/telescope-makefile" })
 
 			-- Diagnostics
 			use({ "folke/trouble.nvim", branch = "main" })
@@ -81,8 +83,30 @@ local function install_packages()
 				requires = { "nvim-lua/plenary.nvim" },
 			})
 
+			-- Co-pilot
+			use({
+				"zbirenbaum/copilot.lua",
+				event = { "VimEnter" },
+				config = function()
+					vim.defer_fn(function()
+						require("copilot").setup()
+					end, 100)
+				end,
+			})
+
+			use({
+				"zbirenbaum/copilot-cmp",
+				after = { "copilot.lua" },
+				config = function()
+					require("copilot_cmp").setup()
+				end,
+			})
+
 			-- Improved splits ergonomics
 			use({ "mrjones2014/smart-splits.nvim" })
+
+			-- Terminal
+			use({ "akinsho/toggleterm.nvim", tag = "*" })
 
 			-- Autocomplete
 			use({ "hrsh7th/nvim-cmp" })
@@ -113,7 +137,7 @@ local function install_packages()
 			use({ "martinda/Jenkinsfile-vim-syntax" })
 			use({ "habamax/vim-godot" })
 			use({ "ron-rs/ron.vim" })
-      use({ "wuelnerdotexe/vim-astro" })
+			use({ "wuelnerdotexe/vim-astro" })
 			-- Make sure chezmoi files highlight like the actual files they represent
 			use({ "alker0/chezmoi.vim", opt = true })
 
@@ -136,9 +160,9 @@ local function install_packages()
 end
 
 local function load_plugin_configs()
-  -- Set colorscheme first to ensure any variables are present for plugins
-  -- require("atta.plugins.kanagawa").setup()
-  require("atta.plugins.nightfox").setup()
+	-- Set colorscheme first to ensure any variables are present for plugins
+	-- require("atta.plugins.kanagawa").setup()
+	require("atta.plugins.nightfox").setup()
 
 	require("atta.plugins.fern").setup()
 	require("atta.plugins.glyph_palette").setup()

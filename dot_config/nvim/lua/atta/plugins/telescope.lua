@@ -49,6 +49,8 @@ local function telescope_settings()
 	})
 
 	telescope.load_extension("fzf")
+  telescope.load_extension("live_grep_args")
+  telescope.load_extension("make")
 end
 
 function M.reload()
@@ -83,11 +85,12 @@ end
 local function telescope_mappings()
 	noremap("n", "<leader>ff", "<cmd>lua require('telescope.builtin').find_files()<cr>")
 	noremap("n", "<leader>fb", "<cmd>lua require('telescope.builtin').buffers()<cr>")
-	noremap("n", "<leader>fsa", "<cmd>lua require('telescope.builtin').live_grep()<cr>")
 	noremap("n", "<leader>fss", "<cmd>lua require('telescope.builtin').grep_string()<cr>")
 	noremap("n", "<leader>fgs", "<cmd>lua require('telescope.builtin').git_status()<cr>")
 	noremap("n", "<leader>fgc", "<cmd>lua require('telescope.builtin').git_commits()<cr>")
 	noremap("n", "<leader>frc", "<cmd>lua require('atta.plugins.telescope').reload()<cr>")
+
+	noremap("n", "<leader>fg", "<cmd>lua require('telescope').extensions.live_grep_args.live_grep_args()<cr>")
 end
 
 function M.setup()

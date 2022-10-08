@@ -1,0 +1,13 @@
+---
+title: Team Repo
+---
+
+if WezTerm is running
+    %WezTerm
+    - {@t "c github.com/github/platform-ux" return "e" return}
+else
+    %WezTerm
+    - {"c github.com/github/platform-ux" return "e" return}
+end
+
+@WezTerm

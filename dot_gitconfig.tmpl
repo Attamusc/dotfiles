@@ -5,6 +5,9 @@
 [commit]
   gpgsign = true
 [alias]
+  # utility to get the mainline branch
+  main-branch = !"git symbolic-ref refs/remotes/origin/HEAD | cut -d'/' -f4"
+
   # Add
   aa = add --all
 
@@ -18,8 +21,7 @@
   # Checkout
   co = checkout
   cb = checkout -b
-  com = checkout main
-  coma = checkout master
+  com = !"git checkout $(git main-branch)"
 
   # Diff
   d = !"git diff --no-color | tig"
@@ -44,8 +46,7 @@
   p = push
   poh = push origin HEAD
   pof = push origin +HEAD
-  pom = push origin main
-  poma = push origin master
+  pom = !"git push origin $(git main-branch)"
   puh = push upstream HEAD
 
   # tig shims
