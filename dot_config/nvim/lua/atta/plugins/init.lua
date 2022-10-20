@@ -145,6 +145,7 @@ local function install_packages()
 			use({ "rose-pine/neovim" })
 			use({ "rebelot/kanagawa.nvim" })
 			use({ "EdenEast/nightfox.nvim" })
+			use({ "catppuccin/nvim", as = "catppuccin" })
 		end,
 		config = {
 			display = {
@@ -162,7 +163,8 @@ end
 local function load_plugin_configs()
 	-- Set colorscheme first to ensure any variables are present for plugins
 	-- require("atta.plugins.kanagawa").setup()
-	require("atta.plugins.nightfox").setup()
+	-- require("atta.plugins.nightfox").setup()
+	require("atta.plugins.catppuccin").setup()
 
 	require("atta.plugins.fern").setup()
 	require("atta.plugins.glyph_palette").setup()
