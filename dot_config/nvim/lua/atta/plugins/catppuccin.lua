@@ -1,10 +1,26 @@
-local nightfox = require("nightfox")
+local catppuccin = require("catppuccin")
 
 local M = {}
 
 function M.setup()
-	vim.g.catppuccin_flavour = "macchiato" -- latte, frappe, macchiato, mocha
-	require("catppuccin").setup()
+	catppuccin.setup({
+		flavour = "macchiato",
+		styles = {
+			comments = { "italic" },
+			conditionals = {},
+			loops = {},
+			functions = {},
+			keywords = {},
+			strings = {},
+			variables = {},
+			numbers = {},
+			booleans = {},
+			properties = {},
+			types = {},
+			operators = {},
+		},
+	})
+
 	vim.api.nvim_command("colorscheme catppuccin")
 end
 
