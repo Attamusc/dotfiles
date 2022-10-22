@@ -71,7 +71,7 @@ local function general_settings()
 	opt.splitright = true
 
 	-- seach both cscopes and the tags file
-	opt.cscopetag = true
+	-- opt.cscopetag = true
 
 	-- Make the command line 2 lines high
 	opt.cmdheight = 2
@@ -94,9 +94,9 @@ local function general_settings()
 	opt.autoindent = true
 
 	-- fold settings
-  -- opt.foldcolumn = '1'
+	-- opt.foldcolumn = '1'
 	-- opt.foldlevel = 99
-  -- opt.foldenable = true
+	-- opt.foldenable = true
 
 	-- Use tree-sitter for folding
 	-- opt.foldmethod = "expr"
@@ -105,8 +105,8 @@ local function general_settings()
 	-- Use the same symbols as TextMate for tabstops and EOLs
 	opt.listchars = [[tab:▸ ,eol:¬,trail:·]]
 
-  -- fillchars
-  opt.fillchars = [[eob: ,fold: ,foldopen:,foldsep: ,foldclose:]]
+	-- fillchars
+	opt.fillchars = [[eob: ,fold: ,foldopen:,foldsep: ,foldclose:]]
 
 	-- Set a default tab width as use spaces as tabs
 	opt.ts = 2

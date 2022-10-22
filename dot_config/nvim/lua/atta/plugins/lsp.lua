@@ -18,6 +18,34 @@ local lsp = vim.lsp
 local fn = vim.fn
 
 local M = {}
+local cmp_kinds = {
+	Copilot = " ",
+	Text = "  ",
+	Method = "  ",
+	Function = "  ",
+	Constructor = "  ",
+	Field = "  ",
+	Variable = "  ",
+	Class = "  ",
+	Interface = "  ",
+	Module = "  ",
+	Property = "  ",
+	Unit = "  ",
+	Value = "  ",
+	Enum = "  ",
+	Keyword = "  ",
+	Snippet = "  ",
+	Color = "  ",
+	File = "  ",
+	Reference = "  ",
+	Folder = "  ",
+	EnumMember = "  ",
+	Constant = "  ",
+	Struct = "  ",
+	Event = "  ",
+	Operator = "  ",
+	TypeParameter = "  ",
+}
 
 local augroup = vim.api.nvim_create_augroup("LspFormatting", {})
 
@@ -40,7 +68,7 @@ local function on_attach(client, bufnr)
 end
 
 local server_configs = {
-	astro_language_server = {},
+	-- ["astro-language-server"] = {},
 	yamlls = {},
 	bashls = {},
 	solargraph = {},
@@ -169,29 +197,20 @@ local function setup_completions()
 		},
 
 		sources = {
-			{ name = "copilot" },
 			{ name = "nvim_lua" },
 			{ name = "nvim_lsp" },
+			{ name = "copilot" },
 			{ name = "luasnip" },
 			{ name = "path" },
 			{ name = "buffer", keyword_length = 4 },
 		},
 
 		formatting = {
-			format = kind.cmp_format({
-				menu = {
-					buffer = "[buffer]",
-					nvim_lsp = "[LSP]",
-					nvim_lua = "[api]",
-					path = "[path]",
-					vsnip = "[snippet]",
-					gh_issues = "[issues]",
-					tn = "[TabNine]",
-				},
-				symbol_map = {
-					Copilot = "",
-				},
-			}),
+			fields = { "kind", "abbr" },
+			format = function(_, vim_item)
+				vim_item.kind = (cmp_kinds[vim_item.kind] or "") .. vim_item.kind
+				return vim_item
+			end,
 		},
 
 		sorting = {
@@ -219,6 +238,9 @@ end
 
 local function setup_saga()
 	saga.init_lsp_saga({
+		code_action_lightbulb = {
+			virtual_text = false,
+		},
 		symbol_in_winbar = {
 			enable = false,
 		},
@@ -228,10 +250,10 @@ end
 local function setup_kind()
 	kind.init({
 		symbol_map = {
-			Text = "",
-			Method = "",
-			Function = "",
-			Constructor = "",
+			text = "",
+			method = "",
+			["function"] = "",
+			constructor = "",
 			Field = "ﰠ",
 			Variable = "",
 			Class = "ﴯ",
@@ -337,7 +359,7 @@ local function bind_keymaps()
 	utils.noremap("n", "[e", "<cmd>Lspsaga diagnostic_jump_prev<CR>", { silent = true })
 	utils.noremap("n", "]e", "<cmd>Lspsaga diagnostic_jump_next<CR>", { silent = true })
 
-	vim.cmd([[autocmd CursorHold * Lspsaga show_cursor_diagnostics]])
+	cmd([[autocmd CursorHold * Lspsaga show_cursor_diagnostics]])
 end
 
 local function setup_diagnostics()
@@ -359,7 +381,7 @@ local function setup_diagnostics()
 	fn.sign_define("LspDiagnosticsSignError", { text = "", texthl = "LspDiagnosticsDefaultError" })
 	fn.sign_define("LspDiagnosticsSignWarning", { text = "", texthl = "LspDiagnosticsDefaultWarning" })
 	fn.sign_define("LspDiagnosticsSignInformation", { text = "", texthl = "LspDiagnosticsDefaultInformation" })
-	fn.sign_define("LspDiagnosticsSignHint", { text = "", texthl = "LspDiagnosticsDefaultHint" })
+	fn.sign_define("LspDiagnosticsSignHint", { text = "", texthl = "LspDiagnosticsDefaultHint" })
 end
 
 function M.setup()
