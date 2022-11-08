@@ -1,4 +1,4 @@
-{{- if (and (eq .chezmoi.os "linux")) -}}
+{{ if eq .chezmoi.os "linux"}}
 #!/bin/bash
 
 source /tmp/chezmoi-utils.sh
@@ -12,4 +12,4 @@ if ! grep -q "$(whoami).*/bin/zsh" /etc/passwd
 then
   sudo chsh -s /bin/zsh $(whoami)
 fi
-{{ end -}}
+{{- end }}

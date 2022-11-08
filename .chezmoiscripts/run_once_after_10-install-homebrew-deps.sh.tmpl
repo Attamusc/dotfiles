@@ -1,3 +1,4 @@
+{{ if ne .chezmoi.os "windows" -}}
 #!/bin/bash
 
 source /tmp/chezmoi-utils.sh
@@ -78,3 +79,4 @@ cask "{{ . }}"
 EOF
 
 echo "Homebrew Dependencies Installed!"
+{{- end }}

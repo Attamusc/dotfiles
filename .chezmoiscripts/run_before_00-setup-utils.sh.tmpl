@@ -1,3 +1,4 @@
+{{ if ne .chezmoi.os "windows" -}}
 #!/bin/sh
 # Idea for this taken from https://github.com/narze/dotfiles
 
@@ -17,3 +18,4 @@ export bold="\e[1m"
 export uline="\e[4m"
 export reset="\e[0m"
 EOF
+{{- end }}
