@@ -1,3 +1,4 @@
+{{ if ne .chezmoi.os "windows" -}}
 #!/bin/bash
 
 source /tmp/chezmoi-utils.sh
@@ -41,3 +42,4 @@ if [ -d /home/linuxbrew/.linuxbrew/bin ]; then
 fi
 
 echo "Homebrew Installed!"
+{{- end }}

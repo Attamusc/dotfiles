@@ -1,3 +1,4 @@
+{{ if ne .chezmoi.os "windows" -}}
 #!/bin/bash
 
 set -eufo pipefail
@@ -22,3 +23,4 @@ brew install neovim --HEAD
 
 # Run neovim and have it install plugins with packer
 # nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync'
+{{- end }}
