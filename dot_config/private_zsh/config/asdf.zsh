@@ -1,4 +1,4 @@
-if [[ -f "/opt/homebrew/opt/asdf/libexec/asdf.sh" ]]
+if [[ -f "$(brew --prefix)/opt/asdf/libexec/asdf.sh" ]]
 then
-  source /opt/homebrew/opt/asdf/libexec/asdf.sh
+  source $(brew --prefix)/opt/asdf/libexec/asdf.sh
 fi

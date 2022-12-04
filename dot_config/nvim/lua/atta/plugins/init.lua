@@ -26,18 +26,20 @@ local function install_packages()
 
 			-- General/Utils
 			use({ "antoinemadec/FixCursorHold.nvim" })
+			use({ "kylechui/nvim-surround" })
 			use({ "lambdalisue/nerdfont.vim" })
 			use({ "lambdalisue/glyph-palette.vim" })
 			use({ "preservim/nerdcommenter" })
-			use({ "machakann/vim-sandwich" })
 			use({ "jiangmiao/auto-pairs" })
 			use({ "tpope/vim-repeat" })
 			use({ "guns/vim-sexp" })
 			use({ "tpope/vim-sexp-mappings-for-regular-people" })
 			use({ "kyazdani42/nvim-web-devicons" })
 			use({ "nvim-treesitter/nvim-treesitter", run = ":TSUpdate" })
+			use({ "nvim-treesitter/nvim-treesitter-textobjects" })
 			use({ "ggandor/lightspeed.nvim" })
 			use({ "wellle/targets.vim" })
+			use({ "folke/neodev.nvim" })
 
 			-- Lua nvim utils
 			use({ "nvim-lua/popup.nvim" })
@@ -142,9 +144,6 @@ local function install_packages()
 			use({ "alker0/chezmoi.vim", opt = true })
 
 			-- Colors
-			use({ "rose-pine/neovim" })
-			use({ "rebelot/kanagawa.nvim" })
-			use({ "EdenEast/nightfox.nvim" })
 			use({ "catppuccin/nvim", as = "catppuccin" })
 		end,
 		config = {
@@ -174,6 +173,7 @@ local function load_plugin_configs()
 	require("atta.plugins.luasnip").setup()
 	require("atta.plugins.nerdcommenter").setup()
 	require("atta.plugins.nvim-treesitter").setup()
+	require("atta.plugins.nvim-surround").setup()
 	require("atta.plugins.sexp").setup()
 	require("atta.plugins.telescope").setup()
 	require("atta.plugins.todo_comments").setup()
