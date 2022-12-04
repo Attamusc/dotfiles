@@ -13,6 +13,8 @@ local cmp_under = require("cmp-under-comparator")
 local rust_tools = require("rust-tools")
 local utils = require("atta.utils")
 local luasnip = require("luasnip")
+local neodev = require("neodev")
+
 local cmd = vim.cmd
 local lsp = vim.lsp
 local fn = vim.fn
@@ -68,7 +70,6 @@ local function on_attach(client, bufnr)
 end
 
 local server_configs = {
-	-- ["astro-language-server"] = {},
 	yamlls = {},
 	bashls = {},
 	solargraph = {},
@@ -88,18 +89,8 @@ local server_configs = {
 		on_attach = on_attach,
 		settings = {
 			Lua = {
-				runtime = {
-					version = "LuaJIT",
-					path = vim.split(package.path, ";"),
-				},
-				diagnostics = {
-					globals = { "vim" },
-				},
-				workspace = {
-					library = {
-						[fn.expand("$VIMRUNTIME/lua")] = true,
-						[fn.expand("$VIMRUNTIME/lua/vim/lsp")] = true,
-					},
+				completion = {
+					callSnippet = "Replace",
 				},
 			},
 		},
@@ -136,6 +127,7 @@ local function setup_servers()
 		table.insert(servers_to_install, k)
 	end
 
+	neodev.setup()
 	mason.setup()
 	mason_lsp_config.setup({
 		ensure_installed = servers_to_install,
@@ -350,6 +342,7 @@ end
 local function bind_keymaps()
 	-- hover docs
 	utils.noremap("n", "K", "<cmd>Lspsaga hover_doc<CR>", { silent = true })
+	utils.noremap({ "n", "i" }, "<A-k>", "<cmd>lua vim.lsp.buf.signature_help()<CR>", { silent = true })
 
 	-- code action
 	utils.noremap({ "n", "v" }, "<leader>ca", "<cmd>Lspsaga code_action<CR>", { silent = true })
