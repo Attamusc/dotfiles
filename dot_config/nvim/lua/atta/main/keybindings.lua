@@ -86,7 +86,7 @@ local function keymaps()
 	map("", "<leader>uc", "mQviwU`Q")
 	map("", "<leader>lc", "mQviwu`Q")
 
-	-- Quick(ish) saving
+	-- quick(ish) saving
 	noremap("n", "<leader>s", ":w<cr>")
 	noremap("n", "<leader>S", ":wall<cr>")
 
