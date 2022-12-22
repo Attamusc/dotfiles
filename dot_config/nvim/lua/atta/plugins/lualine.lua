@@ -1,6 +1,7 @@
-local lualine = require("lualine")
-
-local M = {}
+local M = {
+	"nvim-lualine/lualine.nvim",
+	dependencies = { "kyazdani42/nvim-web-devicons", lazy = true },
+}
 
 local function telescope_label()
 	return [[Telescope]]
@@ -13,7 +14,9 @@ local telescope = {
 	filetypes = { "TelescopePrompt" },
 }
 
-function M.setup()
+function M.config()
+	local lualine = require("lualine")
+
 	lualine.setup({
 		options = {
 			globalstatus = true,

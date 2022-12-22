@@ -1,10 +1,12 @@
 local g = vim.g
 
-local utils = require("atta.utils")
+local M = {
+	"preservim/nerdcommenter",
+}
 
-local M = {}
+function M.config()
+	local utils = require("atta.utils")
 
-function M.setup()
 	g.NERDCreateDefaultMappings = 0
 	g.NERDSpaceDelims = 1
 	g.NERDToggleCheckAllLines = 1
