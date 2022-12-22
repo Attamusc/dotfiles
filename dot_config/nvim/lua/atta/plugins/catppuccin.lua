@@ -1,8 +1,11 @@
-local catppuccin = require("catppuccin")
+local M = {
+	"catppuccin/nvim",
+	name = "catppuccin",
+}
 
-local M = {}
+function M.config()
+	local catppuccin = require("catppuccin")
 
-function M.setup()
 	catppuccin.setup({
 		flavour = "macchiato",
 		styles = {

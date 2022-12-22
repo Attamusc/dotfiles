@@ -1,14 +1,26 @@
-local telescope = require("telescope")
-local sorters = require("telescope.sorters")
-local previewers = require("telescope.previewers")
-local actions = require("telescope.actions")
-local themes = require("telescope.themes")
-local utils = require("atta.utils")
-
-local noremap = utils.noremap
-local M = {}
+local M = {
+	-- Fuzzy Finder(s)
+	"nvim-telescope/telescope.nvim",
+	dependencies = {
+		"nvim-telescope/telescope-ui-select.nvim",
+		"nvim-telescope/telescope-live-grep-args.nvim",
+		{
+			"ptethng/telescope-makefile",
+			dependencies = {
+				{ "akinsho/toggleterm.nvim", version = "*" },
+			},
+		},
+		{ "nvim-telescope/telescope-fzf-native.nvim", build = "make" },
+	},
+}
 
 local function telescope_settings()
+	local telescope = require("telescope")
+	local sorters = require("telescope.sorters")
+	local previewers = require("telescope.previewers")
+	local actions = require("telescope.actions")
+	local themes = require("telescope.themes")
+
 	telescope.setup({
 		defaults = {
 			file_sorter = sorters.get_fzy_sorter,
@@ -49,8 +61,8 @@ local function telescope_settings()
 	})
 
 	telescope.load_extension("fzf")
-  telescope.load_extension("live_grep_args")
-  telescope.load_extension("make")
+	telescope.load_extension("live_grep_args")
+	-- telescope.load_extension("make")
 end
 
 function M.reload()
@@ -83,6 +95,9 @@ function M.reload()
 end
 
 local function telescope_mappings()
+	local utils = require("atta.utils")
+	local noremap = utils.noremap
+
 	noremap("n", "<leader>ff", "<cmd>lua require('telescope.builtin').find_files()<cr>")
 	noremap("n", "<leader>fb", "<cmd>lua require('telescope.builtin').buffers()<cr>")
 	noremap("n", "<leader>fss", "<cmd>lua require('telescope.builtin').grep_string()<cr>")
@@ -93,7 +108,7 @@ local function telescope_mappings()
 	noremap("n", "<leader>fg", "<cmd>lua require('telescope').extensions.live_grep_args.live_grep_args()<cr>")
 end
 
-function M.setup()
+function M.config()
 	telescope_settings()
 	telescope_mappings()
 end

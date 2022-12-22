@@ -1,8 +1,12 @@
-local luasnip = require("luasnip")
+local M = {
+	-- Snippets
+	"L3MON4D3/LuaSnip",
+	"saadparwaiz1/cmp_luasnip",
+}
 
-local M = {}
+function M.config()
+	local luasnip = require("luasnip")
 
-function M.setup()
 	luasnip.config.set_config({})
 end
 

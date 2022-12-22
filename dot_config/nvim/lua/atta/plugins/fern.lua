@@ -2,9 +2,15 @@ local utils = require("atta.utils")
 
 local cmd = vim.cmd
 local g = vim.g
-local fn = vim.fn
 
-local M = {}
+local M = {
+	"lambdalisue/fern.vim",
+	branch = "main",
+	dependencies = {
+		"lambdalisue/fern-hijack.vim",
+		{ "lambdalisue/fern-renderer-nerdfont.vim", dependencies = { "lambdalisue/nerdfont.vim" } },
+	},
+}
 
 local function map_buffer(from, to, opt)
 	local options = {}
@@ -26,24 +32,7 @@ local function fern_mappings()
 	utils.map("", "<leader>e", ":Fern . -drawer -reveal=% -toggle -width=35<cr><c-w>=", { silent = true })
 end
 
-local function fern_augroups()
-	cmd([[
-augroup FernInit
-  autocmd!
-  autocmd FileType fern :lua require("atta.plugins.fern").fern_init()
-augroup END
-  ]])
-end
-
--- local function fern_smart_leaf()
--- local open = t("<Plug>(fern-action-open:select)")
--- local expand = t("<Plug>(fern-action-expand)")
--- local collapse = t("<Plug>(fern-action-collapse)")
-
--- return fn.printf("fern#smart#leaf(%s, %s, %s)", open, expand, collapse)
--- end
-
-function M.fern_init()
+local function fern_init()
 	vim.api.nvim_set_option_value("rnu", false, { scope = "local" })
 	vim.api.nvim_set_option_value("nu", false, { scope = "local" })
 
@@ -70,7 +59,34 @@ function M.fern_init()
 	map_buffer(">", "<Plug>(fern-action-enter)", { nowait = true })
 end
 
-function M.setup()
+local fern_augroup = vim.api.nvim_create_augroup("FernInit", {})
+
+local function fern_augroups()
+	vim.api.nvim_clear_autocmds({ group = fern_augroup })
+	vim.api.nvim_create_autocmd("FileType", {
+		pattern = {"fern"},
+		group = fern_augroup,
+		callback = function()
+			fern_init()
+		end,
+	})
+	-- cmd([[
+	-- augroup FernInit
+	-- autocmd!
+	-- autocmd FileType fern :lua require("atta.plugins.fern").fern_init()
+	-- augroup END
+	-- ]])
+end
+
+-- local function fern_smart_leaf()
+-- local open = t("<Plug>(fern-action-open:select)")
+-- local expand = t("<Plug>(fern-action-expand)")
+-- local collapse = t("<Plug>(fern-action-collapse)")
+
+-- return fn.printf("fern#smart#leaf(%s, %s, %s)", open, expand, collapse)
+-- end
+
+function M.config()
 	fern_variables()
 	fern_mappings()
 	fern_augroups()

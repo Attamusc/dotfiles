@@ -1,9 +1,11 @@
 local cmd = vim.cmd
 
-local M = {}
+local M = {
+	"lambdalisue/glyph-palette.vim",
+}
 
-function M.setup()
-  cmd([[
+function M.config()
+	cmd([[
     augroup GlyphPaletteGroup
       autocmd!
       autocmd FileType fern call glyph_palette#apply()

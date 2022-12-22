@@ -1,8 +1,11 @@
-local indent_blankline = require("indent_blankline")
+local M = {
+	"lukas-reineke/indent-blankline.nvim",
+	event = "BufReadPre",
+}
 
-local M = {}
+function M.config()
+	local indent_blankline = require("indent_blankline")
 
-function M.setup()
 	vim.opt.list = true
 
 	indent_blankline.setup({

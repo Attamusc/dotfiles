@@ -1,8 +1,10 @@
-local nvim_surround = require("nvim-surround")
+local M = {
+	"kylechui/nvim-surround",
+}
 
-local M = {}
+function M.config()
+	local nvim_surround = require("nvim-surround")
 
-function M.setup()
 	nvim_surround.setup({})
 end
 

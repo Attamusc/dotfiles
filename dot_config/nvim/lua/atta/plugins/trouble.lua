@@ -1,9 +1,12 @@
-local trouble = require("trouble")
-local utils = require("atta.utils")
+local M = {
+	"folke/trouble.nvim",
+	branch = "main",
+}
 
-local M = {}
+function M.config()
+	local trouble = require("trouble")
+	local utils = require("atta.utils")
 
-function M.setup()
 	trouble.setup()
 
 	utils.noremap("n", "<leader>xx", "<cmd>TroubleToggle<cr>", { silent = true })

@@ -1,11 +1,10 @@
 local main = require("atta.main")
 
 if not vim.g.vscode then
-	local plugins = require("atta.plugins")
+	local plugins = require("atta.main.lazy")
 
-	plugins.setup_packer()
 	main.setup()
-	plugins.setup_plugins()
+	plugins.setup()
 else
 	local vscode = require("atta.vscode")
 

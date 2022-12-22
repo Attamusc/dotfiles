@@ -1,9 +1,12 @@
-local todo_comments = require("todo-comments")
+local M = {
+	"folke/todo-comments.nvim",
+	branch = "main",
+}
 
-local M = {}
+function M.config()
+	local todo_comments = require("todo-comments")
 
-function M.setup()
-  todo_comments.setup()
+	todo_comments.setup()
 end
 
 return M
