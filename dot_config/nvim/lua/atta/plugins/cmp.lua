@@ -47,7 +47,7 @@ function M.config()
 	local luasnip = require("luasnip")
 
 	cmp.setup({
-		mapping = {
+		mapping = cmp.mapping.preset.insert({
 			["<c-d>"] = cmp.mapping.scroll_docs(-4),
 			["<c-f>"] = cmp.mapping.scroll_docs(4),
 			["<c-e>"] = cmp.mapping({
@@ -75,6 +75,11 @@ function M.config()
 					end
 				end,
 			}),
+		}),
+
+		window = {
+			completion = cmp.config.window.bordered(),
+			documentation = cmp.config.window.bordered(),
 		},
 
 		snippet = {
@@ -114,7 +119,7 @@ function M.config()
 		},
 
 		view = {
-			entries = "native",
+			entries = "custom",
 		},
 
 		experimental = {
