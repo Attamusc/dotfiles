@@ -81,21 +81,8 @@ local server_configs = {
 
 local function bind_keymaps()
 	local utils = require("atta.utils")
-	local cmd = vim.cmd
 
-	-- hover docs
-	utils.noremap("n", "K", "<cmd>Lspsaga hover_doc<CR>", { silent = true })
 	utils.noremap({ "n", "i" }, "<A-k>", "<cmd>lua vim.lsp.buf.signature_help()<CR>", { silent = true })
-
-	-- code action
-	utils.noremap({ "n", "v" }, "<leader>ca", "<cmd>Lspsaga code_action<CR>", { silent = true })
-
-	-- diagnostics
-	utils.noremap("n", "<leader>cd", "<cmd>Lspsaga show_line_diagnostics<CR>", { silent = true })
-	utils.noremap("n", "[e", "<cmd>Lspsaga diagnostic_jump_prev<CR>", { silent = true })
-	utils.noremap("n", "]e", "<cmd>Lspsaga diagnostic_jump_next<CR>", { silent = true })
-
-	cmd([[autocmd CursorHold * Lspsaga show_cursor_diagnostics]])
 end
 
 function M.config()
