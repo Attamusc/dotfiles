@@ -16,6 +16,7 @@ set -eufo pipefail
 {{ $taps := list
   "homebrew/cask"
   "microsoft/git"
+  "1password/tap"
 -}}
 
 {{ $brews := list
@@ -45,6 +46,7 @@ set -eufo pipefail
 
 {{ $casks := list 
   "git-credential-manager-core"
+  "1password-cli"
 -}}
 
 {{ if (eq .chezmoi.os "darwin") -}}

@@ -22,6 +22,6 @@ fi
 autoload -U compinit && compinit
 
 # load every completion after autocomplete loads
-# for config_file ($ZSH/config/**/completion.sh) source $config_file
+for config_file ($ZSH/completions/*.zsh) source $config_file
 
 eval "$(starship init zsh)"
