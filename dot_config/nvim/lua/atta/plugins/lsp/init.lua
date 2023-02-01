@@ -10,7 +10,6 @@ local M = {
 	dependencies = {
 		"hrsh7th/cmp-nvim-lsp",
 	},
-
 }
 
 local augroup = vim.api.nvim_create_augroup("LspFormatting", {})
@@ -37,7 +36,6 @@ local server_configs = {
 	stylelint_lsp = {},
 	yamlls = {},
 	bashls = {},
-	solargraph = {},
 	sorbet = {},
 	omnisharp = {},
 	jsonls = {},
