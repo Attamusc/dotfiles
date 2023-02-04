@@ -22,6 +22,14 @@ function M.config()
 			types = {},
 			operators = {},
 		},
+		integrations = {
+      cmp = true,
+      fern = true,
+      telescope = true,
+			indent_blankline = {
+				enabled = true,
+			},
+		},
 	})
 
 	vim.api.nvim_command("colorscheme catppuccin")
