@@ -7,11 +7,14 @@ local M = {
 function M.config()
 	local saga = require("lspsaga")
 	local utils = require("atta.utils")
+	local catppuccin = require("catppuccin.groups.integrations.lsp_saga")
 	local cmd = vim.cmd
 
 	saga.setup({
 		ui = {
 			title = false,
+			colors = catppuccin.custom_colors(),
+			kind = catppuccin.custom_kind(),
 		},
 		lightbulb = {
 			virtual_text = false,
@@ -20,7 +23,10 @@ function M.config()
 			enable = false,
 		},
 	})
-	--
+
+	-- definition mappings
+	utils.noremap("n", "gd", "<cmd>Lspsaga goto_definition<CR>", { silent = true })
+
 	-- hover docs
 	utils.noremap("n", "K", "<cmd>Lspsaga hover_doc<CR>", { silent = true })
 
