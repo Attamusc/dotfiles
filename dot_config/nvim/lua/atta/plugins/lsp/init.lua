@@ -85,7 +85,16 @@ end
 
 function M.config()
 	local neodev = require("neodev")
-	neodev.setup()
+	neodev.setup({
+		override = function(root_dir, options)
+			if root_dir:find("chezmoi") then
+				options.enabled = true
+				options.runtime = true
+				options.types = true
+				options.plugins = true
+			end
+		end,
+	})
 
 	local capabilities = vim.lsp.protocol.make_client_capabilities()
 	capabilities = require("cmp_nvim_lsp").default_capabilities(capabilities)
