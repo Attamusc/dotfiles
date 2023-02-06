@@ -68,6 +68,10 @@ function M.setup(options)
 
 			-- markdown
 			null_ls.builtins.diagnostics.vale,
+
+			-- yaml
+			null_ls.builtins.diagnostics.yamllint,
+			null_ls.builtins.formatting.yamlfmt,
 		},
 	})
 end
