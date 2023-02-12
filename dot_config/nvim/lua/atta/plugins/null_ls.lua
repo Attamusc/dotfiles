@@ -6,6 +6,8 @@ function M.setup(options)
 	local null_ls = require("null-ls")
 
 	local eslint_config = {
+		prefer_local = true,
+		extra_filetypes = { "astro", "vue" },
 		condition = function(h)
 			return h.root_has_file({
 				"eslint.config.js",
@@ -23,7 +25,9 @@ function M.setup(options)
 		on_attach = options.on_attach,
 		sources = {
 			-- js
-			null_ls.builtins.formatting.prettier.with({
+			null_ls.builtins.formatting.prettierd.with({
+				prefer_local = true,
+				extra_filetypes = { "astro", "vue" },
 				condition = function(h)
 					return h.root_has_file({
 						".prettierrc",
