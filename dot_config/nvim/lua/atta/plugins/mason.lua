@@ -12,7 +12,7 @@ local tools = {
 	"protolint",
 	"vale",
 	"goimports",
-	"prettier",
+	"prettierd",
 	"rustfmt",
 	"stylua",
 }

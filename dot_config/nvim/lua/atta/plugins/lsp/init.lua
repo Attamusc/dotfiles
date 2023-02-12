@@ -22,6 +22,8 @@ local function on_attach(client, bufnr)
 			buffer = bufnr,
 			callback = function()
 				vim.lsp.buf.format({
+					-- Some formatters from null-ls take a long time (example, astro with prettier)
+					timeout_ms = 5000,
 					bufnr = bufnr,
 					filter = function(c)
 						return c.name == "null-ls"
@@ -33,6 +35,7 @@ local function on_attach(client, bufnr)
 end
 
 local server_configs = {
+	astro = {},
 	stylelint_lsp = {},
 	yamlls = {},
 	bashls = {},
@@ -40,7 +43,7 @@ local server_configs = {
 	omnisharp = {},
 	jsonls = {},
 	pyright = {},
-	sumneko_lua = {
+	lua_ls = {
 		settings = {
 			Lua = {
 				completion = {
