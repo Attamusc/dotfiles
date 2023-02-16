@@ -1,0 +1,24 @@
+# Argument branches
+# 1. If there was nothing passed in, give a filterable list of everything
+# 2. If there was something passsed in that matched multiple repos, give a filterable list of the matches
+# 3. If there was only one result, cd to the result
+# 4. If there was no matches, then clone that repo with ghq
+
+if [ -z "$(command -v ghq)" ]; then
+  echo "'ghq' is required to use the 'cdr' command"
+  exit 1
+fi
+
+if [ -n "$1" ]; then
+  matched_local_repos=$(ghq list $1 | wc -l | tr -d ' ')
+
+  if [ $matched_local_repos -gt 1 ]; then
+    cd "$(ghq root)/$(ghq list $1 | fzf)"
+  elif [ $matched_local_repos -eq 1 ]; then
+    cd "$(ghq list -p $1)"
+  else
+    ghq get $1
+  fi
+else
+  cd "$(ghq root)/$(ghq list | fzf)"
+fi
