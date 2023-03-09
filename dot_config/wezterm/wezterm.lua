@@ -10,7 +10,7 @@ local config = {
 	use_fancy_tab_bar = false,
 	color_scheme = "Catppuccin Macchiato",
 	font = wezterm.font({
-		family = "MonoLisa Slashed",
+		family = "MonoLisa Mild",
 		weight = "Light",
 	}),
 	font_size = 14.0,
