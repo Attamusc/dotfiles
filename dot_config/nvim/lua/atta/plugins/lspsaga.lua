@@ -38,7 +38,7 @@ function M.config()
 	utils.noremap("n", "[e", "<cmd>Lspsaga diagnostic_jump_prev<CR>", { silent = true })
 	utils.noremap("n", "]e", "<cmd>Lspsaga diagnostic_jump_next<CR>", { silent = true })
 
-	cmd([[autocmd CursorHold * Lspsaga show_cursor_diagnostics]])
+	cmd([[autocmd CursorHold * Lspsaga show_cursor_diagnostics ++unfocus]])
 end
 
 return M
