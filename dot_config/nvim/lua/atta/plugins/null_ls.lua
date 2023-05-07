@@ -75,7 +75,7 @@ function M.setup(options)
 
 			-- yaml
 			null_ls.builtins.diagnostics.yamllint,
-			null_ls.builtins.formatting.yamlfmt,
+			-- null_ls.builtins.formatting.yamlfmt,
 		},
 	})
 end
