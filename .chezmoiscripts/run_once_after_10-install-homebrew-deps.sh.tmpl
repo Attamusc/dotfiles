@@ -22,6 +22,7 @@ set -eufo pipefail
 {{ $brews := list
   "asdf"
   "bat"
+  "ccls"
   "exa"
   "fd"
   "fzf"
@@ -56,6 +57,8 @@ set -eufo pipefail
     "reattach-to-user-namespace") -}}
 
 {{ $casks := concat $casks (list
+    "slack"
+    "raycast"
     "git-credential-manager-core") -}}
 {{ end -}}
 

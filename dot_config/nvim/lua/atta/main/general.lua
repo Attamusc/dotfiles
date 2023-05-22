@@ -153,6 +153,10 @@ local function general_settings()
 	opt.autowrite = true
 end
 
+local function autocmd_filetypes()
+	cmd([[autocmd BufRead *.keymap set ft=dts]])
+end
+
 local function autocmd_number_toggle()
 	-- Relative line numbers are nice to move around, but not so helpful in
 	-- insert mode. This autocmd switches between them
@@ -188,6 +192,7 @@ function M.setup()
 	mapleader()
 	general_settings()
 
+	autocmd_filetypes()
 	autocmd_number_toggle()
 	autocmd_highlight_yank()
 	autocmd_chezmoi_apply()

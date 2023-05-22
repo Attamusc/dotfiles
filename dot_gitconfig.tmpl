@@ -164,9 +164,11 @@
 	defaultBranch = main
 [credential "https://dev.azure.com"]
 	useHttpPath = true
-[gpg]
-  program = /opt/homebrew/bin/gpg
 [credential "https://ghe.io"]
 	provider = github
 [ghq]
   root = ~/projects
+[gpg]
+  format = ssh
+[gpg "ssh"]
+  program = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
