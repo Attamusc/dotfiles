@@ -5,6 +5,21 @@ local M = {
 	},
 }
 
+local language_servers = {
+	"astro",
+	"stylelint_lsp",
+	"yamlls",
+	"bashls",
+	"sorbet",
+	"omnisharp",
+	"jsonls",
+	"pyright",
+	"lua_ls",
+	"tsserver",
+	"gopls",
+  "rust_analyzer",
+}
+
 local tools = {
 	"eslint_d",
 	"black",

@@ -42,6 +42,25 @@ function M.config()
 			})
 		end,
 	})
+
+	vim.api.nvim_create_autocmd("BufEnter", {
+		desc = "Format zmk corne keyboard",
+		group = qmk_group,
+		pattern = "*/corne.keymap",
+		callback = function()
+			qmk.setup({
+				name = "layout",
+				auto_format_pattern = "*/corne.keymap",
+        variant = "zmk",
+				layout = {
+					"_ x x x x x x _ _ _ x x x x x x",
+					"_ x x x x x x _ _ _ x x x x x x",
+					"_ x x x x x x _ _ _ x x x x x x",
+					"_ _ _ _ _ x x x _ x x x _ _ _ _",
+				},
+			})
+		end,
+	})
 end
 
 return M

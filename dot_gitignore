@@ -116,3 +116,6 @@ tags
 
 # --direnv--
 .envrc
+
+# --1password--
+.op/
