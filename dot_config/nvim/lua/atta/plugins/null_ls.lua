@@ -28,6 +28,7 @@ function M.setup(options)
 			null_ls.builtins.formatting.prettierd.with({
 				prefer_local = true,
 				extra_filetypes = { "astro", "vue" },
+				disabled_filetypes = { "yaml", "markdown", "markdown.mdx" },
 				condition = function(h)
 					return h.root_has_file({
 						".prettierrc",
