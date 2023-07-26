@@ -7,7 +7,7 @@ function M.config()
 	local catppuccin = require("catppuccin")
 
 	catppuccin.setup({
-		flavour = "macchiato",
+		flavour = "mocha",
 		styles = {
 			comments = { "italic" },
 			conditionals = {},
@@ -23,9 +23,10 @@ function M.config()
 			operators = {},
 		},
 		integrations = {
-      cmp = true,
-      fern = true,
-      telescope = true,
+			cmp = true,
+			fern = true,
+			telescope = true,
+			lsp_saga = true,
 			indent_blankline = {
 				enabled = true,
 			},
