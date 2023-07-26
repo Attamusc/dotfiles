@@ -8,7 +8,7 @@ local config = {
 		target = "CursorColor",
 	},
 	use_fancy_tab_bar = false,
-	color_scheme = "Catppuccin Macchiato",
+	color_scheme = "Catppuccin Mocha",
 	font = wezterm.font({
 		family = "MonoLisa Mild",
 		weight = "Light",
