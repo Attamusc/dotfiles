@@ -65,13 +65,16 @@ function M.setup()
 
 	-- Show the command palette
 	noremap("n", "<leader>cx", function()
-		cmd([[call VSCodeNotifyVisual("workbench.action.showCommands", 1)]])
+		cmd([[call VSCodeNotify("workbench.action.showCommands", 1)]])
 	end)
 
 	-- Toggle the sidebar
 	noremap("n", "<leader>e", function()
 		triggerVSCodeNotifyCommand("workbench.action.toggleSidebarVisibility")
 	end)
+
+	noremap({ "x", "n", "o" }, "gc", "<Plug>VSCodeCommentary")
+	noremap("n", "gcc", "<Plug>VSCodeCommentaryLine")
 end
 
 return M
