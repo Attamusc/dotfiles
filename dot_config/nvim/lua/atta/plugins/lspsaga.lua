@@ -31,7 +31,7 @@ function M.config()
 	utils.noremap("n", "K", "<cmd>Lspsaga hover_doc<CR>", { silent = true })
 
 	-- code action
-	utils.noremap({ "n", "v" }, "<leader>ca", "<cmd>Lspsaga code_action<CR>", { silent = true })
+	utils.noremap({ "n", "v" }, "<leader>a", "<cmd>Lspsaga code_action<CR>", { silent = true })
 
 	-- diagnostics
 	utils.noremap("n", "<leader>cd", "<cmd>Lspsaga show_line_diagnostics<CR>", { silent = true })

@@ -88,7 +88,7 @@ local function general_settings()
 	opt.ttimeoutlen = 0
 
 	-- When switching buffers, prefer ones that are already open vs opening a new duplicate
-	opt.switchbuf = "useopen"
+	-- opt.switchbuf = "useopen"
 
 	-- Automatically indent inside of blocks per the language rules
 	opt.autoindent = true

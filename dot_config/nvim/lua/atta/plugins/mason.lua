@@ -21,6 +21,7 @@ local language_servers = {
 }
 
 local tools = {
+  "codelldb",
 	"eslint_d",
 	"black",
 	"rubocop",
