@@ -117,7 +117,39 @@ function M.config()
 		opts = vim.tbl_deep_extend("force", {}, options, opts or {})
 
 		if server == "rust_analyzer" then
-			rust_tools.setup(opts)
+			local mason_registry = require("mason-registry")
+      local rust_tools_dap = require("rust-tools.dap")
+
+			local codelldb = mason_registry.get_package("codelldb")
+			local extension_path = codelldb:get_install_path() .. "/extension/"
+			local codelldb_path = extension_path .. "adapter/codelldb"
+			local liblldb_path = extension_path .. "lldb/lib/liblldb.dylib"
+
+			rust_options = {
+        dap = {
+          adapter = rust_tools_dap.get_codelldb_adapter(codelldb_path, liblldb_path),
+        },
+				server = vim.tbl_deep_extend("force", opts, {
+					on_attach = function(client, bufnr)
+						on_attach(client, bufnr)
+
+						vim.keymap.set("n", "K", rust_tools.hover_actions.hover_actions, { buffer = bufnr })
+						vim.keymap.set(
+							"n",
+							"<leader>a",
+							rust_tools.code_action_group.code_action_group,
+							{ buffer = bufnr }
+						)
+					end,
+				}),
+				tools = {
+					hover_actions = {
+						auto_focus = true,
+					},
+				},
+			}
+
+			rust_tools.setup(rust_options)
 		else
 			lspconfig[server].setup(opts)
 		end
