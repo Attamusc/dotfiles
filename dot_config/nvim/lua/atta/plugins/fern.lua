@@ -64,7 +64,7 @@ local fern_augroup = vim.api.nvim_create_augroup("FernInit", {})
 local function fern_augroups()
 	vim.api.nvim_clear_autocmds({ group = fern_augroup })
 	vim.api.nvim_create_autocmd("FileType", {
-		pattern = {"fern"},
+		pattern = { "fern" },
 		group = fern_augroup,
 		callback = function()
 			fern_init()
