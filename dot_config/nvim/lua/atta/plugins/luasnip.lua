@@ -1,7 +1,10 @@
 local M = {
 	-- Snippets
 	"L3MON4D3/LuaSnip",
-	"saadparwaiz1/cmp_luasnip",
+  build = "make install_jsregexp",
+  dependencies = {
+    "saadparwaiz1/cmp_luasnip",
+  }
 }
 
 function M.config()
