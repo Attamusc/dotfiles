@@ -1,4 +1,4 @@
-local M = { "NeogitOrg/neogit", dependencies = "nvim-lua/plenary.nvim" }
+local M = { "NeogitOrg/neogit", branch = "nightly", dependencies = "nvim-lua/plenary.nvim" }
 
 function M.config()
 	local neogit = require("neogit")

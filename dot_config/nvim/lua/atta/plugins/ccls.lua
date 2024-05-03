@@ -3,9 +3,9 @@ local M = {
 }
 
 function M.config()
-  local ccls = require("ccls") 
+	local ccls = require("ccls")
 
-  ccls.setup({lsp = {use_defaults = true}})
+	ccls.setup({ lsp = { use_defaults = true } })
 end
 
 return M

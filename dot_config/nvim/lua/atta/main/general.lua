@@ -178,15 +178,6 @@ local function autocmd_highlight_yank()
   ]])
 end
 
-local function autocmd_chezmoi_apply()
-	cmd([[
-    augroup chezmoi_apply
-      autocmd!
-      autocmd BufWritePost ~/.local/share/chezmoi/* silent! !chezmoi apply --source-path "%"
-    augroup END
-  ]])
-end
-
 function M.setup()
 	disable_default_plugins()
 	mapleader()
@@ -195,7 +186,6 @@ function M.setup()
 	autocmd_filetypes()
 	autocmd_number_toggle()
 	autocmd_highlight_yank()
-	autocmd_chezmoi_apply()
 end
 
 return M

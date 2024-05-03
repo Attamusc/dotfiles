@@ -17,11 +17,11 @@ local language_servers = {
 	"lua_ls",
 	"tsserver",
 	"gopls",
-  "rust_analyzer",
+	"rust_analyzer",
 }
 
 local tools = {
-  "codelldb",
+	"codelldb",
 	"eslint_d",
 	"black",
 	"rubocop",

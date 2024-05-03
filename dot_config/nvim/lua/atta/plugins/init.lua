@@ -25,8 +25,8 @@ local M = {
 	"cespare/vim-toml",
 	"pangloss/vim-javascript",
 	"HerringtonDarkholme/yats.vim",
-	"rust-lang/rust.vim",
-	"simrat39/rust-tools.nvim",
+	{ "rust-lang/rust.vim", ft = "rust" },
+	{ "simrat39/rust-tools.nvim", ft = "rust" },
 	"vim-ruby/vim-ruby",
 	"maxmellon/vim-jsx-pretty",
 	"bakpakin/fennel.vim",
@@ -38,7 +38,7 @@ local M = {
 	"ron-rs/ron.vim",
 	"wuelnerdotexe/vim-astro",
 	-- Make sure chezmoi files highlight like the actual files they represent
-	{ "alker0/chezmoi.vim", lazy = true },
+	-- { "alker0/chezmoi.vim", lazy = true },
 }
 
 return M

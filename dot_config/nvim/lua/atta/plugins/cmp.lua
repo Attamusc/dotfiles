@@ -89,10 +89,11 @@ function M.config()
 		},
 
 		sources = {
+			{ name = "crates" },
 			{ name = "nvim_lua" },
 			{ name = "nvim_lsp" },
-			{ name = "copilot" },
 			{ name = "luasnip" },
+			{ name = "copilot" },
 			{ name = "path" },
 			{ name = "buffer", keyword_length = 4 },
 		},

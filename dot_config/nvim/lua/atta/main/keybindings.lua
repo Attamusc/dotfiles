@@ -56,8 +56,8 @@ local function keymaps()
 	map("", "k", "gk")
 
 	-- Easier up/down movement in insert mode
-	map("i", "<c-k>", "<up>")
-	map("i", "<c-j>", "<down>")
+	-- map("i", "<c-k>", "<up>")
+	-- map("i", "<c-j>", "<down>")
 
 	-- Use tab and shift tab for indentation
 	noremap("n", "<s-tab>", "<<")
