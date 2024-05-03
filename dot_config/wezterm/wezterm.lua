@@ -1,82 +1,109 @@
 local wezterm = require("wezterm")
 
 local config = {
-	audible_bell = "Disabled",
-	visual_bell = {
-		fade_in_duration_ms = 75,
-		fade_out_duration_ms = 75,
-		target = "CursorColor",
-	},
 	use_fancy_tab_bar = false,
 	color_scheme = "Catppuccin Mocha",
-	font = wezterm.font({
-		family = "MonoLisa",
-		weight = "Light",
-	}),
-	font_size = 14.0,
 }
 
-local launch_menu = {}
+-- Fonts
+local font = 'MonoLisa'
+config.font_size = 14.0;
+config.font = wezterm.font_with_fallback({
+	{ family = font, weight = 'Light', italic = false },
+  { family = 'Apple Color Emoji' },
+  { family = 'Symbols Nerd Font Mono', scale = 1 },
+})
+config.font_rules = {
+	{
+		intensity = 'Bold',
+		font = wezterm.font_with_fallback({
+			{ family = font, weight = 'Regular', italic = false },
+			{ family = 'Apple Color Emoji' },
+			{ family = 'Symbols Nerd Font Mono', scale = 1 },
+		}),
+  }
+}
 
-if wezterm.target_triple == "x86_64-pc-windows-msvc" then
-	table.insert(launch_menu, {
-		label = "PowerShell",
-		args = { "pwsh.exe", "-NoLogo" },
-	})
+-- Disable font ligatures
+config.harfbuzz_features = { 'calt=1', 'clig=0', 'liga=0', 'zero', 'ss01' }
 
-	-- Find installed visual studio version(s) and add their compilation
-	-- environment command prompts to the menu
-	for _, vsvers in ipairs(wezterm.glob("Microsoft Visual Studio/20*", "C:/Program Files (x86)")) do
-		local year = vsvers:gsub("Microsoft Visual Studio/", "")
-		table.insert(launch_menu, {
-			label = "x64 Native Tools VS " .. year,
-			args = {
-				"cmd.exe",
-				"/k",
-				"C:/Program Files (x86)/" .. vsvers .. "/BuildTools/VC/Auxiliary/Build/vcvars64.bat",
-			},
-		})
-	end
+config.window_frame = {
+	font = wezterm.font { family = font, weight = 'Regular' },
+	font_size = 14.0,
+	-- Fancy tab bar
+	active_titlebar_bg = '#574131',
+	inactive_titlebar_bg = '#352a21',
+}
 
-	-- Enumerate any WSL distributions that are installed and add those to the menu
-	local success, wsl_list, wsl_err = wezterm.run_child_process({ "wsl.exe", "-l" })
-	-- `wsl.exe -l` has a bug where it always outputs utf16:
-	-- https://github.com/microsoft/WSL/issues/4607
-	-- So we get to convert it
-	wsl_list = wezterm.utf16_to_utf8(wsl_list)
+-- Command Palette
+config.command_palette_rows = 7
+config.command_palette_font_size = 15
+config.command_palette_bg_color = "#44382D"
+config.command_palette_fg_color = "#c4a389"
 
-	for idx, line in ipairs(wezterm.split_by_newlines(wsl_list)) do
-		-- Skip the first line of output; it's just a header
-		if idx > 1 then
-			-- Remove the "(Default)" marker from the default line to arrive
-			-- at the distribution name on its own
-			local distro = line:gsub(" %(Default%)", "")
+-- Bell
+config.audible_bell = "Disabled";
+config.visual_bell = {
+	target = "CursorColor",
+	fade_in_function = "EaseIn",
+	fade_in_duration_ms = 150,
+	fade_out_function = "EaseOut",
+	fade_out_duration_ms = 300,
+}
 
-			-- Add an entry that will spawn into the distro with the default shell
-			table.insert(launch_menu, {
-				label = distro .. " (WSL default shell)",
-				args = { "wsl.exe", "--distribution", distro },
-			})
+-- Misc
+config.adjust_window_size_when_changing_font_size = false
+config.bold_brightens_ansi_colors = 'No'
+config.default_cwd = wezterm.home_dir
+config.hyperlink_rules = wezterm.default_hyperlink_rules()
+config.inactive_pane_hsb = { saturation = 1.0, brightness = 0.8}
+config.scrollback_lines = 10000
+config.show_new_tab_button_in_tab_bar = false
+config.switch_to_last_active_tab_when_closing_tab = true
+config.tab_max_width = 60
+config.window_close_confirmation = 'NeverPrompt'
 
-			-- Here's how to jump directly into some other program; in this example
-			-- its a shell that probably isn't the default, but it could also be
-			-- any other program that you want to run in that environment
-			table.insert(launch_menu, {
-				label = distro .. " (WSL zsh login shell)",
-				args = {
-					"wsl.exe",
-					"--distribution",
-					distro,
-					"--exec",
-					"/bin/zsh",
-					"-l",
-				},
-			})
-		end
-	end
+local function get_current_working_dir(tab)
+	local current_dir = tab.active_pane and tab.active_pane.current_working_dir or { file_path = '' }
+	local HOME_DIR = string.format('file://%s', os.getenv('HOME'))
 
-	config.default_prog = { "pwsh.exe", "-NoLogo" }
-	config.launch_menu = launch_menu
+	return current_dir == HOME_DIR and '.'
+	or string.gsub(current_dir.file_path, '(.*[/\\])(.*)', '%2')
 end
+
+-- Set tab title to the one that was set via `tab:set_title()`
+-- or fall back to the current working directory as a title
+wezterm.on('format-tab-title', function(tab, tabs, panes, config, hover, max_width)
+	local index = tonumber(tab.tab_index) + 1
+	local custom_title = tab.tab_title
+	local title = get_current_working_dir(tab)
+
+	if custom_title and #custom_title > 0 then
+		title = custom_title
+	end
+
+	return string.format('  %s•%s  ', index, title)
+end)
+
+-- Set window title to the current working directory
+wezterm.on('format-window-title', function(tab, pane, tabs, panes, config)
+	return get_current_working_dir(tab)
+end)
+
+-- Set the correct window size at the startup
+wezterm.on('gui-startup', function(cmd)
+	local active_screen = wezterm.gui.screens()["active"]
+	local _, _, window = wezterm.mux.spawn_window(cmd or {})
+
+	-- MacBook Pro 14" 2023
+	if active_screen.width <= 3024 then
+		-- Laptop: open full screen
+		window:gui_window():maximize()
+	else
+		-- Desktop: place on the right half of the screen
+		window:gui_window():set_position(active_screen.width / 4, 0)
+		window:gui_window():set_inner_size(active_screen.width / 2, active_screen.height)
+	end
+end)
 
 return config

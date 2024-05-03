@@ -23,6 +23,8 @@ local function map_buffer(from, to, opt)
 end
 
 local function fern_variables()
+	-- g["nerdfont#autofix_cellwidths"] = 0
+
 	g["fern#renderer"] = "nerdfont"
 	g["fern#disable_default_mappings"] = 1
 	g["fern#default_hidden"] = 1

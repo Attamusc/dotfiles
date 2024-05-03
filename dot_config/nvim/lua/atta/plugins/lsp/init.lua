@@ -143,6 +143,7 @@ function M.config()
 					end,
 				}),
 				tools = {
+					executor = require("rust-tools.executors").toggleterm,
 					hover_actions = {
 						auto_focus = true,
 					},

@@ -44,6 +44,24 @@ function M.config()
 	})
 
 	vim.api.nvim_create_autocmd("BufEnter", {
+		desc = "Format 3w6 keyboard",
+		group = qmk_group,
+		pattern = "*/3w6/*/keymap.c",
+		callback = function()
+			qmk.setup({
+				name = "LAYOUT",
+				auto_format_pattern = "*/3w6/*/keymap.c",
+				layout = {
+					"_ x x x x x _ _ _ x x x x x",
+					"_ x x x x x _ _ _ x x x x x",
+					"_ x x x x x _ _ _ x x x x x",
+					"_ _ _ _ x x x _ x x x _ _ _",
+				},
+			})
+		end,
+	})
+
+	vim.api.nvim_create_autocmd("BufEnter", {
 		desc = "Format zmk corne keyboard",
 		group = qmk_group,
 		pattern = "*/corne.keymap",
@@ -51,12 +69,50 @@ function M.config()
 			qmk.setup({
 				name = "layout",
 				auto_format_pattern = "*/corne.keymap",
-        variant = "zmk",
+				variant = "zmk",
 				layout = {
 					"_ x x x x x x _ _ _ x x x x x x",
 					"_ x x x x x x _ _ _ x x x x x x",
 					"_ x x x x x x _ _ _ x x x x x x",
 					"_ _ _ _ _ x x x _ x x x _ _ _ _",
+				},
+			})
+		end,
+	})
+
+	vim.api.nvim_create_autocmd("BufEnter", {
+		desc = "Format zmk totem keyboard",
+		group = qmk_group,
+		pattern = "*/totem.keymap",
+		callback = function()
+			qmk.setup({
+				name = "layout",
+				auto_format_pattern = "*/totem.keymap",
+				variant = "zmk",
+				layout = {
+					"_ x x x x x _ x x x x x _",
+					"_ x x x x x _ x x x x x _",
+					"x x x x x x _ x x x x x x",
+					"_ _ _ x x x _ x x x _ _ _",
+				},
+			})
+		end,
+	})
+
+	vim.api.nvim_create_autocmd("BufEnter", {
+		desc = "Format zmk urchin keyboard",
+		group = qmk_group,
+		pattern = "*/urchin.keymap",
+		callback = function()
+			qmk.setup({
+				name = "layout",
+				auto_format_pattern = "*/urchin.keymap",
+				variant = "zmk",
+				layout = {
+					"_ x x x x x _ x x x x x",
+					"_ x x x x x _ x x x x x",
+					"_ x x x x x _ x x x x x",
+					"_ _ _ _ x x _ x x _ _ _",
 				},
 			})
 		end,
