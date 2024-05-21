@@ -16,7 +16,14 @@ function M.setup()
 
 	vim.opt.rtp:prepend(lazypath)
 
-	require("lazy").setup("atta.plugins")
+	require("lazy").setup({ import = "atta.plugins" }, {
+		install = {
+			colorscheme = { "catpuccin" },
+		},
+		change_detection = {
+			notify = false,
+		},
+	})
 end
 
 return M

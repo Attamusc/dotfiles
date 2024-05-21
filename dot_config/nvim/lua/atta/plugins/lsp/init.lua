@@ -8,7 +8,9 @@ local M = {
 	name = "lsp",
 	event = "BufReadPre",
 	dependencies = {
+		"folke/neodev.nvim",
 		"hrsh7th/cmp-nvim-lsp",
+    "stevearc/conform.nvim",
 	},
 }
 
@@ -83,7 +85,7 @@ local server_configs = {
 local function bind_keymaps()
 	local utils = require("atta.utils")
 
-	utils.noremap({ "n", "i" }, "<A-k>", "<cmd>lua vim.lsp.buf.signature_help()<CR>", { silent = true })
+	utils.noremap({ "n", "i" }, "<M-k>", "<cmd>lua vim.lsp.buf.signature_help()<CR>", { silent = true })
 end
 
 function M.config()
