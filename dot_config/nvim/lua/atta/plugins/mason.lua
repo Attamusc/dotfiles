@@ -29,7 +29,6 @@ local tools = {
 	"vale",
 	"goimports",
 	"prettierd",
-	"rustfmt",
 	"stylua",
 }
 

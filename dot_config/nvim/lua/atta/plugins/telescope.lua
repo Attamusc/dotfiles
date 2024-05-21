@@ -4,12 +4,6 @@ local M = {
 	dependencies = {
 		"nvim-telescope/telescope-ui-select.nvim",
 		"nvim-telescope/telescope-live-grep-args.nvim",
-		{
-			"ptethng/telescope-makefile",
-			dependencies = {
-				{ "akinsho/toggleterm.nvim", version = "*" },
-			},
-		},
 		{ "nvim-telescope/telescope-fzf-native.nvim", build = "make" },
 	},
 }
@@ -62,7 +56,6 @@ local function telescope_settings()
 
 	telescope.load_extension("fzf")
 	telescope.load_extension("live_grep_args")
-	-- telescope.load_extension("make")
 end
 
 function M.reload()

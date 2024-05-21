@@ -1,4 +1,4 @@
-local M = {
+return {
 	"utilyre/barbecue.nvim",
 	name = "barbecue",
 	version = "*",
@@ -6,12 +6,7 @@ local M = {
 		"SmiteshP/nvim-navic",
 		"nvim-tree/nvim-web-devicons",
 	},
+	config = function()
+		require("barbecue").setup()
+	end,
 }
-
-function M.config()
-	local barbecue = require("barbecue")
-
-	barbecue.setup()
-end
-
-return M
