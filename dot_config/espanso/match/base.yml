@@ -1,3 +1,30 @@
 matches:
+  - trigger: "//md"
+    replace: "{{output}}"
+    vars:
+      - name: clipboard
+        type: clipboard
+      - name: output
+        type: shell
+        params:
+          cmd: "gh md link {{clipboard}}"
+  - trigger: "//ml"
+    replace: "{{output}}"
+    vars:
+      - name: clipboard
+        type: clipboard
+      - name: output
+        type: shell
+        params:
+          cmd: "gh md link --simple {{clipboard}}"
+  - trigger: "//ir"
+    replace: "{{output}}"
+    vars:
+      - name: clipboard
+        type: clipboard
+      - name: output
+        type: shell
+        params:
+          cmd: "gh md ref {{clipboard}}"
   - trigger: "//mp"
     replace: "Monolith Platform"

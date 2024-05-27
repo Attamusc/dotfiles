@@ -1,4 +1,4 @@
-local M = {
+return {
 	-- Snippets
 	{
 		"L3MON4D3/LuaSnip",
@@ -28,5 +28,3 @@ local M = {
 	},
 	"saadparwaiz1/cmp_luasnip",
 }
-
-return M

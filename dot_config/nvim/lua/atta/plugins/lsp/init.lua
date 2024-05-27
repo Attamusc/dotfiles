@@ -10,31 +10,10 @@ local M = {
 	dependencies = {
 		"folke/neodev.nvim",
 		"hrsh7th/cmp-nvim-lsp",
-    "stevearc/conform.nvim",
+		"stevearc/conform.nvim",
+		"j-hui/fidget.nvim",
 	},
 }
-
-local augroup = vim.api.nvim_create_augroup("LspFormatting", {})
-
-local function on_attach(client, bufnr)
-	if client.supports_method("textDocument/formatting") then
-		vim.api.nvim_clear_autocmds({ group = augroup, buffer = bufnr })
-		vim.api.nvim_create_autocmd("BufWritePre", {
-			group = augroup,
-			buffer = bufnr,
-			callback = function()
-				vim.lsp.buf.format({
-					-- Some formatters from null-ls take a long time (example, astro with prettier)
-					timeout_ms = 5000,
-					bufnr = bufnr,
-					filter = function(c)
-						return c.name == "null-ls"
-					end,
-				})
-			end,
-		})
-	end
-end
 
 local server_configs = {
 	astro = {},
@@ -89,6 +68,8 @@ local function bind_keymaps()
 end
 
 function M.config()
+	require("fidget").setup({})
+
 	local neodev = require("neodev")
 	neodev.setup({
 		override = function(root_dir, options)
@@ -159,7 +140,28 @@ function M.config()
 	end
 
 	require("atta.plugins.lsp.diagnostics").setup()
-	require("atta.plugins.null_ls").setup(options)
+
+	require("conform").setup({
+		formatters_by_ft = {
+			go = { "goimports", "gofmt" },
+			javascript = { "prettier_d" },
+			javascriptreact = { "prettier_d" },
+			lua = { "stylua" },
+			rust = { "rustfmt" },
+			typescript = { "prettier_d" },
+			typescriptreact = { "prettier_d" },
+		},
+	})
+
+	vim.api.nvim_create_autocmd("BufWritePre", {
+		callback = function(args)
+			require("conform").format({
+				bufnr = args.buf,
+				lsp_fallback = true,
+				quiet = true,
+			})
+		end,
+	})
 
 	bind_keymaps()
 end

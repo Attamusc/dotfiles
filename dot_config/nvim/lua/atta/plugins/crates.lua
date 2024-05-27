@@ -1,13 +1,10 @@
-local M = {
+return {
 	"saecki/crates.nvim",
 	ft = { "rust", "toml" },
+	config = function()
+		local crates = require("crates")
+
+		crates.setup()
+		crates.show()
+	end,
 }
-
-function M.config()
-	local crates = require("crates")
-
-	crates.setup()
-	crates.show()
-end
-
-return M

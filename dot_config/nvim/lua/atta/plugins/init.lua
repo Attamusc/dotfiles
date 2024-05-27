@@ -5,7 +5,6 @@ local M = {
 	"tpope/vim-sexp-mappings-for-regular-people",
 	"ggandor/lightspeed.nvim",
 	"wellle/targets.vim",
-	"folke/neodev.nvim",
 
 	-- Lua nvim utils
 	"nvim-lua/popup.nvim",
@@ -18,8 +17,11 @@ local M = {
 	-- Improved splits ergonomics
 	"mrjones2014/smart-splits.nvim",
 
-	-- Terminal
-	{ "akinsho/toggleterm.nvim", version = "*" },
+	-- wezterm types
+	"justinsgithub/wezterm-types",
+
+	-- tmux
+	"christoomey/vim-tmux-navigator",
 
 	-- Languages
 	"cespare/vim-toml",
@@ -29,16 +31,12 @@ local M = {
 	{ "simrat39/rust-tools.nvim", ft = "rust" },
 	"vim-ruby/vim-ruby",
 	"maxmellon/vim-jsx-pretty",
-	"bakpakin/fennel.vim",
 	"euclidianAce/BetterLua.vim",
 	"mustache/vim-mustache-handlebars",
 	"jparise/vim-graphql",
-	"martinda/Jenkinsfile-vim-syntax",
 	"habamax/vim-godot",
 	"ron-rs/ron.vim",
 	"wuelnerdotexe/vim-astro",
-	-- Make sure chezmoi files highlight like the actual files they represent
-	-- { "alker0/chezmoi.vim", lazy = true },
 }
 
 return M

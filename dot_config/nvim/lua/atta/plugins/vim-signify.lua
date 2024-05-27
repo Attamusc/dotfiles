@@ -1,11 +1,6 @@
-local g = vim.g
-
-local M = {
+return {
 	"mhinz/vim-signify",
+	config = function()
+		vim.g.signify_priority = 0
+	end,
 }
-
-function M.config()
-	g.signify_priority = 0
-end
-
-return M
