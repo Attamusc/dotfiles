@@ -1,12 +1,6 @@
-local g = vim.g
-
-local M = {
+return {
 	"numToStr/Comment.nvim",
+	config = function()
+		require("Comment").setup()
+	end,
 }
-
-function M.config()
-	local comment = require("Comment")
-	comment.setup()
-end
-
-return M

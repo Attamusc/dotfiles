@@ -5,21 +5,6 @@ local M = {
 	},
 }
 
-local language_servers = {
-	"astro",
-	"stylelint_lsp",
-	"yamlls",
-	"bashls",
-	"sorbet",
-	"omnisharp",
-	"jsonls",
-	"pyright",
-	"lua_ls",
-	"tsserver",
-	"gopls",
-	"rust_analyzer",
-}
-
 local tools = {
 	"codelldb",
 	"eslint_d",
@@ -30,6 +15,7 @@ local tools = {
 	"goimports",
 	"prettierd",
 	"stylua",
+	"luacheck",
 }
 
 local function install_tools()

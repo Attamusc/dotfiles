@@ -1,6 +1,4 @@
-local M = {
+return {
 	"sindrets/diffview.nvim",
 	dependencies = { "nvim-lua/plenary.nvim" },
 }
-
-return M

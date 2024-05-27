@@ -4,15 +4,9 @@ local cmd = vim.cmd
 
 local M = {}
 
+-- General Keybindings
+-- Keybindings not related to a specific plugin or language
 local function keymaps()
-	-- General Keybindings
-	-- Keybindings not related to a specific plugin or language
-	-- Enforce good habits
-	-- map("", "<left>", "<nop>")
-	-- map("", "<right>", "<nop>")
-	-- map("", "<up>", "<nop>")
-	-- map("", "<down>", "<nop>")
-
 	-- jj | escaping
 	noremap("i", "jj", "<esc>")
 	noremap("c", "jj", "<c-c>")
@@ -42,6 +36,9 @@ local function keymaps()
 	noremap("n", "n", "nzzzv")
 	noremap("n", "N", "Nzzzv")
 	noremap("n", "J", "mzJ`z")
+
+	noremap("n", "<leader>x", "<cmd>.lua<CR>", { desc = "Execute the current line" })
+	noremap("n", "<leader><leader>x", "<cmd>source %<CR>", { desc = "Execute the current file" })
 
 	-- Quick command mode
 	-- Clears hlsearch after doing a search, otherwise got into command mode

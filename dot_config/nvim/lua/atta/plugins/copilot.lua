@@ -1,15 +1,11 @@
-local M = {
-	-- Co-pilot
+return {
 	"zbirenbaum/copilot.lua",
 	event = "VeryLazy",
 	dependencies = {
 		"zbirenbaum/copilot-cmp",
 	},
+	config = function()
+		require("copilot").setup()
+		require("copilot_cmp").setup()
+	end,
 }
-
-function M.config()
-	require("copilot").setup()
-	require("copilot_cmp").setup()
-end
-
-return M
