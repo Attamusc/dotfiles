@@ -149,7 +149,7 @@ local function general_settings()
 	opt.backspace = "indent,eol,start"
 	opt.tags = "./tags;/"
 	opt.clipboard = "unnamed"
-	opt.lazyredraw = true
+	-- opt.lazyredraw = true
 	opt.autowrite = true
 end
 

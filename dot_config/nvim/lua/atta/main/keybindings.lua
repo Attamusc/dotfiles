@@ -37,12 +37,11 @@ local function keymaps()
 	noremap("n", "N", "Nzzzv")
 	noremap("n", "J", "mzJ`z")
 
-	noremap("n", "<leader>x", "<cmd>.lua<CR>", { desc = "Execute the current line" })
-	noremap("n", "<leader><leader>x", "<cmd>source %<CR>", { desc = "Execute the current file" })
+	noremap("n", "<leader>r", "<cmd>.lua<CR>", { desc = "Execute the current line" })
+	noremap("n", "<leader><leader>r", "<cmd>source %<CR>", { desc = "Execute the current file" })
 
-	-- Quick command mode
-	-- Clears hlsearch after doing a search, otherwise got into command mode
-	cmd([[nnoremap <expr> <CR> {-> v:hlsearch ? ":nohl<CR>" : ":"}()]])
+	-- Clears hlsearch after doing a search, otherwise send <CR>
+	cmd([[nnoremap <expr> <CR> {-> v:hlsearch ? ":nohl<CR>" : "<CR>"}()]])
 
 	-- In the quickfix window, <CR> is used to jump to the error under the
 	-- cursor, so undefine the mapping there.
