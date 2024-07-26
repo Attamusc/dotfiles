@@ -16,9 +16,9 @@ alias o="open"
 alias oo="open ."
 
 # ls
-alias l="exa -lah"
-alias ll="exa -l"
-alias la='exa -a'
+alias l="eza -lah"
+alias ll="eza -l"
+alias la='eza -a'
 alias kl="k --almost-all"
 
 # Fix blank camera in zoom
