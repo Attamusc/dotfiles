@@ -33,7 +33,7 @@ local server_configs = {
 			},
 		},
 	},
-	tsserver = {},
+	ts_ls = {},
 	gopls = {
 		settings = {
 			gopls = {
@@ -144,12 +144,12 @@ function M.config()
 	require("conform").setup({
 		formatters_by_ft = {
 			go = { "goimports", "gofmt" },
-			javascript = { "prettier_d" },
-			javascriptreact = { "prettier_d" },
+			javascript = { "prettierd" },
+			javascriptreact = { "prettierd" },
 			lua = { "stylua" },
 			rust = { "rustfmt" },
-			typescript = { "prettier_d" },
-			typescriptreact = { "prettier_d" },
+			typescript = { "prettierd" },
+			typescriptreact = { "prettierd" },
 		},
 	})
 
