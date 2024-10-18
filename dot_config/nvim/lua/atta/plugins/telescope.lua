@@ -14,6 +14,7 @@ local function telescope_settings()
 	local previewers = require("telescope.previewers")
 	local actions = require("telescope.actions")
 	local themes = require("telescope.themes")
+	local lga_actions = require("telescope-live-grep-args.actions")
 
 	telescope.setup({
 		defaults = {
@@ -51,12 +52,18 @@ local function telescope_settings()
 					-- even more opts
 				}),
 			},
+			live_grep_args = {
+				mappings = { -- extend mappings
+					i = {
+						["<C-k>"] = lga_actions.quote_prompt(),
+					},
+				},
+			},
 		},
 	})
 
 	telescope.load_extension("fzf")
 	telescope.load_extension("live_grep_args")
-	-- telescope.load_extension("noice")
 end
 
 function M.reload()
@@ -99,7 +106,8 @@ local function telescope_mappings()
 	noremap("n", "<leader>fgc", "<cmd>lua require('telescope.builtin').git_commits()<cr>")
 	noremap("n", "<leader>frc", "<cmd>lua require('atta.plugins.telescope').reload()<cr>")
 
-	noremap("n", "<leader>fg", "<cmd>lua require('telescope').extensions.live_grep_args.live_grep_args()<cr>")
+	noremap("n", "<leader>fl", "<cmd>lua require('telescope').extensions.live_grep_args.live_grep_args()<cr>")
+	noremap("n", "<leader>fg", "<cmd>lua require('telescope-live-grep-args.shortcuts').grep_word_under_cursor()<cr>")
 end
 
 function M.config()
