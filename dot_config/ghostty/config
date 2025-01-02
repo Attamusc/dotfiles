@@ -1,0 +1,12 @@
+font-family =
+font-family = MonoLisa Mild
+
+font-style = Light
+font-style-bold = Regular
+font-style-bold-italic = Regular Italic
+
+font-size = 14
+
+theme = catppuccin-mocha
+
+cursor-style-blink = false
