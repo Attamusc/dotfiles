@@ -1,15 +1,12 @@
 -- Bundling all these plguins into one config since they need to come
 -- in a specific order. I might split them apart if this files ends up
 -- too large.
-
 local M = {
-	-- Native LSP
 	"neovim/nvim-lspconfig",
 	name = "lsp",
 	event = "BufReadPre",
 	dependencies = {
-		"folke/neodev.nvim",
-		"hrsh7th/cmp-nvim-lsp",
+		"saghen/blink.cmp",
 		"stevearc/conform.nvim",
 		"j-hui/fidget.nvim",
 	},
@@ -70,24 +67,8 @@ end
 function M.config()
 	require("fidget").setup({})
 
-	local neodev = require("neodev")
-	neodev.setup({
-		override = function(root_dir, options)
-			if root_dir:find("chezmoi") then
-				options.enabled = true
-				options.runtime = true
-				options.types = true
-				options.plugins = true
-			end
-		end,
-	})
-
-	local capabilities = vim.lsp.protocol.make_client_capabilities()
-	capabilities = require("cmp_nvim_lsp").default_capabilities(capabilities)
-
 	local options = {
-		on_attach = on_attach,
-		capabilities = capabilities,
+		capabilities = require("blink.cmp").get_lsp_capabilities(),
 		flags = {
 			debounce_text_changes = 150,
 		},

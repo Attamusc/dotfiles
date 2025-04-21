@@ -10,8 +10,7 @@ alias -- -="cd -"
 alias cdot="chezmoi cd"
 
 # Shortcuts
-alias m="mvim"
-alias v="vim"
+alias v="nvim"
 alias o="open"
 alias oo="open ."
 
