@@ -5,17 +5,23 @@ function M.setup()
 	local fn = vim.fn
 
 	lsp.handlers["textDocument/publishDiagnostics"] = lsp.with(lsp.diagnostic.on_publish_diagnostics, {
-		virtual_text = false,
-		underline = true,
+		virtual_lines = { current_line = true },
+		virtual_text = {
+			source = "if_many",
+			spacing = 4,
+		},
+		underline = false,
 		signs = true,
 		update_in_insert = false,
 	})
 
 	vim.diagnostic.config({
+		virtual_lines = { current_line = true },
 		virtual_text = false,
 		float = {
 			source = true,
 		},
+		underline = true,
 		severity_sort = true,
 	})
 

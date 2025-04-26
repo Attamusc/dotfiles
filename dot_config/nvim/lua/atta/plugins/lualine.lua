@@ -11,11 +11,9 @@ local telescope = {
 
 return {
 	"nvim-lualine/lualine.nvim",
-	dependencies = { "nvim-tree/nvim-web-devicons", lazy = true },
+	dependencies = { { "nvim-tree/nvim-web-devicons", lazy = true }, { "ravitemer/mcphub.nvim" } },
 	config = function()
-		local lualine = require("lualine")
-
-		lualine.setup({
+		require("lualine").setup({
 			options = {
 				globalstatus = true,
 				icons_enabled = true,
@@ -33,7 +31,7 @@ return {
 				} },
 				lualine_b = { "branch", "diff", { "diagnostics", sources = { "nvim_lsp" } } },
 				lualine_c = { "filename" },
-				lualine_x = {},
+				lualine_x = { { require("mcphub.extensions.lualine") } },
 				lualine_y = { "filetype", "progress" },
 				lualine_z = { "location" },
 			},

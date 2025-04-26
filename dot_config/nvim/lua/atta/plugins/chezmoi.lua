@@ -10,10 +10,9 @@ return {
 			end,
 		},
 	},
+	opts = {},
 	config = function()
-		require("chezmoi").setup({})
-
-		-- Apply chances when editing any file inside the chezmoi directory
+		-- Apply changes when editing any file inside the chezmoi directory
 		vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
 			pattern = { os.getenv("HOME") .. "/.local/share/chezmoi/*" },
 			callback = function()

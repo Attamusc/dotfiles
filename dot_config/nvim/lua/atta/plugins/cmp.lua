@@ -27,7 +27,7 @@ local cmp_kinds = {
 	TypeParameter = "  ",
 }
 
-local cmp_config = {
+return {
 	"hrsh7th/nvim-cmp",
 	event = "InsertEnter",
 	dependencies = {
@@ -127,4 +127,3 @@ local cmp_config = {
 		})
 	end,
 }
-return {}
