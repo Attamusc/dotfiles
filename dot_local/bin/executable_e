@@ -13,7 +13,7 @@
 
 if [ -z "$1" ]
 then
-  $EDITOR .
+  $EDITOR
 else
   $EDITOR $1
 fi
