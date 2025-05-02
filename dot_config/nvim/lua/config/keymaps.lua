@@ -3,3 +3,4 @@
 -- Add any additional keymaps here
 
 vim.keymap.set("i", "jj", "<esc>")
+vim.keymap.set({ "i", "x", "n", "s" }, "<D-s>", "<cmd>w<cr><esc>", { desc = "Save File" })
