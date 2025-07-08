@@ -10,3 +10,4 @@ font-size = 14
 theme = catppuccin-mocha
 
 cursor-style-blink = false
+keybind = shift+enter=text:\n
