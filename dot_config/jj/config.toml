@@ -1,0 +1,27 @@
+"$schema" = "https://jj-vcs.github.io/jj/latest/config-schema.json"
+
+[user]
+name = "Sean Dunn"
+email = "attamusc@github.com"
+
+[ui]
+default-command = "log"
+
+[revset-aliases]
+'closest_bookmark(to)' = 'heads(::to & bookmarks())'
+
+[git]
+push-new-bookmarks = true
+
+[aliases]
+c = ["commit"]
+ci = ["commit", "--interactive"]
+e = ["edit"]
+i = ["git", "init", "--colocate"]
+nb = ["bookmark", "create", "-r @-"] # "new bookmark"
+pull = ["git", "fetch"]
+push = ["git", "push", "--allow-new"]
+r = ["rebase"]
+s = ["squash"]
+si = ["squash", "--interactive"]
+tug = ["bookmark", "move", "--from", "closest_bookmark(@-)", "--to", "@-"]
