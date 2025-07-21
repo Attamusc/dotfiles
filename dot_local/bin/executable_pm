@@ -1,0 +1,263 @@
+#!/usr/bin/env node
+
+const fs = require('fs').promises;
+const path = require('path');
+const { execSync, spawn } = require('child_process');
+const os = require('os');
+
+class ProjectManager {
+  constructor() {
+    this.projectsDir = process.env.PROJECTS;
+    if (!this.projectsDir) {
+      console.error('Error: $PROJECTS environment variable is not set');
+      process.exit(1);
+    }
+  }
+
+  // Normalize repo name to handle case sensitivity on macOS
+  normalizeRepoName(repoName) {
+    const parts = repoName.split('/');
+    if (parts.length !== 2) {
+      throw new Error('Repository name must be in format "owner/repo"');
+    }
+    return `${parts[0].toLowerCase()}/${parts[1].toLowerCase()}`;
+  }
+
+  // Get the expected directory path for a repo
+  getRepoPath(repoName) {
+    const normalized = this.normalizeRepoName(repoName);
+    return path.join(this.projectsDir, 'github.com', normalized);
+  }
+
+  // Check if directory exists (case-insensitive search on macOS)
+  async findExistingRepo(repoName) {
+    const expectedPath = this.getRepoPath(repoName);
+    const parentDir = path.dirname(expectedPath);
+    const expectedDirName = path.basename(expectedPath);
+
+    try {
+      const entries = await fs.readdir(parentDir);
+      const match = entries.find(entry =>
+        entry.toLowerCase() === expectedDirName.toLowerCase()
+      );
+
+      if (match) {
+        return path.join(parentDir, match);
+      }
+    } catch (error) {
+      // Parent directory doesn't exist
+      return null;
+    }
+
+    return null;
+  }
+
+  // Clone repository using git
+  async cloneRepo(repoName) {
+    const repoPath = this.getRepoPath(repoName);
+    const repoUrl = `https://github.com/${repoName}.git`;
+
+    console.log(`Cloning ${repoName}...`);
+
+    // Ensure parent directory exists
+    await fs.mkdir(path.dirname(repoPath), { recursive: true });
+
+    try {
+      execSync(`git clone "${repoUrl}" "${repoPath}"`, {
+        stdio: 'inherit',
+        cwd: this.projectsDir
+      });
+      console.log(`✓ Successfully cloned ${repoName}`);
+      return repoPath;
+    } catch (error) {
+      console.error(`✗ Failed to clone ${repoName}:`, error.message);
+      throw error;
+    }
+  }
+
+  // Generate shell command to change directory
+  generateCdCommand(targetPath) {
+    const shell = process.env.SHELL || '/bin/bash';
+
+    if (shell.includes('zsh')) {
+      return `cd "${targetPath}"`;
+    } else if (shell.includes('bash')) {
+      return `cd "${targetPath}"`;
+    } else if (shell.includes('fish')) {
+      return `cd "${targetPath}"`;
+    }
+
+    return `cd "${targetPath}"`;
+  }
+
+  // Main function to get or clone a project
+  async getProject(repoName) {
+    try {
+      // First, check if repo already exists
+      let repoPath = await this.findExistingRepo(repoName);
+
+      if (repoPath) {
+        console.log(`✓ Found existing repository at: ${repoPath}`);
+      } else {
+        // Clone the repository
+        repoPath = await this.cloneRepo(repoName);
+      }
+
+      // Print the path for shell integration
+      console.log(repoPath);
+      return repoPath;
+
+    } catch (error) {
+      console.error('Error:', error.message);
+      process.exit(1);
+    }
+  }
+
+  // List all projects
+  async listProjects() {
+    const githubDir = path.join(this.projectsDir, 'github.com');
+
+    try {
+      const owners = await fs.readdir(githubDir);
+      const projects = [];
+
+      for (const owner of owners) {
+        const ownerPath = path.join(githubDir, owner);
+        const stat = await fs.stat(ownerPath);
+
+        if (stat.isDirectory()) {
+          try {
+            const repos = await fs.readdir(ownerPath);
+            for (const repo of repos) {
+              const repoPath = path.join(ownerPath, repo);
+              const repoStat = await fs.stat(repoPath);
+              if (repoStat.isDirectory()) {
+                projects.push({
+                  name: `${owner}/${repo}`,
+                  path: repoPath
+                });
+              }
+            }
+          } catch (error) {
+            // Skip if can't read directory
+          }
+        }
+      }
+
+      return projects;
+    } catch (error) {
+      console.error('Error listing projects:', error.message);
+      return [];
+    }
+  }
+
+  // Update all projects
+  async updateProjects() {
+    const projects = await this.listProjects();
+
+    console.log(`Updating ${projects.length} projects...`);
+
+    for (const project of projects) {
+      try {
+        console.log(`Updating ${project.name}...`);
+        execSync('git pull --ff-only', {
+          cwd: project.path,
+          stdio: 'pipe'
+        });
+        console.log(`✓ ${project.name} updated`);
+      } catch (error) {
+        console.log(`✗ ${project.name} failed to update`);
+      }
+    }
+  }
+
+  // Clean up old projects (interactive)
+  async cleanProjects() {
+    const projects = await this.listProjects();
+    console.log('\nProjects found:');
+
+    projects.forEach((project, index) => {
+      console.log(`${index + 1}. ${project.name} (${project.path})`);
+    });
+
+    console.log('\nTo remove a project, delete its directory manually.');
+    console.log('This tool does not automatically delete projects for safety.');
+  }
+}
+
+// CLI Interface
+function printUsage() {
+  console.log(`
+Project Manager - A tool for managing GitHub projects locally
+
+Usage:
+  pm <owner/repo>        Get or clone a project
+  pm list               List all projects
+  pm update             Update all projects (git pull)
+  pm clean              Show projects for manual cleanup
+  pm help               Show this help
+
+Examples:
+  pm attamusc/dotfiles   # Clone or navigate to attamusc/dotfiles
+  pm list                # List all local projects
+  pm update              # Pull latest changes for all projects
+
+Shell Integration:
+Add this function to your shell rc file (.bashrc, .zshrc, etc.):
+
+function pm() {
+  if [ "$1" = "help" ] || [ "$1" = "list" ] || [ "$1" = "update" ] || [ "$1" = "clean" ]; then
+    node /path/to/this/script "$@"
+  else
+    local result=$(node /path/to/this/script "$@")
+    if [ $? -eq 0 ] && [ -d "$result" ]; then
+      cd "$result"
+    fi
+  fi
+}
+`);
+}
+
+async function main() {
+  const args = process.argv.slice(2);
+
+  if (args.length === 0 || args[0] === 'help') {
+    printUsage();
+    return;
+  }
+
+  const pm = new ProjectManager();
+  const command = args[0];
+
+  switch (command) {
+    case 'list':
+      const projects = await pm.listProjects();
+      console.log('\nLocal Projects:');
+      projects.forEach(project => {
+        console.log(`  ${project.name} → ${project.path}`);
+      });
+      break;
+
+    case 'update':
+      await pm.updateProjects();
+      break;
+
+    case 'clean':
+      await pm.cleanProjects();
+      break;
+
+    default:
+      // Assume it's a repo name
+      await pm.getProject(command);
+      break;
+  }
+}
+
+if (require.main === module) {
+  main().catch(error => {
+    console.error('Unexpected error:', error);
+    process.exit(1);
+  });
+}
+
+module.exports = ProjectManager;
