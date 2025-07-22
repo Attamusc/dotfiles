@@ -171,17 +171,35 @@ class ProjectManager {
     }
   }
 
-  // Clean up old projects (interactive)
-  async cleanProjects() {
+  // Search for projects matching a pattern (for completion)
+  async searchProjects(pattern) {
     const projects = await this.listProjects();
-    console.log('\nProjects found:');
+    const matches = projects.filter(project =>
+      project.name.toLowerCase().includes(pattern.toLowerCase())
+    );
 
-    projects.forEach((project, index) => {
-      console.log(`${index + 1}. ${project.name} (${project.path})`);
+    return matches.map(p => p.name).sort();
+  }
+
+  // Get completion suggestions
+  async getCompletions(partial) {
+    if (!partial) {
+      return ['help', 'list', 'update', 'clean'];
+    }
+
+    // If it looks like a repo pattern (has slash), search for exact matches
+    if (partial.includes('/')) {
+      return await this.searchProjects(partial);
+    }
+
+    // If it's just an owner name, find all repos for that owner
+    const projects = await this.listProjects();
+    const ownerMatches = projects.filter(project => {
+      const owner = project.name.split('/')[0];
+      return owner.toLowerCase().startsWith(partial.toLowerCase());
     });
 
-    console.log('\nTo remove a project, delete its directory manually.');
-    console.log('This tool does not automatically delete projects for safety.');
+    return ownerMatches.map(p => p.name).sort();
   }
 }
 
@@ -195,6 +213,7 @@ Usage:
   pm list               List all projects
   pm update             Update all projects (git pull)
   pm clean              Show projects for manual cleanup
+  pm complete <partial> Get completion suggestions (for shell integration)
   pm help               Show this help
 
 Examples:
@@ -244,6 +263,12 @@ async function main() {
 
     case 'clean':
       await pm.cleanProjects();
+      break;
+
+    case 'complete':
+      const partial = args[1] || '';
+      const completions = await pm.getCompletions(partial);
+      completions.forEach(completion => console.log(completion));
       break;
 
     default:

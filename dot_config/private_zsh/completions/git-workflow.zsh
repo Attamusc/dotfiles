@@ -1,4 +1,4 @@
-__workflow_gitdir ()
+c__workflow_gitdir ()
 {
   if [ -z "${1-}" ]; then
     if [ -n "${__git_dir-}" ]; then
