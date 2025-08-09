@@ -1,0 +1,99 @@
+(defsrc
+  tab    q    w    e    r    t       y    u    i    o    p       [    ]    \ 
+  caps   a    s    d    f    g       h    j    k    l    ;       '    ret 
+  lsft   z    x    c    v    b       n    m    ,    .    /       rsft
+  lctl   lalt lmet spc  rmet ralt
+) 
+
+(defvar
+  tap-time 200
+  hold-time 200 
+  hold-time-slow 300
+  one-shot-time 500 
+)
+
+(defalias
+   meh  (multi ctl alt sft)
+   hypr  (multi ctl alt sft met)
+   lga (multi lalt lmet)
+   l_nav (layer-toggle nav)
+   l_symr (layer-toggle symr)
+   l_syml (layer-toggle syml)
+   l_num (layer-toggle num)
+   l_util (layer-toggle util)
+   d (tap-hold $tap-time $hold-time d @l_nav)
+   f (tap-hold $tap-time $hold-time f @l_symr)
+   j (tap-hold $tap-time $hold-time j @l_syml)
+   k (tap-hold $tap-time $hold-time k @l_num)
+   spc (tap-hold $tap-time $hold-time spc @l_util)
+   t_c (tap-hold $tap-time $hold-time tab ctl)
+   c_d (chord esc d)
+   c_f (chord esc f)
+   c_m (chord meh_hypr m)
+   c_, (chord meh_hypr ,)
+   c_. (chord meh_hypr .)
+   o_met (one-shot $one-shot-time met)
+   o_ctl (one-shot $one-shot-time ctl)
+   o_sft (one-shot $one-shot-time sft)
+   o_alt (one-shot $one-shot-time alt)
+)
+
+(defchords esc 15
+  (d  ) @d
+  (  f) @f
+  (d f) esc 
+)
+
+(defchords meh_hypr 15
+  (m    ) m
+  (  ,  ) ,
+  (    .) .
+  (m ,  ) @meh 
+  (  , .) @hypr 
+)
+
+(deflayer qwery 
+  tab   q     w     e      r      t    y    u     i     o    p    [   ]   \ 
+  lctl  a     s     @c_d   @c_f   g    h    @j    @k    l    bspc  '   ret 
+  lsft  z     x     c      v      b    n    @c_m  @c_,  @c_. ret   rsft
+  lctl  lalt  lmet  @spc   @t_c   ralt
+)
+(deflayer nav 
+  _     _     _     _      _      _    _    _     pgup  _     _ _ _ _ 
+  _     del   bspc  XX     @lga   _    left down  up    right _ _ _ 
+  _     _     _     _      _      _    _    home  pgdn  end     _ _
+  _  _     _  _  _ _
+)
+(deflayer symr 
+  _  _    _    _    _  _    _   S-- '   S-\ _ _ _ _ 
+  _  S-6  S-8  S-7  XX _    S-3 -   S-' /   S-4 _ _ 
+  _  _    _    _    _  _    _   ~   `   \   _ _
+  _  _    _    _    _  _
+)
+(deflayer syml 
+  _  _    S-1  S-;  ;    _   _ _   _ _    _   _ _ _ 
+  _  S-,  [    S-[  S-9  S-2 _ XX  = S-=  S-5 _ _ 
+  _  S-.  ]    S-]  S-0  _   _ _   _ _    _   _
+  _  _    _    _    _    _
+)
+//        ┌───┬───┬───┬──────┬──────┐   ┌──────┬──────────────────────┬──────┬──────┬──────┐
+//        │ / │ 7 │ 8 │  9   │  +   │   │ ____ │         ____         │ ____ │ ____ │ ____ │
+//        ├───┼───┼───┼──────┼──────┤   ├──────┼──────────────────────┼──────┼──────┼──────┤
+//        │ 0 │ 1 │ 2 │  3   │  -   │   │ ____ │       &sk lgui       │ _XXX │ ____ │ ____ │
+//        ├───┼───┼───┼──────┼──────┤   ├──────┼──────────────────────┼──────┼──────┼──────┤
+//        │ * │ 4 │ 5 │  6   │ EQL  │   │ ____ │ &sk lctl(lsft(lalt)) │ ____ │ ____ │ ____ │
+//        └───┴───┴───┼──────┼──────┤   ├──────┼──────────────────────┼──────┴──────┴──────┘
+//                    │ ____ │ ____ │   │ ____ │         ____         │
+//                    └──────┴──────┘   └──────┴──────────────────────┘
+(deflayer num 
+  /    7  8  9  S-= _ _ _ _ _ _ _ _ _ 
+  0    1  2  3  -   _ _ _ _ _ _ _ _ 
+  S-8  4  5  6  =   _ _ _ _ _ _ _
+  _    _  _  _  _ _
+)
+(deflayer util 
+  _  _     _     _    _ _ _ _ _ _ _ _ _ _ 
+  _  _     _     _    _ _ _ _ _ _ _ _ _ 
+  _  _     _     _    _ _ _ _ _ _ _ _
+  _  _     _  _  _ _
+)
