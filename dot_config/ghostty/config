@@ -7,7 +7,7 @@ font-style-bold-italic = Regular Italic
 
 font-size = 14
 
-theme = catppuccin-mocha
+theme = Catppuccin Mocha
 
 cursor-style-blink = false
 window-inherit-working-directory = true
