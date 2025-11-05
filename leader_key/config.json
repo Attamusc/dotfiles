@@ -1,0 +1,249 @@
+{
+  "actions" : [
+    {
+      "actions" : [
+        {
+          "key" : "z",
+          "type" : "application",
+          "value" : "/Applications/Zen Browser.app"
+        },
+        {
+          "key" : "e",
+          "type" : "application",
+          "value" : "/Applications/Setapp/Spark Mail.app"
+        },
+        {
+          "key" : "m",
+          "type" : "application",
+          "value" : "/Applications/Spotify.app"
+        },
+        {
+          "key" : "c",
+          "type" : "application",
+          "value" : "/System/Applications/Messages.app"
+        },
+        {
+          "key" : "s",
+          "type" : "application",
+          "value" : "/Applications/Slack.app"
+        }
+      ],
+      "key" : "o",
+      "label" : "Applications",
+      "type" : "group"
+    },
+    {
+      "actions" : [
+        {
+          "key" : "e",
+          "type" : "url",
+          "value" : "raycast://extensions/raycast/emoji-symbols/search-emoji-symbols"
+        },
+        {
+          "key" : "p",
+          "type" : "url",
+          "value" : "raycast://confetti"
+        },
+        {
+          "key" : "c",
+          "type" : "url",
+          "value" : "raycast://extensions/raycast/system/open-camera"
+        }
+      ],
+      "key" : "r",
+      "label" : "Raycast",
+      "type" : "group"
+    },
+    {
+      "actions" : [
+        {
+          "key" : "e",
+          "label" : "workspace e",
+          "type" : "command",
+          "value" : "/opt/homebrew/bin/aerospace workspace a3"
+        },
+        {
+          "key" : "f",
+          "label" : "fullscreen",
+          "type" : "command",
+          "value" : "/opt/homebrew/bin/aerospace fullscreen"
+        },
+        {
+          "key" : "F",
+          "label" : "flatten-workspace-tree",
+          "type" : "command",
+          "value" : "/opt/homebrew/bin/aerospace flatten-workspace-tree"
+        },
+        {
+          "actions" : [
+            {
+              "key" : "h",
+              "label" : "left",
+              "type" : "command",
+              "value" : "/opt/homebrew/bin/aerospace join-with left"
+            },
+            {
+              "key" : "j",
+              "label" : "down",
+              "type" : "command",
+              "value" : "/opt/homebrew/bin/aerospace join-with down"
+            },
+            {
+              "key" : "k",
+              "label" : "up",
+              "type" : "command",
+              "value" : "/opt/homebrew/bin/aerospace join-with up"
+            },
+            {
+              "key" : "l",
+              "label" : "right",
+              "type" : "command",
+              "value" : "/opt/homebrew/bin/aerospace join-with right"
+            }
+          ],
+          "key" : "j",
+          "label" : "join-with",
+          "type" : "group"
+        },
+        {
+          "actions" : [
+            {
+              "key" : "a",
+              "label" : "accordion",
+              "type" : "command",
+              "value" : "/opt/homebrew/bin/aerospace layout accordion horizontal vertical"
+            },
+            {
+              "key" : "f",
+              "label" : "floating",
+              "type" : "command",
+              "value" : "/opt/homebrew/bin/aerospace layout floating tiling"
+            },
+            {
+              "key" : "t",
+              "label" : "tiles",
+              "type" : "command",
+              "value" : "/opt/homebrew/bin/aerospace layout tiles vertical horizontal"
+            }
+          ],
+          "key" : "l",
+          "label" : "layout",
+          "type" : "group"
+        },
+        {
+          "actions" : [
+            {
+              "key" : "e",
+              "label" : "move-node-to-workspace a3",
+              "type" : "command",
+              "value" : "/opt/homebrew/bin/aerospace move-node-to-workspace a3 --focus-follows-window"
+            },
+            {
+              "key" : "h",
+              "label" : "left",
+              "type" : "command",
+              "value" : "/opt/homebrew/bin/aerospace move left"
+            },
+            {
+              "key" : "j",
+              "label" : "down",
+              "type" : "command",
+              "value" : "/opt/homebrew/bin/aerospace move down"
+            },
+            {
+              "key" : "k",
+              "label" : "up",
+              "type" : "command",
+              "value" : "/opt/homebrew/bin/aerospace move up"
+            },
+            {
+              "key" : "l",
+              "label" : "right",
+              "type" : "command",
+              "value" : "/opt/homebrew/bin/aerospace move right"
+            },
+            {
+              "key" : "q",
+              "label" : "move-node-to-workspace a1",
+              "type" : "command",
+              "value" : "/opt/homebrew/bin/aerospace move-node-to-workspace a1 --focus-follows-window"
+            },
+            {
+              "key" : "r",
+              "label" : "move-node-to-workspace a4",
+              "type" : "command",
+              "value" : "/opt/homebrew/bin/aerospace move-node-to-workspace a4 --focus-follows-window"
+            },
+            {
+              "key" : "t",
+              "label" : "move-node-to-workspace a5",
+              "type" : "command",
+              "value" : "/opt/homebrew/bin/aerospace move-node-to-workspace a5 --focus-follows-window"
+            },
+            {
+              "key" : "w",
+              "label" : "move-node-to-workspace a2",
+              "type" : "command",
+              "value" : "/opt/homebrew/bin/aerospace move-node-to-workspace a2 --focus-follows-window"
+            }
+          ],
+          "key" : "m",
+          "label" : "move",
+          "type" : "group"
+        },
+        {
+          "key" : "q",
+          "label" : "workspace q",
+          "type" : "command",
+          "value" : "/opt/homebrew/bin/aerospace workspace a1"
+        },
+        {
+          "key" : "R",
+          "label" : "reload-config",
+          "type" : "command",
+          "value" : "/opt/homebrew/bin/aerospace reload-config"
+        },
+        {
+          "key" : "r",
+          "label" : "workspace r",
+          "type" : "command",
+          "value" : "/opt/homebrew/bin/aerospace workspace a4"
+        },
+        {
+          "key" : "s",
+          "label" : "mode resize",
+          "type" : "command",
+          "value" : "/opt/homebrew/bin/aerospace mode resize"
+        },
+        {
+          "key" : "t",
+          "label" : "workspace t",
+          "type" : "command",
+          "value" : "/opt/homebrew/bin/aerospace workspace a5"
+        },
+        {
+          "key" : "w",
+          "label" : "workspace w",
+          "type" : "command",
+          "value" : "/opt/homebrew/bin/aerospace workspace a2"
+        },
+        {
+          "key" : "c",
+          "type" : "url",
+          "value" : "raycast://extensions/raycast/window-management/center"
+        }
+      ],
+      "iconPath" : "rectangle.grid.2x2",
+      "key" : "w",
+      "label" : "Aerospace",
+      "type" : "group"
+    },
+    {
+      "key" : "enter",
+      "label" : "Terminal",
+      "type" : "application",
+      "value" : "/Applications/Ghostty.app"
+    }
+  ],
+  "type" : "group"
+}
