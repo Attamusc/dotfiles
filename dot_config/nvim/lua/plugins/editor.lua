@@ -89,6 +89,24 @@ return {
       })
 
       vim.api.nvim_create_autocmd("BufEnter", {
+        desc = "Format sweeq keyboard",
+        group = qmk_group,
+        pattern = "*/sweeq/*/keymap.c",
+        callback = function()
+          qmk.setup({
+            name = "LAYOUT",
+            auto_format_pattern = "*/sweeq/*/keymap.c",
+            layout = {
+              "_ x x x x x _ _ _ x x x x x",
+              "_ x x x x x _ _ _ x x x x x",
+              "_ x x x x x _ _ _ x x x x x",
+              "_ _ _ _ _ x x _ x x _ _ _ _",
+            },
+          })
+        end,
+      })
+
+      vim.api.nvim_create_autocmd("BufEnter", {
         desc = "Format zmk corne keyboard",
         group = qmk_group,
         pattern = "*/corne.keymap",
