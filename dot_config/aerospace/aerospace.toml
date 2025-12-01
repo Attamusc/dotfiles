@@ -1,6 +1,8 @@
 # Place a copy of this config to ~/.aerospace.toml
 # After that, you can edit ~/.aerospace.toml to your liking
 
+config-version = 2
+
 # It's not necessary to copy all keys to your config.
 # If the key is missing in your config, "default-config.toml" will serve as a fallback
 
@@ -12,14 +14,19 @@ after-login-command = []
 # You can use it to add commands that run after AeroSpace startup.
 # 'after-startup-command' is run after 'after-login-command'
 # Available commands : https://nikitabobko.github.io/AeroSpace/commands
-after-startup-command = [
-  'exec-and-forget borders active_color=0xffe1e3e4 inactive_color=0xff494d64 width=5.0',
-]
+after-startup-command = []
 
 exec-on-workspace-change = [
   '/bin/bash',
   '-c',
   'sketchybar --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE',
+]
+
+on-focus-changed = [
+  'exec-and-forget sketchybar --trigger aerospace_mode_changed',
+]
+on-mode-changed = [
+  'exec-and-forget sketchybar --trigger aerospace_mode_changed',
 ]
 
 # Start AeroSpace at login
@@ -35,12 +42,14 @@ enable-normalization-opposite-orientation-for-nested-containers = true
 accordion-padding = 20
 
 # Possible values: tiles|accordion
-default-root-container-layout = 'tiles'
+default-root-container-layout = 'accordion'
 
 # Possible values: horizontal|vertical|auto
 # 'auto' means: wide monitor (anything wider than high) gets horizontal orientation,
 #               tall monitor (anything higher than wide) gets vertical orientation
 default-root-container-orientation = 'auto'
+
+persistent-workspaces = ['a1', 'a2', 'a3', 'a4', 'a5']
 
 # Possible values: (qwerty|dvorak)
 # See https://nikitabobko.github.io/AeroSpace/guide#key-mapping
@@ -71,8 +80,8 @@ outer.right = 8
 # See: https://nikitabobko.github.io/AeroSpace/guide#binding-modes
 # 'main' binding mode must be always presented
 [mode.main.binding]
-alt-h = 'focus left'
-alt-l = 'focus right'
+alt-h = 'focus left --boundaries-action wrap-around-the-workspace'
+alt-l = 'focus right --boundaries-action wrap-around-the-workspace'
 alt-j = 'focus down --boundaries-action wrap-around-the-workspace'
 alt-k = 'focus up --boundaries-action wrap-around-the-workspace'
 shift-alt-h = 'workspace prev'
@@ -94,17 +103,10 @@ run = "layout floating"
 if.app-id = 'com.mutedeck.mac'
 run = "layout floating"
 
-[[on-window-detected]]
-if.app-id = 'com.mitchellh.ghostty'
-run = "layout floating"
+# [[on-window-detected]]
+# if.app-id = 'com.mitchellh.ghostty'
+# run = "layout floating"
 
 [[on-window-detected]]
 if.app-id = 'pl.maketheweb.cleanshotx'
 run = "layout floating"
-
-[workspace-to-monitor-force-assignment]
-a1 = "main"
-a2 = "main"
-a3 = "main"
-a4 = "main"
-a5 = "main"

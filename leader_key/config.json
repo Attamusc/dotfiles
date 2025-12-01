@@ -231,6 +231,12 @@
           "key" : "c",
           "type" : "url",
           "value" : "raycast://extensions/raycast/window-management/center"
+        },
+        {
+          "iconPath" : "apple.terminal",
+          "key" : "enter",
+          "type" : "command",
+          "value" : "/opt/homebrew/bin/aerospace enable toggle"
         }
       ],
       "iconPath" : "rectangle.grid.2x2",
