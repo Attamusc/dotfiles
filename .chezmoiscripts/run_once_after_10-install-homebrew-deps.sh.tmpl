@@ -14,26 +14,36 @@ echo "Installing Homebrew Dependencies"
 set -eufo pipefail
 
 {{ $taps := list
-  "homebrew/cask"
   "microsoft/git"
   "1password/tap"
+  "FelixKratz/formulae"
 -}}
 
 {{ $brews := list
+  "adr-tools"
   "bat"
+  "bob"
   "ccls"
+  "crush"
   "eza"
   "fd"
   "fzf"
   "fzy"
   "gh"
+  "ghq"
   "git"
   "git-delta"
   "gnu-sed"
+  "jj"
+  "jjui"
   "jq"
   "lazygit"
   "mise"
+  "opencode"
+  "pinentry"
+  "qmk"
   "ripgrep"
+  "sheldon"
   "starship"
   "stylua"
   "tig"
@@ -47,20 +57,29 @@ set -eufo pipefail
 -}}
 
 {{ $casks := list 
-  "git-credential-manager-core"
   "1password-cli"
+  "aerospace"
+  "alt-tab"
+  "font-hack-nerd-font"
+  "ghostty"
+  "git-credential-manager"
+  "leader-key"
+  "raycast"
 -}}
 
 {{ if (eq .chezmoi.os "darwin") -}}
 {{ $brews = concat $brews (list
+    "borders"
     "chezmoi"
     "mas"
-    "reattach-to-user-namespace") -}}
+    "pinentry-mac"
+    "reattach-to-user-namespace"
+    "sketchybar") -}}
 
 {{ $casks := concat $casks (list
     "slack"
     "raycast"
-    "git-credential-manager-core") -}}
+    "git-credential-manager") -}}
 {{ end -}}
 
 if [ -d /opt/homebrew/bin ]; then
@@ -73,7 +92,7 @@ if [ -d /home/linuxbrew/.linuxbrew/bin ]; then
   eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 fi
 
-brew bundle --no-lock --file=/dev/stdin <<EOF || :
+brew bundle --file=/dev/stdin <<EOF || :
 {{ range ($taps | sortAlpha | uniq) -}}
 tap "{{ . }}"
 {{ end }}
