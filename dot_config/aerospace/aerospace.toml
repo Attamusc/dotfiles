@@ -80,12 +80,12 @@ outer.right = 8
 # See: https://nikitabobko.github.io/AeroSpace/guide#binding-modes
 # 'main' binding mode must be always presented
 [mode.main.binding]
-alt-h = 'focus left --boundaries-action wrap-around-the-workspace'
-alt-l = 'focus right --boundaries-action wrap-around-the-workspace'
-alt-j = 'focus down --boundaries-action wrap-around-the-workspace'
-alt-k = 'focus up --boundaries-action wrap-around-the-workspace'
-shift-alt-h = 'workspace prev'
-shift-alt-l = 'workspace next'
+ctrl-shift-alt-h = 'focus left --boundaries-action wrap-around-the-workspace'
+ctrl-shift-alt-l = 'focus right --boundaries-action wrap-around-the-workspace'
+ctrl-shift-alt-j = 'focus down --boundaries-action wrap-around-the-workspace'
+ctrl-shift-alt-k = 'focus up --boundaries-action wrap-around-the-workspace'
+ctrl-cmd-shift-alt-h = 'workspace prev'
+ctrl-cmd-shift-alt-l = 'workspace next'
 
 [mode.resize.binding]
 minus = "resize smart -50"
