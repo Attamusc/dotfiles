@@ -5,22 +5,25 @@ name = "Sean Dunn"
 email = "attamusc@github.com"
 
 [ui]
-default-command = "log"
+default-command = "st"
 
 [revset-aliases]
 'closest_bookmark(to)' = 'heads(::to & bookmarks())'
 
-[git]
-push-new-bookmarks = true
+[remotes.origin]
+auto-track-bookmarks = "glob:*"
+[remotes.upstream]
+auto-track-bookmarks = "main"
 
 [aliases]
 c = ["commit"]
 ci = ["commit", "--interactive"]
 e = ["edit"]
 i = ["git", "init", "--colocate"]
-nb = ["bookmark", "create", "-r @-"] # "new bookmark"
+l = ["log"]
+nb = ["bookmark", "create", "-r @-"]
 pull = ["git", "fetch"]
-push = ["git", "push", "--allow-new"]
+push = ["git", "push"]
 r = ["rebase"]
 s = ["squash"]
 si = ["squash", "--interactive"]
