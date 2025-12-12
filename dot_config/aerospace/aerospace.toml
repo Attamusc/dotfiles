@@ -39,7 +39,7 @@ enable-normalization-opposite-orientation-for-nested-containers = true
 # See: https://nikitabobko.github.io/AeroSpace/guide#layouts
 # The 'accordion-padding' specifies the size of accordion padding
 # You can set 0 to disable the padding feature
-accordion-padding = 20
+accordion-padding = 8
 
 # Possible values: tiles|accordion
 default-root-container-layout = 'accordion'
@@ -49,7 +49,7 @@ default-root-container-layout = 'accordion'
 #               tall monitor (anything higher than wide) gets vertical orientation
 default-root-container-orientation = 'auto'
 
-persistent-workspaces = ['a1', 'a2', 'a3', 'a4', 'a5']
+persistent-workspaces = ['a1', 'a2', 'a3', 'a4', 'a5', 'b1']
 
 # Possible values: (qwerty|dvorak)
 # See https://nikitabobko.github.io/AeroSpace/guide#key-mapping
@@ -95,6 +95,7 @@ esc = "mode main"
 ctrl-c = "mode main"
 enter = "mode main"
 
+# Float windows that behave weird otherwise
 [[on-window-detected]]
 if.app-id = 'com.apple.finder'
 run = "layout floating"
@@ -103,10 +104,31 @@ run = "layout floating"
 if.app-id = 'com.mutedeck.mac'
 run = "layout floating"
 
-# [[on-window-detected]]
-# if.app-id = 'com.mitchellh.ghostty'
-# run = "layout floating"
-
 [[on-window-detected]]
 if.app-id = 'pl.maketheweb.cleanshotx'
 run = "layout floating"
+
+# Sticky workspaces for common apps
+[[on-window-detected]]
+if.app-id = 'com.mitchellh.ghostty'
+run = "move-node-to-workspace a5"
+
+[[on-window-detected]]
+if.app-id = 'com.readdle.SparkDesktop-setapp'
+run = "move-node-to-workspace a3"
+
+[[on-window-detected]]
+if.app-id = 'com.apple.MobileSMS'
+run = ["move-node-to-workspace a3", "layout floating"]
+
+[[on-window-detected]]
+if.app-id = 'com.apple.iCal'
+run = ["move-node-to-workspace a3", "layout floating"]
+
+[workspace-to-monitor-force-assignment]
+b1 = "secondary"
+a1 = "main"
+a2 = "main"
+a3 = "main"
+a4 = "main"
+a5 = "main"
