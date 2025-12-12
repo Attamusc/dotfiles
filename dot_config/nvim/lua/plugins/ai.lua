@@ -1,56 +1,5 @@
 return {
   {
-    "greggh/claude-code.nvim",
-    dependencies = {
-      "nvim-lua/plenary.nvim", -- Required for git operations
-    },
-    config = function()
-      require("claude-code").setup({
-        window = {
-          position = "float",
-        },
-      })
-    end,
-  },
-  {
-    "olimorris/codecompanion.nvim",
-    dependencies = {
-      "nvim-lua/plenary.nvim",
-      "nvim-treesitter/nvim-treesitter",
-      "ravitemer/mcphub.nvim",
-    },
-    opts = {
-      display = {
-        chat = {
-          show_settings = true, -- Show settings in chat
-        },
-      },
-      strategies = {
-        chat = {
-          adapter = {
-            name = "copilot",
-            model = "claude-sonnet-4",
-          },
-          roles = {
-            user = "attamusc",
-          },
-          tools = {
-            ["mcp"] = {
-              -- calling it in a function would prevent mcphub from being loaded before it's needed
-              callback = function()
-                return require("mcphub.extensions.codecompanion")
-              end,
-              description = "Call tools and resources from the MCP Servers",
-            },
-          },
-        },
-      },
-    },
-    keys = {
-      { "<leader>ac", "<cmd>CodeCompanionChat Toggle<CR>", { desc = "Toggle CodeCompanion" } },
-    },
-  },
-  {
     "ravitemer/mcphub.nvim",
     dependencies = {
       "nvim-lua/plenary.nvim",
