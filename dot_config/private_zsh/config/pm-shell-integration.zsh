@@ -87,7 +87,7 @@ _pm_fuzzy_select() {
   local partial="$1"
   local matches=()
   
-  # Get all owners and repos
+  # Get all owners and repos from cache (fast!)
   local owners
   owners=$(_pm_get_owners 2>/dev/null)
   local repos
@@ -95,63 +95,49 @@ _pm_fuzzy_select() {
   
   # Check for exact owner match first (case-insensitive)
   local exact_owner=""
-  if [ -n "$owners" ]; then
-    while IFS= read -r owner; do
-      if [ -n "$owner" ] && _pm_case_insensitive_match "$owner" "$partial" "exact"; then
+  if [[ -n "$owners" ]]; then
+    local -a owner_array=("${(@f)owners}")
+    for owner in $owner_array; do
+      if [[ -n "$owner" ]] && _pm_case_insensitive_match "$owner" "$partial" "exact"; then
         exact_owner="$owner"
         break
       fi
-    done <<< "$owners"
+    done
   fi
   
-  if [ -n "$exact_owner" ]; then
+  if [[ -n "$exact_owner" ]]; then
     # Exact owner match - show repos for this owner
-    if [ -n "$repos" ]; then
-      while IFS= read -r repo; do
-        if [ -n "$repo" ]; then
+    if [[ -n "$repos" ]]; then
+      local -a repo_array=("${(@f)repos}")
+      for repo in $repo_array; do
+        if [[ -n "$repo" ]]; then
           local repo_owner="${repo%%/*}"
-          if [[ "$repo_owner" == "$exact_owner" ]]; then
-            matches+=("$repo")
-          fi
+          [[ "$repo_owner" == "$exact_owner" ]] && matches+=("$repo")
         fi
-      done <<< "$repos"
+      done
     fi
   else
     # No exact owner match - find partial matches
     
     # Add matching owners
-    if [ -n "$owners" ]; then
-      while IFS= read -r owner; do
-        if [ -n "$owner" ] && _pm_case_insensitive_match "$owner" "$partial" "prefix"; then
-          matches+=("$owner")
-        fi
-      done <<< "$owners"
+    if [[ -n "$owners" ]]; then
+      local -a owner_array=("${(@f)owners}")
+      for owner in $owner_array; do
+        [[ -n "$owner" ]] && _pm_case_insensitive_match "$owner" "$partial" "prefix" && matches+=("$owner")
+      done
     fi
     
     # Add matching repos
-    if [ -n "$repos" ]; then
-      while IFS= read -r repo; do
-        if [ -n "$repo" ] && _pm_case_insensitive_match "$repo" "$partial" "contains"; then
-          matches+=("$repo")
-        fi
-      done <<< "$repos"
+    if [[ -n "$repos" ]]; then
+      local -a repo_array=("${(@f)repos}")
+      for repo in $repo_array; do
+        [[ -n "$repo" ]] && _pm_case_insensitive_match "$repo" "$partial" "contains" && matches+=("$repo")
+      done
     fi
   fi
   
-  # Remove duplicates
-  local unique_matches=()
-  for match in "${matches[@]}"; do
-    local duplicate=false
-    for existing in "${unique_matches[@]}"; do
-      if [[ "$existing" == "$match" ]]; then
-        duplicate=true
-        break
-      fi
-    done
-    if [ "$duplicate" = false ]; then
-      unique_matches+=("$match")
-    fi
-  done
+  # Remove duplicates using zsh unique flag (-U)
+  local -aU unique_matches=("${matches[@]}")
   
   if [ ${#unique_matches[@]} -eq 0 ]; then
     return 1

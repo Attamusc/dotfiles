@@ -68,6 +68,10 @@ class ProjectManager {
         cwd: this.projectsDir
       });
       console.log(`✓ Successfully cloned ${repoName}`);
+      
+      // Invalidate completion cache so new project appears in tab completions
+      this.invalidateCompletionCache();
+      
       return repoPath;
     } catch (error) {
       console.error(`✗ Failed to clone ${repoName}:`, error.message);
@@ -171,6 +175,80 @@ class ProjectManager {
     }
   }
 
+  // Invalidate shell completion cache
+  // Called after operations that change the project list (clone, etc.)
+  invalidateCompletionCache() {
+    const cacheDir = path.join(os.homedir(), '.local/share/pm');
+    const cacheFile = path.join(cacheDir, 'projects.cache');
+    
+    try {
+      fs.unlinkSync(cacheFile);
+    } catch (error) {
+      // Cache didn't exist or couldn't be deleted, not a critical error
+    }
+  }
+
+  // Debug cache status for troubleshooting completion issues
+  async debugCompletion() {
+    const cacheDir = path.join(os.homedir(), '.local/share/pm');
+    const cacheFile = path.join(cacheDir, 'projects.cache');
+    
+    console.log('\nPM Completion Cache Status:');
+    console.log(`  Cache file: ${cacheFile}`);
+    
+    try {
+      const stats = await fs.stat(cacheFile);
+      const content = await fs.readFile(cacheFile, 'utf8');
+      const lines = content.split('\n');
+      
+      // Parse cache contents
+      const cacheTime = lines.find(l => l.startsWith('CACHE_TIME='))?.split('=')[1];
+      const owners = lines.find(l => l.startsWith('OWNERS='))?.split('=')[1];
+      const repos = lines.find(l => l.startsWith('REPOS='))?.split('=')[1];
+      
+      // Calculate cache age
+      const now = Math.floor(Date.now() / 1000);
+      const age = cacheTime ? now - parseInt(cacheTime) : 0;
+      const ageMinutes = Math.floor(age / 60);
+      const ageSeconds = age % 60;
+      const stale = age > 1800; // 30 minutes
+      
+      console.log(`  Exists: yes`);
+      console.log(`  Age: ${ageMinutes} minutes ${ageSeconds} seconds`);
+      console.log(`  Stale: ${stale ? 'yes' : 'no'} (TTL: 30 minutes)`);
+      console.log(`  Size: ${(stats.size / 1024).toFixed(1)} KB`);
+      
+      // Count owners and repos
+      const ownerCount = owners ? owners.split('|').filter(o => o.length > 0).length : 0;
+      const repoCount = repos ? repos.split('|').filter(r => r.length > 0).length : 0;
+      
+      console.log(`  Owners: ${ownerCount}`);
+      console.log(`  Repos: ${repoCount}`);
+      
+      if (cacheTime) {
+        const date = new Date(parseInt(cacheTime) * 1000);
+        console.log(`  Last refresh: ${date.toLocaleString()}`);
+      }
+      
+      console.log('\nCache content preview:');
+      if (ownerCount > 0) {
+        const ownerList = owners.split('|').slice(0, 5);
+        console.log(`  First ${Math.min(5, ownerCount)} owners: ${ownerList.join(', ')}`);
+        if (ownerCount > 5) console.log(`  ... and ${ownerCount - 5} more`);
+      }
+      if (repoCount > 0) {
+        const repoList = repos.split('|').slice(0, 5);
+        console.log(`  First ${Math.min(5, repoCount)} repos: ${repoList.join(', ')}`);
+        if (repoCount > 5) console.log(`  ... and ${repoCount - 5} more`);
+      }
+      
+    } catch (error) {
+      console.log(`  Exists: no`);
+      console.log(`  Status: Cache will be built on next tab completion`);
+      console.log(`  Reason: ${error.message}`);
+    }
+  }
+
   // Search for projects matching a pattern (for completion)
   async searchProjects(pattern) {
     const projects = await this.listProjects();
@@ -210,16 +288,20 @@ Project Manager - A tool for managing GitHub projects locally
 
 Usage:
   pm <owner/repo>        Get or clone a project
-  pm list               List all projects
-  pm update             Update all projects (git pull)
-  pm clean              Show projects for manual cleanup
-  pm complete <partial> Get completion suggestions (for shell integration)
-  pm help               Show this help
+  pm list                List all projects
+  pm update              Update all projects (git pull)
+  pm clean               Show projects for manual cleanup
+  pm cache-refresh       Clear completion cache (force rebuild)
+  pm debug-completion    Show completion cache diagnostics
+  pm complete <partial>  Get completion suggestions (for shell integration)
+  pm help                Show this help
 
 Examples:
   pm attamusc/dotfiles   # Clone or navigate to attamusc/dotfiles
   pm list                # List all local projects
   pm update              # Pull latest changes for all projects
+  pm cache-refresh       # Clear completion cache if it seems stale
+  pm debug-completion    # Debug tab completion issues
 
 Shell Integration:
 Add this function to your shell rc file (.bashrc, .zshrc, etc.):
@@ -234,6 +316,12 @@ function pm() {
     fi
   fi
 }
+
+Tab Completion Cache:
+- Tab completions are cached for 30 minutes for performance
+- Cache is automatically rebuilt when stale or after cloning projects
+- Use 'pm cache-refresh' to manually clear the cache
+- Use 'pm debug-completion' to troubleshoot completion issues
 `);
 }
 
@@ -263,6 +351,16 @@ async function main() {
 
     case 'clean':
       await pm.cleanProjects();
+      break;
+
+    case 'cache-refresh':
+      pm.invalidateCompletionCache();
+      console.log('✓ Completion cache cleared');
+      console.log('  Cache will be rebuilt on next tab completion');
+      break;
+
+    case 'debug-completion':
+      await pm.debugCompletion();
       break;
 
     case 'complete':
