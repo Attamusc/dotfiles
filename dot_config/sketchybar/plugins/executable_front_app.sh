@@ -22,13 +22,13 @@ get_layout_icon() {
   fi
 }
 
-if [ "$NAME" = "front_app" ]; then
-  if [ "$SENDER" = "front_app_switched" ]; then
-    sketchybar --set "$NAME" label="$INFO"
-  fi
-elif [ "$NAME" = "front_app_layout" ]; then
-  if [ "$SENDER" = "front_app_switched" ] || [ "$SENDER" = "aerospace_mode_changed" ]; then
-    ICON=$(get_layout_icon)
-    sketchybar --set "$NAME" icon="$ICON"
-  fi
+# if [ "$NAME" = "front_app" ]; then
+if [ "$SENDER" = "front_app_switched" ]; then
+  sketchybar --set "$NAME" label="$INFO"
 fi
+# elif [ "$NAME" = "front_app_layout" ]; then
+#   if [ "$SENDER" = "front_app_switched" ] || [ "$SENDER" = "aerospace_mode_changed" ]; then
+#     ICON=$(get_layout_icon)
+#     sketchybar --set "$NAME" icon="$ICON"
+#   fi
+# fi

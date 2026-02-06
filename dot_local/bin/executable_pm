@@ -52,6 +52,86 @@ class ProjectManager {
     return null;
   }
 
+  // Default owner for new projects without an explicit owner
+  get defaultOwner() {
+    return 'attamusc';
+  }
+
+  // Parse project name into owner and repo
+  // "my-project" -> { owner: "attamusc", repo: "my-project" }
+  // "other-org/my-project" -> { owner: "other-org", repo: "my-project" }
+  parseProjectName(name) {
+    const parts = name.split('/');
+    if (parts.length === 1) {
+      return { owner: this.defaultOwner, repo: parts[0].toLowerCase() };
+    } else if (parts.length === 2) {
+      return { owner: parts[0].toLowerCase(), repo: parts[1].toLowerCase() };
+    } else {
+      throw new Error('Project name must be "repo" or "owner/repo" format');
+    }
+  }
+
+  // Create a new project with jj + git colocation
+  async createProject(name) {
+    const { owner, repo } = this.parseProjectName(name);
+    const repoName = `${owner}/${repo}`;
+    const repoPath = this.getRepoPath(repoName);
+
+    // Check if project already exists
+    const existingPath = await this.findExistingRepo(repoName);
+    if (existingPath) {
+      console.error(`✗ Project already exists at: ${existingPath}`);
+      console.error(`  Use 'pm ${repoName}' to switch to it`);
+      process.exit(1);
+    }
+
+    // Check if jj is available
+    try {
+      execSync('which jj', { stdio: 'pipe' });
+    } catch (error) {
+      console.error('✗ jj (Jujutsu) is not installed or not in PATH');
+      console.error('  Install it from: https://github.com/martinvonz/jj');
+      process.exit(1);
+    }
+
+    console.log(`Creating new project: ${repoName}`);
+
+    try {
+      // Create the project directory
+      await fs.mkdir(repoPath, { recursive: true });
+      console.log(`✓ Created directory: ${repoPath}`);
+
+      // Create docs/plans directory structure
+      const docsPlansPath = path.join(repoPath, 'docs', 'plans');
+      await fs.mkdir(docsPlansPath, { recursive: true });
+      console.log(`✓ Created docs/plans directory`);
+
+      // Initialize jj with git colocation
+      execSync('jj git init --colocate', {
+        cwd: repoPath,
+        stdio: 'inherit'
+      });
+      console.log(`✓ Initialized jj repository with git colocation`);
+
+      // Invalidate completion cache so new project appears in tab completions
+      this.invalidateCompletionCache();
+
+      console.log(`✓ Successfully created ${repoName}`);
+      console.log(repoPath);
+      return repoPath;
+
+    } catch (error) {
+      // Clean up on failure
+      console.error(`✗ Failed to create project: ${error.message}`);
+      try {
+        await fs.rm(repoPath, { recursive: true, force: true });
+      } catch (cleanupError) {
+        // Ignore cleanup errors
+      }
+      process.exit(1);
+    }
+  }
+
   // Clone repository using git
   async cloneRepo(repoName) {
     const repoPath = this.getRepoPath(repoName);
@@ -288,6 +368,7 @@ Project Manager - A tool for managing GitHub projects locally
 
 Usage:
   pm <owner/repo>        Get or clone a project
+  pm new <name>          Create a new local project with jj + git
   pm list                List all projects
   pm update              Update all projects (git pull)
   pm clean               Show projects for manual cleanup
@@ -298,6 +379,8 @@ Usage:
 
 Examples:
   pm attamusc/dotfiles   # Clone or navigate to attamusc/dotfiles
+  pm new my-project      # Create new project at attamusc/my-project
+  pm new other/project   # Create new project at other/project
   pm list                # List all local projects
   pm update              # Pull latest changes for all projects
   pm cache-refresh       # Clear completion cache if it seems stale
@@ -351,6 +434,15 @@ async function main() {
 
     case 'clean':
       await pm.cleanProjects();
+      break;
+
+    case 'new':
+      if (!args[1]) {
+        console.error('Error: Please provide a project name');
+        console.error('Usage: pm new <name> or pm new <owner/name>');
+        process.exit(1);
+      }
+      await pm.createProject(args[1]);
       break;
 
     case 'cache-refresh':
