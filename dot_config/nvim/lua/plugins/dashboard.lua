@@ -19,7 +19,14 @@ return {
             action = ":lua Snacks.dashboard.pick('live_grep')",
           },
           { icon = " ", key = "s", desc = "Restore Session", section = "session" },
-          { icon = " ", key = "a", desc = "Chat", action = ":CodeCompanionChat Toggle" },
+          {
+            icon = "󱚣",
+            key = "a",
+            desc = "Opencode",
+            action = function()
+              require("sidekick.cli").toggle({ name = "opencode", focus = true })
+            end,
+          },
           { icon = "󰒲 ", key = "l", desc = "Lazy", action = ":Lazy" },
           { icon = " ", key = "x", desc = "Lazy Extras", action = ":LazyExtras" },
           {
