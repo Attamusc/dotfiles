@@ -226,7 +226,7 @@ if [ -n "$BASH_VERSION" ]; then
     local cur="${COMP_WORDS[COMP_CWORD]}"
     
     if [ ${COMP_CWORD} -eq 1 ]; then
-      local commands="help list update clean cache-refresh debug-completion"
+      local commands="help list update clean new cache-refresh debug-completion"
       local all_completions=()
       
       # Add commands
@@ -334,7 +334,7 @@ if [ -n "$ZSH_VERSION" ]; then
     local -a all_matches
     
     # Get basic commands
-    local commands=("help" "list" "update" "clean" "cache-refresh" "debug-completion")
+    local commands=("help" "list" "update" "clean" "new" "cache-refresh" "debug-completion")
     
     # Add commands that match (case-insensitive)
     for cmd in "${commands[@]}"; do
@@ -390,7 +390,7 @@ if [ -n "$ZSH_VERSION" ]; then
       
       for match in "${unique_matches[@]}"; do
         case "$match" in
-          "help"|"list"|"update"|"clean"|"cache-refresh"|"debug-completion"|"complete")
+          "help"|"list"|"update"|"clean"|"new"|"cache-refresh"|"debug-completion"|"complete")
             commands_desc+=("$match:Command")
             ;;
           */*)
@@ -432,7 +432,7 @@ if [ -n "$ZSH_VERSION" ]; then
         local all_options=()
         
         # Add commands
-        all_options+=("help" "list" "update" "clean")
+        all_options+=("help" "list" "update" "clean" "new")
         
         # Add owners (using cached data for speed)
         local owners

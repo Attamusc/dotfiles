@@ -14,9 +14,36 @@ function pm() {
   
   # Handle special commands that don't need directory changing
   case "$1" in
-    "help"|"list"|"update"|"clean"|"")
+    "help"|"list"|"update"|"clean"|"cache-refresh"|"debug-completion"|"")
       node "$pm_script_path" "$@"
       return $?
+      ;;
+    "new")
+      # Handle 'pm new <name>' - create project and cd into it
+      if [ -z "$2" ]; then
+        node "$pm_script_path" "$@"
+        return $?
+      fi
+      local full_output
+      full_output=$(node "$pm_script_path" "$@" 2>&1)
+      local exit_code=$?
+      
+      if [ $exit_code -eq 0 ]; then
+        # Show the output (creation messages)
+        echo "$full_output" | grep -v '^/'
+        # Extract the directory path (last line that looks like a path)
+        local result
+        result=$(echo "$full_output" | grep -E '^/' | tail -n 1)
+        
+        if [ -n "$result" ] && [ -d "$result" ]; then
+          echo "Changing to: $result"
+          cd "$result"
+        fi
+      else
+        echo "$full_output"
+        return $exit_code
+      fi
+      return 0
       ;;
   esac
   

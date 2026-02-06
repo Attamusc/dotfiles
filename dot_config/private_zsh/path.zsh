@@ -20,6 +20,7 @@ export USER_BIN=$HOME/.config/bin
 export GO_HOME=$(brew --prefix go)/libexec
 export CARGO_HOME=$HOME/.cargo
 export GOPATH=$PROJECTS/go-space
+export BUN_HOME=$HOME/.bun
 
 export TMUXIFIER_HOME=~/.tmuxifier
 export HEROKU_HOME=/usr/local/heroku
@@ -27,7 +28,7 @@ export GIT_FUZZY_HOME=$PROJECTS/tools/git-fuzzy
 export OPENCODE_HOME=$HOME/.opencode
 
 # Add our special directories
-export PATH=$USER_BIN:$HEROKU_HOME/bin:$OPENCODE_HOME/bin:$TMUXIFIER_HOME/bin:$GOPATH/bin:$GO_HOME/bin:$GIT_FUZZY_HOME/bin:$PATH
+export PATH=$USER_BIN:$HEROKU_HOME/bin:$OPENCODE_HOME/bin:$BUN_HOME/bin:$TMUXIFIER_HOME/bin:$GOPATH/bin:$GO_HOME/bin:$GIT_FUZZY_HOME/bin:$PATH
 
 # mkdir .git/safe in the root of repositories you trust
 export PATH=".git/safe/../../bin:.git/safe/../../node_modules/.bin:$PATH"
