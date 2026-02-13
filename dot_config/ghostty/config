@@ -11,6 +11,7 @@ theme = Catppuccin Mocha
 
 cursor-style-blink = false
 window-inherit-working-directory = true
+shell-integration-features = no-title
 
 keybind = shift+enter=text:\n
 

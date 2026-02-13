@@ -12,7 +12,6 @@ export FZF_DEFAULT_OPTS='--height 40% --reverse'
 
 export LSCOLORS="exfxcxdxbxegedabagacad"
 export CLICOLOR=true
-export DISABLE_AUTO_TITLE=true
 
 # Add custom functions
 fpath=($ZSH/functions $fpath)

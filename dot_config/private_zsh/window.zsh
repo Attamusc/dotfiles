@@ -1,19 +1,29 @@
-# From http://dotfiles.org/~_why/.zshrc
-# Sets the window title nicely no matter where you are
-function title() {
-  # escape '%' chars in $1, make nonprintables visible
-  a=${(V)1//\%/\%\%}
+# Sets the window/tab title via OSC 2 escape sequences.
+#
+# At a prompt:  full working directory path (with ~ substitution)
+# Running a command:  directory basename + command name
+#
+# Examples:
+#   idle prompt  ->  ~/projects/myapp
+#   running nvim ->  myapp: nvim
 
-  # Truncate command, and join lines.
-  a=$(print -Pn "%40>...>$a" | tr -d "\n")
-
-  case $TERM in
-  screen)
-    print -Pn "\ek$a\e\\" # screen title (in ^A")
-    ;;
-  xterm*|rxvt)
-    print -Pn "\e]2;$3\a" # plain xterm title ($3 for pwd)
-    print -Pn "\e]1;$2\a"
-    ;;
-  esac
+# Set the terminal title using OSC 2
+function _set_title() {
+  print -Pn "\e]2;$1\a"
 }
+
+# Called before each prompt — show the full working directory
+function _title_precmd() {
+  _set_title "%~"
+}
+
+# Called before command execution — show basename of cwd + command
+function _title_preexec() {
+  # $1 is the command string as typed; strip control characters
+  local cmd="${1//[[:cntrl:]]/}"
+  _set_title "%1~: $cmd"
+}
+
+autoload -Uz add-zsh-hook
+add-zsh-hook precmd _title_precmd
+add-zsh-hook preexec _title_preexec
