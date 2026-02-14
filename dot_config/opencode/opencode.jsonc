@@ -6,6 +6,19 @@
       "url": "https://mcp.datadoghq.com/api/unstable/mcp-server/mcp?",
       "headers": {},
       "enabled": true
+    },
+    "kusto": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@azure/mcp@latest",
+        "server",
+        "start",
+        "--mode",
+        "single"
+      ],
+      "enabled": true
     }
   }
 }
