@@ -1,1 +1,1 @@
-if which tmuxifier > /dev/null; then eval "$(tmuxifier init -)"; fi
+if (( $+commands[tmuxifier] )); then eval "$(tmuxifier init -)"; fi

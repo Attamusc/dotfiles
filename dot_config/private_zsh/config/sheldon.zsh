@@ -1,4 +1,4 @@
-# sheldon (shell plugin manager) initiatization
-if which sheldon > /dev/null; then
+# sheldon (shell plugin manager) initialization
+if (( $+commands[sheldon] )); then
   eval "$(sheldon source)"
 fi

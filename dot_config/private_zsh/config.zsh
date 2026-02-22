@@ -7,7 +7,7 @@ export TMUXIFIER_TMUX_OPTS="-2"
 
 export EDITOR="nvim"
 export LESS=iRS
-export FZF_DEFAULT_COMMAND='ag -g ""'
+export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
 export FZF_DEFAULT_OPTS='--height 40% --reverse'
 
 export LSCOLORS="exfxcxdxbxegedabagacad"
@@ -28,8 +28,8 @@ fi
 autoload -U $ZSH/functions/*(:t)
 
 HISTFILE=$HOME/.zsh_history
-HISTSIZE=10000
-SAVEHIST=10000
+HISTSIZE=50000
+SAVEHIST=50000
 
 setopt NO_BG_NICE
 setopt NO_HUP
@@ -44,8 +44,6 @@ setopt CORRECT
 setopt COMPLETE_IN_WORD
 setopt IGNORE_EOF
 
-setopt APPEND_HISTORY
-setopt INC_APPEND_HISTORY SHARE_HISTORY
 setopt HIST_IGNORE_ALL_DUPS
 setopt HIST_REDUCE_BLANKS
 
