@@ -19,9 +19,6 @@ defer = "{% for file in files %}zsh-defer source \"{{ file }}\"\n{% endfor %}"
 [plugins.zsh-defer]
 github = "romkatv/zsh-defer"
 
-[plugins.k]
-github = "supercrabtree/k"
-
 [plugins.zoxide]
 github = "ajeetdsouza/zoxide"
 

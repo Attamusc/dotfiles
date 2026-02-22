@@ -1,2 +1,2 @@
 # Load kubectl completion if it's installed
-if which kubectl > /dev/null; then source <(kubectl completion zsh); fi
+if (( $+commands[kubectl] )); then source <(kubectl completion zsh); fi

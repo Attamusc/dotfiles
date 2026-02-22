@@ -19,7 +19,6 @@ alias oo="open ."
 alias l="eza -lah"
 alias ll="eza -l"
 alias la='eza -a'
-alias kl="k --almost-all"
 
 # Fix blank camera in zoom
 alias zoom-fix="sudo killall VDCAssistant"

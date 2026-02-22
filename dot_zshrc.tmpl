@@ -19,9 +19,19 @@ then
 fi
 
 # initialize autocomplete here, otherwise functions won't be loaded
-autoload -U compinit && compinit
+# only regenerate the compinit dump once per day for faster startup
+autoload -Uz compinit
+if [[ -n $HOME/.zcompdump(#qN.mh+24) ]]; then
+  compinit
+else
+  compinit -C
+fi
 
 # load every completion after autocomplete loads
 for config_file ($ZSH/completions/*.zsh) source $config_file
 
-eval "$(starship init zsh)"
+{{ if not .headless -}}
+if (( $+commands[starship] )); then
+  eval "$(starship init zsh)"
+fi
+{{ end -}}
