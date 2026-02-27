@@ -31,9 +31,10 @@ export BUN_HOME=$HOME/.bun
 export TMUXIFIER_HOME=~/.tmuxifier
 export GIT_FUZZY_HOME=$PROJECTS/tools/git-fuzzy
 export OPENCODE_HOME=$HOME/.opencode
+export OBSIDIAN_HOME=/Applications/Obsidian.app/Contents/MacOS
 
 # Add our special directories
-export PATH=$USER_BIN:$OPENCODE_HOME/bin:$BUN_HOME/bin:$TMUXIFIER_HOME/bin:$GOPATH/bin:$GO_HOME/bin:$GIT_FUZZY_HOME/bin:$PATH
+export PATH=$USER_BIN:$OPENCODE_HOME/bin:$BUN_HOME/bin:$TMUXIFIER_HOME/bin:$GOPATH/bin:$GO_HOME/bin:$GIT_FUZZY_HOME/bin:$OBSIDIAN_HOME:$PATH
 
 # mkdir .git/safe in the root of repositories you trust
 export PATH=".git/safe/../../bin:.git/safe/../../node_modules/.bin:$PATH"
