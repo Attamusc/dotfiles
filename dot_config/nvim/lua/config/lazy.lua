@@ -14,6 +14,10 @@ if not (vim.uv or vim.loop).fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
+-- Point LazyVim's JSON config at the chezmoi source so writes go there
+-- instead of the target (prevents chezmoi auto-apply conflicts)
+vim.g.lazyvim_json = vim.env.HOME .. "/.local/share/chezmoi/dot_config/nvim/lazyvim.json"
+
 require("lazy").setup({
   spec = {
     -- add LazyVim and import its plugins
@@ -30,7 +34,8 @@ require("lazy").setup({
     version = false, -- always use the latest git commit
     -- version = "*", -- try installing the latest stable version for plugins that support semver
   },
-  install = { colorscheme = { "tokyonight", "habamax" } },
+  install = { colorscheme = { "catppuccin", "habamax" } },
+  lockfile = vim.env.HOME .. "/.local/share/chezmoi/dot_config/nvim/lazy-lock.json",
   checker = {
     enabled = true, -- check for plugin updates periodically
     notify = false, -- notify on update

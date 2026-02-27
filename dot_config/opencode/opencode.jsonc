@@ -10,13 +10,23 @@
     "kusto": {
       "type": "local",
       "command": [
-        "npx",
+        "/Users/attamusc/.local/share/mise/shims/npx",
         "-y",
         "@azure/mcp@latest",
         "server",
         "start",
         "--mode",
         "single"
+      ],
+      "enabled": true
+    },
+    "workiq": {
+      "type": "local",
+      "command": [
+        "/Users/attamusc/.local/share/mise/shims/npx",
+        "-y",
+        "@microsoft/workiq",
+        "mcp"
       ],
       "enabled": true
     }
