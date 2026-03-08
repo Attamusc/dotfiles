@@ -253,7 +253,7 @@ leaderModeCheatsheetBehavior = 'always'
 leaderModeThemeStyle = 'breadcrumb'
 screenPreference = 'primary'
 themeIdentifier = 'com.brnbw.tuna.themes.default'
-typingTimeoutDuration = 0.94999999999999996
+typingTimeoutDuration = 3.0
 
 [[smartLinks.entries]]
 enabled = true
