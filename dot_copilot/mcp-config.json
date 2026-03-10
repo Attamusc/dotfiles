@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "datadog": {
+      "type": "http",
+      "url": "https://mcp.datadoghq.com/api/unstable/mcp-server/mcp?",
+      "headers": {},
+      "tools": ["*"]
+    },
+    "kusto": {
+      "type": "local",
+      "command": "npx",
+      "args": ["-y", "@azure/mcp@latest", "server", "start", "--mode", "single"],
+      "env": {},
+      "tools": ["*"]
+    },
+    "workiq": {
+      "type": "local",
+      "command": "npx",
+      "args": ["-y", "@microsoft/workiq", "mcp"],
+      "env": {},
+      "tools": ["*"]
+    }
+  }
+}

@@ -5,7 +5,7 @@ custom = []
 
     [hotkeys.app.activate]
     carbonKeyCode = 49
-    carbonModifiers = 256
+    carbonModifiers = 2304
 
     [hotkeys.app.leaderMode]
     carbonKeyCode = 111
@@ -81,7 +81,7 @@ label = 'Capture'
 [[leaderMode.bindings]]
 key = 'enter'
 label = 'Terminal'
-url = 'tuna://run/path.%252FApplications%252FGhostty.app/Open'
+url = 'tuna://run/path.%252FApplications%252Fcmux.app/Open'
 
 [[leaderMode.bindings]]
 iconPath = 'uiwindow.split.2x1'
