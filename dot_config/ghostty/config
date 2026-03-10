@@ -1,11 +1,13 @@
 font-family =
 font-family = MonoLisa Mild
-
 font-style = Light
 font-style-bold = Regular
 font-style-bold-italic = Regular Italic
-
 font-size = 14
+
+window-padding-balance = true
+window-padding-x = 0
+window-padding-y = 0
 
 theme = Catppuccin Mocha
 
