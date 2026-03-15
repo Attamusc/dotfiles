@@ -1,3 +1,8 @@
+---
+name: app-valet
+description: "Build native macOS desktop apps with HTML/CSS/JS UIs rendered in WKWebView. Use when building or modifying apps in a ~/.valet/apps/<app>/ directory, or when the user mentions App Valet, valet new, valet build, etc. Triggers: 'valet', 'app valet', 'desktop app', 'macOS app', 'WKWebView app', 'native app from HTML'."
+---
+
 # App Valet Skill
 
 Build native macOS desktop apps with HTML/CSS/JS UIs rendered in WKWebView.

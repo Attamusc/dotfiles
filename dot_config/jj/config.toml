@@ -7,9 +7,6 @@ email = "attamusc@github.com"
 [ui]
 default-command = "st"
 
-[revset-aliases]
-'closest_bookmark(to)' = 'heads(::to & bookmarks())'
-
 [remotes.origin]
 auto-track-bookmarks = "glob:*"
 [remotes.upstream]
@@ -27,4 +24,4 @@ push = ["git", "push"]
 r = ["rebase"]
 s = ["squash"]
 si = ["squash", "--interactive"]
-tug = ["bookmark", "move", "--from", "closest_bookmark(@-)", "--to", "@-"]
+tug = ["bookmark", "advance", "--to", "@-"]
