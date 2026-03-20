@@ -199,6 +199,52 @@ Claude reads REDLINING.md or OOXML.md only when the user needs those features.
 - **Avoid deeply nested references** - Keep references one level deep from SKILL.md. All reference files should link directly from SKILL.md.
 - **Structure longer reference files** - For files longer than 100 lines, include a table of contents at the top so Claude can see the full scope when previewing.
 
+## Creating Skills in the Dotfiles Repo
+
+When working in the chezmoi dotfiles repo (`~/.local/share/chezmoi`), skills follow a specific layout depending on whether they should be committed to git or kept local-only.
+
+### Committed Skills (shared across machines)
+
+These are generic, personal skills safe to publish in the dotfiles repo.
+
+```bash
+# Creates in dot_agents/skills/<name>/ (tracked by git, deployed by chezmoi)
+scripts/init_skill.py my-skill --path dot_agents/skills
+```
+
+Target locations after `chezmoi apply`:
+
+| Chezmoi Source | Target |
+|---|---|
+| `dot_agents/skills/<name>/` | `~/.agents/skills/<name>/` |
+| `dot_pi/agent/skills/<name>/` | `~/.pi/agent/skills/<name>/` |
+| `dot_copilot/skills/<name>/` | `~/.copilot/skills/<name>/` |
+
+### Local-Only Skills (not committed)
+
+These are work-specific or sensitive skills that should exist only on this machine. They live in `.local-skills/` which is gitignored, and a `run_after` chezmoi script symlinks them into the target directories.
+
+```bash
+# Creates in .local-skills/agents/<name>/ (gitignored, symlinked by chezmoi script)
+scripts/init_skill.py my-work-skill --local
+```
+
+The `--local` flag automatically targets `.local-skills/agents/` relative to the repo root. To also make the skill available in other agent tool directories, copy or symlink it:
+
+```bash
+cp -R .local-skills/agents/my-work-skill .local-skills/copilot/
+```
+
+After the next `chezmoi apply`, the skill is symlinked into `~/.agents/skills/` (and `~/.copilot/skills/` if copied there).
+
+### How to decide
+
+| Committed | Local-only |
+|---|---|
+| General-purpose, personal skills | Work-specific, employer-related |
+| Nothing sensitive | Contains internal context |
+| Useful across all machines | Only needed on this machine |
+
 ## Skill Creation Process
 
 Skill creation involves these steps:

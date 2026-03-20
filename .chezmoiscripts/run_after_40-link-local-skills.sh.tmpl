@@ -1,0 +1,59 @@
+{{ if ne .chezmoi.os "windows" -}}
+#!/bin/bash
+
+source /tmp/chezmoi-utils.sh
+
+printf "${green}[04 - Local Skills] ${reset}"
+
+set -euo pipefail
+
+CHEZMOI_SOURCE="{{ .chezmoi.sourceDir }}"
+LOCAL_SKILLS_DIR="$CHEZMOI_SOURCE/.local-skills"
+
+if [ ! -d "$LOCAL_SKILLS_DIR" ]; then
+  echo "No .local-skills directory found, skipping"
+  exit 0
+fi
+
+linked=0
+
+link_skills() {
+  local overlay="$1"
+  local target_dir="$2"
+  local overlay_dir="$LOCAL_SKILLS_DIR/$overlay"
+
+  [ -d "$overlay_dir" ] || return 0
+
+  for skill_dir in "$overlay_dir"/*/; do
+    [ -d "$skill_dir" ] || continue
+
+    skill_name="$(basename "$skill_dir")"
+    target="$target_dir/$skill_name"
+
+    # Skip if already correctly symlinked
+    if [ -L "$target" ] && [ "$(readlink "$target")" = "$skill_dir" ]; then
+      continue
+    fi
+
+    # Remove existing target if it's a regular dir or stale symlink
+    if [ -e "$target" ] || [ -L "$target" ]; then
+      rm -rf "$target"
+    fi
+
+    mkdir -p "$target_dir"
+    ln -s "$skill_dir" "$target"
+    echo "  Linked $overlay/$skill_name → $target"
+    linked=$((linked + 1))
+  done
+}
+
+link_skills "agents" "$HOME/.agents/skills"
+link_skills "pi"     "$HOME/.pi/agent/skills"
+link_skills "copilot" "$HOME/.copilot/skills"
+
+if [ "$linked" -eq 0 ]; then
+  echo "All local skills already linked"
+else
+  echo "Linked $linked local skill(s)"
+fi
+{{- end }}

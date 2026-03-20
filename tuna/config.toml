@@ -171,6 +171,10 @@ label = 'Folders'
     key = 'h'
     url = 'tuna://run/path.%252FUsers%252Fattamusc/Open'
 
+    [[leaderMode.bindings.children]]
+    key = 'p'
+    url = 'tuna://run/path.%252FUsers%252Fattamusc%252Fprojects%252Fgithub.com%252FAttamusc/Open'
+
 [[leaderMode.bindings]]
 iconPath = 'sparkles'
 key = 'l'
@@ -246,6 +250,15 @@ label = 'System'
     [[leaderMode.bindings.children]]
     key = 's'
     url = 'tuna://run/url.raycast:%252F%252Fextensions%252Fraycast%252Fsystem%252Fsleep/Open%20URL'
+
+    [[leaderMode.bindings.children]]
+    key = 'd'
+    url = 'tuna://run/url.raycast:%252F%252Fextensions%252Fraycast%252Fsystem%252Fsleep-displays/Open%20URL'
+
+[[leaderMode.bindings]]
+key = 'space'
+label = 'Slack'
+url = 'tuna://run/TunaCore.AllApplicationsCatalog.Slack/Open'
 
 [settings]
 backspaceBehavior = 'deleteCharacters'

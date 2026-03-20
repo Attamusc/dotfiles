@@ -4,13 +4,16 @@ Skill Initializer - Creates a new skill from template
 
 Usage:
     init_skill.py <skill-name> --path <path>
+    init_skill.py <skill-name> --local
 
 Examples:
     init_skill.py my-new-skill --path skills/public
     init_skill.py my-api-helper --path skills/private
     init_skill.py custom-skill --path /custom/location
+    init_skill.py my-work-skill --local
 """
 
+import subprocess
 import sys
 from pathlib import Path
 
@@ -191,6 +194,18 @@ def title_case_skill_name(skill_name):
     return ' '.join(word.capitalize() for word in skill_name.split('-'))
 
 
+def find_git_root():
+    """Find the root of the current git repository."""
+    try:
+        result = subprocess.run(
+            ['git', 'rev-parse', '--show-toplevel'],
+            capture_output=True, text=True, check=True
+        )
+        return Path(result.stdout.strip())
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return None
+
+
 def init_skill(skill_name, path):
     """
     Initialize a new skill directory with template SKILL.md.
@@ -271,8 +286,9 @@ def init_skill(skill_name, path):
 
 
 def main():
-    if len(sys.argv) < 4 or sys.argv[2] != '--path':
+    if len(sys.argv) < 3:
         print("Usage: init_skill.py <skill-name> --path <path>")
+        print("       init_skill.py <skill-name> --local")
         print("\nSkill name requirements:")
         print("  - Hyphen-case identifier (e.g., 'data-analyzer')")
         print("  - Lowercase letters, digits, and hyphens only")
@@ -282,10 +298,23 @@ def main():
         print("  init_skill.py my-new-skill --path skills/public")
         print("  init_skill.py my-api-helper --path skills/private")
         print("  init_skill.py custom-skill --path /custom/location")
+        print("  init_skill.py my-work-skill --local")
         sys.exit(1)
 
     skill_name = sys.argv[1]
-    path = sys.argv[3]
+
+    if sys.argv[2] == '--local':
+        git_root = find_git_root()
+        if git_root is None:
+            print("❌ Error: --local requires being inside a git repository")
+            sys.exit(1)
+        path = str(git_root / '.local-skills' / 'agents')
+    elif sys.argv[2] == '--path' and len(sys.argv) >= 4:
+        path = sys.argv[3]
+    else:
+        print("Usage: init_skill.py <skill-name> --path <path>")
+        print("       init_skill.py <skill-name> --local")
+        sys.exit(1)
 
     print(f"🚀 Initializing skill: {skill_name}")
     print(f"   Location: {path}")

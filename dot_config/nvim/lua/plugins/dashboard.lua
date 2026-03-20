@@ -22,9 +22,9 @@ return {
           {
             icon = "󱚣",
             key = "a",
-            desc = "Opencode",
+            desc = "Pi",
             action = function()
-              require("sidekick.cli").toggle({ name = "opencode", focus = true })
+              require("sidekick.cli").toggle({ name = "pi", focus = true })
             end,
           },
           { icon = "󰒲 ", key = "l", desc = "Lazy", action = ":Lazy" },
