@@ -1,0 +1,7 @@
+{
+  "name": "pi-agent-config",
+  "version": "1.0.0",
+  "description": "Personal pi coding agent configuration — managed by chezmoi",
+  "keywords": ["pi-package"],
+  "license": "MIT"
+}

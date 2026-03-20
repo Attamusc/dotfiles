@@ -1,0 +1,27 @@
+{
+  "mcpServers": {
+    "datadog": {
+      "type": "url",
+      "url": "https://mcp.datadoghq.com/api/unstable/mcp-server/mcp?"
+    },
+    "kusto": {
+      "command": "/Users/attamusc/.local/share/mise/shims/npx",
+      "args": [
+        "-y",
+        "@azure/mcp@latest",
+        "server",
+        "start",
+        "--mode",
+        "single"
+      ]
+    },
+    "workiq": {
+      "command": "/Users/attamusc/.local/share/mise/shims/npx",
+      "args": [
+        "-y",
+        "@microsoft/workiq",
+        "mcp"
+      ]
+    }
+  }
+}

@@ -1,0 +1,41 @@
+{{ if ne .chezmoi.os "windows" -}}
+#!/bin/bash
+
+source /tmp/chezmoi-utils.sh
+
+printf "${green}[03 - Pi Coding Agent Setup] ${reset}"
+{{ if or (lt 0 (atoi (env "SCRIPTS_START_AT"))) (env "SKIP_SETUP_PI") -}}
+echo "Skip pi coding agent setup"
+exit 0
+{{ else }}
+echo "Setting up Pi Coding Agent"
+{{- end }}
+
+set -eufo pipefail
+
+if [ -d /opt/homebrew/bin ]; then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+fi
+
+if [ -d /home/linuxbrew/.linuxbrew/bin ]; then
+  eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+fi
+
+if ! command -v pi >/dev/null 2>&1; then
+  echo "pi not found in PATH, skipping setup"
+  exit 0
+fi
+
+echo "Installing pi packages..."
+pi install || echo "Warning: pi install failed (packages may need manual install)"
+
+# Install npm deps for claude-tool extension
+CLAUDE_TOOL_DIR="$HOME/.pi/agent/extensions/claude-tool"
+if [ -f "$CLAUDE_TOOL_DIR/package.json" ]; then
+  echo "Installing claude-tool extension dependencies..."
+  (cd "$CLAUDE_TOOL_DIR" && npm install --no-fund --no-audit) || echo "Warning: claude-tool npm install failed"
+fi
+
+echo "Pi Coding Agent Setup Complete!"
+echo "Note: Run 'pi /login' to authenticate with Anthropic"
+{{- end }}

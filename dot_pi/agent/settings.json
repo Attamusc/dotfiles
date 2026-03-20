@@ -1,0 +1,29 @@
+{
+  "defaultProvider": "github-copilot",
+  "defaultModel": "claude-opus-4.6",
+  "defaultThinkingLevel": "high",
+  "packages": [
+    "git:github.com/nicobailon/pi-mcp-adapter",
+    {
+      "source": "git:github.com/HazAT/pi-smart-sessions",
+      "extensions": [
+        "+extensions/smart-sessions.ts"
+      ]
+    },
+    {
+      "source": "git:github.com/HazAT/pi-parallel",
+      "extensions": [
+        "+extension/index.ts"
+      ]
+    },
+    "git:github.com/pasky/chrome-cdp-skill",
+    "git:github.com/HazAT/glimpse",
+    "git:github.com/HazAT/pi-interactive-subagents",
+    "git:github.com/HazAT/pi-autoresearch"
+  ],
+  "hideThinkingBlock": false,
+  "extensions": [
+    "+extensions/cmux/index.ts"
+  ],
+  "lastChangelogVersion": "0.61.1"
+}
