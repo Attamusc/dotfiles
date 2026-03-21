@@ -18,9 +18,11 @@ while getopts "s" opt; do
   esac
 done
 
-choice=$(git branch | rg -v "^\*" | tr -d ' ' | fzf \
-  --header="$header [$flags]" \
-  --prompt="Switch branch: " \
+choice=$(git branch | rg -v "^\*" | tr -d ' ' | tv \
+  --no-preview \
+  --no-remote \
+  --input-header="$header [$flags]" \
+  --input-prompt="Switch branch: " \
 )
 r=$?
 

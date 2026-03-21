@@ -1,12 +1,10 @@
 sg() {
-  if [[ $# -eq 0 ]] && command -v fzf >/dev/null 2>&1; then
+  if [[ $# -eq 0 ]] && command -v tv >/dev/null 2>&1; then
     local selected
-    selected=$(_spin_cached_projects | fzf \
-      --height=40% \
-      --layout=reverse \
-      --border \
-      --prompt="project> " \
-      --preview='echo {}')
+    selected=$(_spin_cached_projects | tv \
+      --no-preview \
+      --no-remote \
+      --input-prompt="project> ")
     [[ -n "$selected" ]] && spin go "$selected"
   else
     spin go "$@"
