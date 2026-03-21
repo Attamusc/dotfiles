@@ -5,7 +5,7 @@ return {
     dashboard = {
       preset = {
         keys = {
-          { icon = " ", key = "f", desc = "Find File", action = ":lua Snacks.dashboard.pick('files')" },
+          { icon = " ", key = "f", desc = "Find File", action = ":Tv files" },
           {
             icon = " ",
             key = "r",
@@ -16,7 +16,7 @@ return {
             icon = " ",
             key = "g",
             desc = "Find Text",
-            action = ":lua Snacks.dashboard.pick('live_grep')",
+            action = ":Tv text",
           },
           { icon = " ", key = "s", desc = "Restore Session", section = "session" },
           {
