@@ -9,13 +9,13 @@ window-padding-balance = true
 window-padding-x = 0
 window-padding-y = 0
 
-theme = Catppuccin Mocha
+theme = Rose Pine Moon
 
 cursor-style-blink = false
 window-inherit-working-directory = true
 shell-integration-features = no-title
 
-keybind = shift+enter=text:\n
+keybind = shift+enter=text:\x1b\r
 
 # Pane splits
 keybind = cmd+d=new_split:right
