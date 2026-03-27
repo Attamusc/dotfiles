@@ -1,10 +1,10 @@
 ---
 name: commit
-description: "Read this skill before making git commits"
+description: "Read this skill before making commits"
 license: From mitsuhiko/agent-stuff
 ---
 
-Create a git commit for the current changes using Conventional Commits format with a **polished, highly descriptive** message.
+Create a commit for the current changes using Conventional Commits format with a **polished, highly descriptive** message.
 
 ## Format
 
@@ -16,7 +16,7 @@ Create a git commit for the current changes using Conventional Commits format wi
 
 ## Notes
 
-- Body is **strongly encouraged** — always include one unless the change is trivially obvious (e.g., fixing a typo). The body should explain **what** changed, **why** it changed, the approach taken, and any notable decisions. A reader of `git log` should understand the change without looking at the diff.
+- Body is **strongly encouraged** — always include one unless the change is trivially obvious (e.g., fixing a typo). The body should explain **what** changed, **why** it changed, the approach taken, and any notable decisions. A reader of the log should understand the change without looking at the diff.
 - Do NOT include breaking-change markers or footers.
 - Do NOT add sign-offs (no `Signed-off-by`).
 - Only commit; do NOT push.
@@ -26,7 +26,34 @@ Create a git commit for the current changes using Conventional Commits format wi
   - File paths or globs should limit which files to commit. If files are specified, only stage/commit those unless the user explicitly asks otherwise.
   - If arguments combine files and instructions, honor both.
 
-## Steps
+## VCS Detection
+
+Detect which VCS to use **before** doing anything else:
+
+1. Check if `.jj/` exists in the repo root → use **jj** (even if `.git/` also exists — colocated repos have both)
+2. Otherwise check if `.git/` exists → use **git**
+
+**Prefer jj whenever available.**
+
+## Steps (jj)
+
+Use these steps when the repo has `.jj/`:
+
+1. Infer from the prompt if the user provided specific file paths/globs and/or additional instructions.
+2. Review `jj st` and `jj diff` to understand the current changes (limit to argument-specified files if provided).
+3. (Optional) Run `jj log --no-graph -r 'ancestors(@, 50)' -T 'description.first_line() ++ "\n"'` to see commonly used scopes.
+4. If there are ambiguous extra files, ask the user for clarification before committing.
+5. Commit:
+   - **All changes:** `jj commit -m "<subject>" -m "<body>"` (each `-m` becomes a separate paragraph).
+   - **Specific files only:** `jj commit -m "<subject>" -m "<body>" <filesets>` — this keeps the specified files in the finalized commit and moves the remaining changes into the new working copy.
+
+> **jj mental model:** There is no staging area. The working copy (`@`) IS a commit.
+> `jj commit` describes the current working copy and creates a new empty `@` on top.
+> When file paths are given, only those files stay in the committed change — everything else moves to the new `@`.
+
+## Steps (git)
+
+Use these steps when the repo only has `.git/`:
 
 1. Infer from the prompt if the user provided specific file paths/globs and/or additional instructions.
 2. Review `git status` and `git diff` to understand the current changes (limit to argument-specified files if provided).
