@@ -2,7 +2,7 @@
 name: scout
 description: Fast codebase reconnaissance - gathers context without making changes
 tools: read, bash
-model: github-copilot/claude-haiku-4.6
+model: github-copilot/claude-haiku-4.5
 output: context.md
 ---
 
