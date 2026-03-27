@@ -1,6 +1,29 @@
 {
-  "app.message.followUp": [
-    "alt+enter",
-    "ctrl+j"
+  "tui.editor.cursorUp": [
+    "up",
+    "alt+k"
+  ],
+  "tui.editor.cursorDown": [
+    "down",
+    "alt+j"
+  ],
+  "tui.editor.cursorLeft": [
+    "left",
+    "alt+h"
+  ],
+  "tui.editor.cursorRight": [
+    "right",
+    "alt+l"
+  ],
+  "tui.editor.cursorWordLeft": [
+    "alt+left",
+    "alt+b"
+  ],
+  "tui.editor.cursorWordRight": [
+    "alt+right",
+    "alt+w"
+  ],
+  "tui.input.newLine": [
+    "ctrl+enter"
   ]
 }
