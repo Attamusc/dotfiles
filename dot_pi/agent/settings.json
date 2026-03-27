@@ -19,11 +19,12 @@
     "git:github.com/pasky/chrome-cdp-skill",
     "git:github.com/HazAT/glimpse",
     "git:github.com/HazAT/pi-interactive-subagents",
-    "git:github.com/HazAT/pi-autoresearch"
+    "git:github.com/HazAT/pi-autoresearch",
+    "/Users/attamusc/projects/github.com/Attamusc/pi-cmux"
   ],
+  "extensions": [],
+  "theme": "rose-pine-moon",
   "hideThinkingBlock": false,
-  "extensions": [
-    "+extensions/cmux/index.ts"
-  ],
+  "editorPaddingX": 2,
   "lastChangelogVersion": "0.61.1"
 }
