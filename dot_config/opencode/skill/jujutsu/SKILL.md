@@ -27,7 +27,7 @@ Jujutsu is a modern, Git-compatible version control system. This project uses jj
 | Commit & continue | `jj commit -m "message"` |
 | Update message | `jj describe -m "message"` |
 | New empty commit | `jj new` |
-| Squash into parent | `jj squash` |
+| Squash into parent | `jj squash -m "message"` |
 | Undo last operation | `jj undo` |
 | Fetch from remote | `jj git fetch` |
 | Push to remote | `jj git push` |
@@ -52,6 +52,7 @@ parent commit
 | `git diff` | `jj diff` |
 | `git log` | `jj log` |
 | `git add . && git commit -m "msg"` | `jj commit -m "msg"` |
+| `git commit --amend` | `jj squash -m "message"` |
 | `git push` | `jj git push` |
 | `git pull` | `jj git fetch` then `jj rebase -d main@origin` |
 | `git checkout -b branch` | `jj new main` then `jj bookmark set branch` |

@@ -51,7 +51,7 @@ jj new
 # Make changes... edit files
 
 # When a piece is ready, squash into staging
-jj squash
+jj squash -m "Feature: user authentication"
 
 # Continue working on next piece
 # (working copy is now empty again)
@@ -96,17 +96,20 @@ All descendant commits are automatically rebased.
 
 ### Squashing Commits Together
 
+> **⚠️ Always pass `-m` to `jj squash`** — without it, jj opens an interactive
+> editor which will hang automated / non-interactive sessions.
+
 ```bash
 # Squash current commit into parent
-jj squash
+jj squash -m "combined commit message"
 
 # Squash specific commit into its parent
-jj squash -r <change-id>
+jj squash -r <change-id> -m "combined commit message"
 
 # Squash current into a specific ancestor
-jj squash --into <change-id>
+jj squash --into <change-id> -m "combined commit message"
 
-# Interactive squash (select what to move)
+# Interactive squash (select what to move — requires interactive terminal)
 jj squash -i
 ```
 
@@ -347,7 +350,7 @@ jj git export
 | Goal | Commands |
 |------|----------|
 | Start feature | `jj new main -m "Feature"` |
-| Save progress | `jj commit -m "WIP"` or `jj squash` |
+| Save progress | `jj commit -m "WIP"` or `jj squash -m "message"` |
 | Fix old commit | `jj edit <id>`, fix, `jj new` |
 | Update from main | `jj git fetch && jj rebase -d main@origin` |
 | Push feature | `jj bookmark set X && jj git push --bookmark X` |
