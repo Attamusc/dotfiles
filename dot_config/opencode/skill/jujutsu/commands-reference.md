@@ -52,12 +52,16 @@ Complete reference for jj commands organized by category.
 
 ## Moving and Combining Changes
 
+> **⚠️ Always pass `-m` to `jj squash`** — without it, jj opens an interactive
+> editor for the combined commit message which will hang non-interactive /
+> automated sessions. Use `-m "message"` to provide the description inline.
+
 | Command | Description |
 |---------|-------------|
-| `jj squash` | Move changes from current commit into parent |
-| `jj squash -r <rev>` | Squash specific revision into its parent |
-| `jj squash --into <rev>` | Squash current commit into specified revision |
-| `jj squash -i` | Interactively select what to squash |
+| `jj squash -m "message"` | Move changes from current commit into parent |
+| `jj squash -r <rev> -m "message"` | Squash specific revision into its parent |
+| `jj squash --into <rev> -m "message"` | Squash current commit into specified revision |
+| `jj squash -i` | Interactively select what to squash (requires interactive terminal) |
 | `jj split` | Split current commit into multiple commits |
 | `jj split -r <rev>` | Split specific revision |
 | `jj absorb` | Auto-distribute changes to appropriate prior commits |
