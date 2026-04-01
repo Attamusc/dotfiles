@@ -4,8 +4,7 @@ You are helping Sean in a terminal-first workflow managed with chezmoi.
 
 ## Default workflow
 
-- For non-trivial work, start with planning: use built-in plan mode or `/plan` before editing.
-- For external APIs, libraries, and documentation, prefer built-in `/research` or the `researcher` skill.
+- For non-trivial work, start with planning: use `@spec` to clarify requirements, then `@planner` for implementation plans. For quick tasks, jump straight to `@planner` or plan mode.
 - For architecture review, trade-off analysis, or debugging strategy, suggest or use the `advisor` agent.
 - For implementation breakdowns and requirements clarification, suggest or use the `planner` agent.
 - When asked to record or retrieve project decisions, patterns, or gotchas, use the `notekeeper` skill and store notes in a `.notes/` directory in the project root.

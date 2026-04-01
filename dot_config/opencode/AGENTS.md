@@ -2,9 +2,15 @@
 
 ### Agents (subagents, invoke with @)
 
-- **@planner** — Interviews about requirements and produces a structured
-  `docs/plans/*.md` file. Read-only for source code, never writes code. Uses
-  `claude-opus-4.6`. Use for any non-trivial task before building.
+- **@spec** — Clarifies WHAT to build. Interviews about intent, scope,
+  effort level, and success criteria, then writes a structured spec to
+  `docs/specs/*.md`. Read-only for source code, never plans architecture.
+  Uses `claude-opus-4.6`. Use when requirements are unclear or you want to
+  nail down exactly what "done" looks like before planning.
+- **@planner** — Figures out HOW to build it. Takes a spec (or request),
+  explores approaches, validates design, runs a premortem, and produces a
+  structured plan in `docs/plans/*.md`. Read-only for source code, never
+  writes code. Uses `claude-opus-4.6`. Use for any non-trivial task.
 - **@advisor** — Senior architect for bouncing ideas, reviewing approaches,
   and debugging strategy. Fully read-only, gives direct opinions. Uses
   `claude-opus-4.6`.
@@ -75,9 +81,11 @@ researcher) and extensions (cmux, todos, cost, watchdog, etc.).
 
 ### Workflow Hint
 
-For complex tasks: `/plan` first, review the plan, implement, then `/note`
-to capture learnings. Use `@advisor` when stuck on a design decision. Use
-`/research` when you need to understand an external library or API.
+For complex tasks: use `@spec` to clarify requirements, then `/plan` to
+create an implementation plan, implement, then `/note` to capture learnings.
+For simpler tasks, jump straight to `/plan`. Use `@advisor` when stuck on a
+design decision. Use `/research` when you need to understand an external
+library or API.
 
 When starting in a new codebase: `/init` to create AGENTS.md files, then
 `/init update` periodically as the project evolves.
