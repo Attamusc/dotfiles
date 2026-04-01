@@ -265,45 +265,55 @@ backspaceBehavior = 'deleteCharacters'
 leaderModeCheatsheetBehavior = 'always'
 leaderModeThemeStyle = 'breadcrumb'
 screenPreference = 'primary'
+showResultsImmediatelyOnActivation = true
+switchToTextModeWhenNoResults = true
 themeIdentifier = 'com.brnbw.tuna.themes.default'
 typingTimeoutDuration = 3.0
 
 [[smartLinks.entries]]
 enabled = true
 name = 'bing'
+requiresInput = true
 template = 'https://www.bing.com/search?q={{input}}'
 
 [[smartLinks.entries]]
 enabled = true
 name = 'ddg'
+requiresInput = true
 template = 'https://duckduckgo.com/?q={{input}}'
 
 [[smartLinks.entries]]
 enabled = true
 name = 'g'
+requiresInput = true
 template = 'https://www.google.com/search?q={{input}}'
 
 [[smartLinks.entries]]
 enabled = true
 name = 'gh'
+requiresInput = true
 template = 'https://github.com/search?q={{input}}'
 
 [[smartLinks.entries]]
 enabled = true
 name = 'ghr'
+requiresInput = true
 template = 'https://github.com/{{input|raw}}'
 
 [[smartLinks.entries]]
 enabled = true
 name = 'so'
+requiresInput = true
 template = 'https://stackoverflow.com/search?q={{input}}'
 
 [[smartLinks.entries]]
 enabled = true
 name = 'wiki'
+requiresInput = true
 template = 'https://en.wikipedia.org/wiki/Special:Search?search={{input}}'
 
 [[smartLinks.entries]]
 enabled = true
 name = 'yt'
+requiresInput = true
 template = 'https://www.youtube.com/results?search_query={{input}}'
