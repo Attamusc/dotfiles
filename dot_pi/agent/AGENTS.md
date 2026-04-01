@@ -143,11 +143,12 @@ You can execute slash commands yourself using the `execute_command` tool:
 
 | Agent | Purpose | Model |
 |-------|---------|-------|
+| `spec` | Interactive spec agent — clarifies WHAT to build (intent, requirements, effort level, ISC). Produces a spec artifact. | Opus 4.6 (medium thinking) |
+| `planner` | Interactive planning agent — takes a spec and figures out HOW to build it. Explores approaches, validates design, writes plans, creates todos. | Opus 4.6 (medium thinking) |
 | `scout` | Fast codebase reconnaissance | Haiku (fast, cheap) |
-| `worker` | Implements tasks from todos, makes polished commits | Sonnet 4.6 |
+| `worker` | Implements tasks from todos, makes polished commits. Reports back if a todo is missing examples/references. | Sonnet 4.6 |
 | `reviewer` | Reviews code for quality/security | Opus 4.6 |
 | `researcher` | Deep research using parallel.ai tools + code analysis | Sonnet 4.6 |
-| `planner` | Interactive brainstorming and planning — clarifies requirements, explores approaches | Opus 4.6 (medium thinking) |
 
 #### Subagents
 
@@ -162,13 +163,11 @@ subagent({ name: "Worker", agent: "worker", interactive: false, task: "Implement
 subagent({ name: "Reviewer", agent: "reviewer", interactive: false, task: "Review recent changes..." })
 subagent({ name: "Researcher", agent: "researcher", interactive: false, task: "Research [topic]..." })
 
-// Planner — interactive
-subagent({
-  name: "Planner",
-  agent: "planner",
-  interactive: true,
-  task: "Plan: [description]. Context: [relevant info]"
-})
+// Spec — clarifies WHAT to build (interactive, user collaborates)
+subagent({ name: "📝 Spec", agent: "spec", interactive: true, task: "Define spec: [description]. Context: [relevant info]" })
+
+// Planner — figures out HOW to build it (interactive, receives spec as input)
+subagent({ name: "💬 Planner", agent: "planner", interactive: true, task: "Plan implementation for spec: [spec artifact path]. Context: [relevant info]" })
 
 // Iterate — fork the session for focused work
 subagent({ name: "Iterate", interactive: true, fork: true, task: "Fix the bug where..." })
@@ -183,13 +182,15 @@ parallel_subagents({
 ```
 
 **Slash commands:**
-- `/plan <what to build>` — start the full planning workflow
+- `/plan <what to build>` — start the full planning workflow (investigate → spec → planner → execute → review)
 - `/subagent <agent> <task>` — spawn a subagent by name
 - `/iterate [task]` — fork session into interactive subagent for quick fixes
 
 #### When to Delegate
 
+- **New feature or unclear requirements** → Start with `spec` to clarify WHAT, then `planner` for HOW
 - **Todos ready to execute** → Spawn `scout` then `worker` agents
+- **Worker reports missing context** → Provide the missing examples/references, update the todo, re-spawn the worker
 - **Code review needed** → Delegate to `reviewer`
 - **Need context first** → Start with `scout`
 - **Web research or external info needed** → Delegate to `researcher`

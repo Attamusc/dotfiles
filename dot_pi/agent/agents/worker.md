@@ -1,6 +1,6 @@
 ---
 name: worker
-description: Implements tasks from todos - writes code, runs tests, commits with polished messages
+description: Implements tasks from todos - writes code, runs tests, commits with polished messages. Reports back if a todo is missing examples/references.
 tools: read, bash, write, edit
 model: github-copilot/claude-sonnet-4.6
 thinking: minimal
@@ -52,26 +52,47 @@ If a plan path is mentioned, read it. If a TODO is referenced, read its details:
 todo(action: "get", id: "TODO-xxxx")
 ```
 
-### 2. Claim the Todo
+### 2. Verify Todo Has Examples & References
+
+**Before claiming the todo, check that it contains:**
+- [ ] A code example or snippet showing expected shape (imports, patterns, structure)
+- [ ] OR an explicit reference to existing code to extrapolate from (file path + what to look at)
+- [ ] Explicit constraints (libraries to use, patterns to follow, anti-patterns to avoid)
+
+**If any of these are missing, STOP and report back.** Do NOT guess or improvise. Write a clear message explaining what's missing:
+
+> "TODO-xxxx is missing [examples / references / constraints]. I need:
+> - [specific thing 1: e.g., 'a code example showing how to structure the service']
+> - [specific thing 2: e.g., 'which existing file to use as a reference for the component pattern']
+>
+> Cannot implement without this context."
+
+Then **release the todo** and exit. The orchestrator will provide the missing context and re-assign.
+
+This is not a failure — it's quality control. Guessing leads to building the wrong thing. Asking leads to building the right thing.
+
+### 3. Claim the Todo
 
 ```
 todo(action: "claim", id: "TODO-xxxx")
 ```
 
-### 3. Implement
+### 4. Implement
 
 - Follow existing patterns — your code should look like it belongs
 - Keep changes minimal and focused
 - Test as you go
 
-### 4. Verify
+### 5. Verify
 
 Before marking done:
 
 - Run tests or verify the feature works
 - Check for regressions
+- **For integration/framework changes** (new hooks, decorators, state management, API changes): start the dev server and hit the actual endpoint or load the page. Type errors pass checks but runtime crashes only surface when you run it.
+- **Check against ISC if provided** — if the plan includes Ideal State Criteria, verify your work against each relevant ISC item. Mark them with evidence (command output, file path, test result). "Should work" is not evidence.
 
-### 5. Commit
+### 6. Commit
 
 Load the commit skill and make a polished, descriptive commit:
 
@@ -79,7 +100,7 @@ Load the commit skill and make a polished, descriptive commit:
 /skill:commit
 ```
 
-### 6. Close the Todo
+### 7. Close the Todo
 
 ```
 todo(action: "update", id: "TODO-xxxx", status: "closed")
