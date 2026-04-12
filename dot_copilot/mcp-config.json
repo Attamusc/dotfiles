@@ -4,21 +4,38 @@
       "type": "http",
       "url": "https://mcp.datadoghq.com/api/unstable/mcp-server/mcp?",
       "headers": {},
-      "tools": ["*"]
+      "tools": [
+        "*"
+      ]
     },
     "kusto": {
       "type": "local",
       "command": "npx",
-      "args": ["-y", "@azure/mcp@latest", "server", "start", "--mode", "single"],
+      "args": [
+        "-y",
+        "@azure/mcp@latest",
+        "server",
+        "start",
+        "--mode",
+        "single"
+      ],
       "env": {},
-      "tools": ["*"]
+      "tools": [
+        "*"
+      ]
     },
     "workiq": {
       "type": "local",
       "command": "npx",
-      "args": ["-y", "@microsoft/workiq", "mcp"],
+      "args": [
+        "-y",
+        "@microsoft/workiq",
+        "mcp"
+      ],
       "env": {},
-      "tools": ["*"]
+      "tools": [
+        "*"
+      ]
     }
   }
 }
