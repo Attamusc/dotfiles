@@ -1,1 +1,0 @@
-if which bob > /dev/null; then eval "$(bob complete zsh)"; fi

@@ -10,16 +10,7 @@ export PROJECTS=$HOME/projects
 # source core zsh configuration files
 for config_file ($ZSH/*.zsh) source $config_file
 
-# source zsh config for tools, etc.
-for config_file ($ZSH/config/*.zsh) source $config_file
-
-if [[ -a ~/.localrc ]]
-then
-  source ~/.localrc
-fi
-
-# initialize autocomplete here, otherwise functions won't be loaded
-# only regenerate the compinit dump once per day for faster startup
+# initialize autocomplete — must run before tool inits that call compdef
 autoload -Uz compinit
 if [[ -n $HOME/.zcompdump(#qN.mh+24) ]]; then
   compinit
@@ -27,8 +18,13 @@ else
   compinit -C
 fi
 
-# load every completion after autocomplete loads
-for config_file ($ZSH/completions/*.zsh) source $config_file
+# source zsh config for tools, completions, etc.
+for config_file ($ZSH/config/*.zsh) source $config_file
+
+if [[ -a ~/.localrc ]]
+then
+  source ~/.localrc
+fi
 
 {{ if not .headless -}}
 if (( $+commands[starship] )); then
