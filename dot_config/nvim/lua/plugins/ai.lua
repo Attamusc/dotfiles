@@ -13,4 +13,5 @@ return {
       },
     },
   },
+  { "carderne/pi-nvim" },
 }

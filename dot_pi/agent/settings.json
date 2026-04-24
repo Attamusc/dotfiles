@@ -10,13 +10,16 @@
         "+extension/index.ts"
       ]
     },
-    "git:github.com/pasky/chrome-cdp-skill",
     "git:github.com/HazAT/glimpse",
     "git:github.com/HazAT/pi-interactive-subagents",
     "git:github.com/HazAT/pi-autoresearch",
+    "git:github.com/carderne/pi-nvim",
     "/Users/attamusc/projects/github.com/Attamusc/pi-cmux"
   ],
-  "extensions": ["+extensions/smart-sessions/index.ts", "/Users/attamusc/projects/github.com/Attamusc/pi-television"],
+  "extensions": [
+    "+extensions/smart-sessions/index.ts",
+    "/Users/attamusc/projects/github.com/Attamusc/pi-television"
+  ],
   "theme": "rose-pine-moon",
   "hideThinkingBlock": false,
   "editorPaddingX": 2,
