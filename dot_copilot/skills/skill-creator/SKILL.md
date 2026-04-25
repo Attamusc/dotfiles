@@ -199,9 +199,13 @@ Claude reads REDLINING.md or OOXML.md only when the user needs those features.
 - **Avoid deeply nested references** - Keep references one level deep from SKILL.md. All reference files should link directly from SKILL.md.
 - **Structure longer reference files** - For files longer than 100 lines, include a table of contents at the top so Claude can see the full scope when previewing.
 
-## Creating Skills in the Dotfiles Repo
+## Creating and Editing Skills
 
-When working in the chezmoi dotfiles repo (`~/.local/share/chezmoi`), skills follow a specific layout depending on whether they should be committed to git or kept local-only.
+**Always create and edit skills in the chezmoi source directory** (`~/.local/share/chezmoi`), never directly in the home directory targets (`~/.agents/`, `~/.pi/`, `~/.copilot/`). Chezmoi manages these files — edits made directly in the home directory will be overwritten on the next `chezmoi apply` and won't be tracked in git.
+
+After making changes in the chezmoi source, run `chezmoi apply` to deploy them to the home directory.
+
+Skills follow a specific layout depending on whether they should be committed to git or kept local-only.
 
 ### Committed Skills (shared across machines)
 
@@ -219,6 +223,8 @@ Target locations after `chezmoi apply`:
 | `dot_agents/skills/<name>/` | `~/.agents/skills/<name>/` |
 | `dot_pi/agent/skills/<name>/` | `~/.pi/agent/skills/<name>/` |
 | `dot_copilot/skills/<name>/` | `~/.copilot/skills/<name>/` |
+
+When editing an existing skill, find and edit the source file under `~/.local/share/chezmoi/dot_agents/skills/` (or `dot_pi/`, `dot_copilot/`), not the deployed copy under `~/`.
 
 ### Local-Only Skills (not committed)
 
