@@ -121,9 +121,24 @@ cat package.json 2>/dev/null | head -30
 
 **If you need deeper upfront context** (unfamiliar codebase, complex existing system), spawn a scout now. See the **Delegation** section.
 
+**Check for prior context artifacts:**
+
+Look for grill session artifacts and domain documentation that may have been produced before this planning session:
+
+```bash
+find . -path "*/grill/*.md" -not -path "*/node_modules/*" 2>/dev/null
+ls CONTEXT.md CONTEXT-MAP.md docs/adr/ 2>/dev/null
+```
+
+If your task references a grill artifact or spec, read those first — they contain decisions already resolved. Don't re-litigate what's been decided. If a decision from a grill session or spec conflicts with something you discover during planning, surface the conflict to the user rather than silently overriding it.
+
+If `CONTEXT.md` or `docs/adr/` exist, use them as ground truth for domain terminology throughout the session. If you introduce a term that conflicts with the glossary, flag it.
+
 **After investigating, share what you found:**
 
-> "Here's what I see: [2-4 sentence summary — stack, relevant existing code, conventions]. Let me make sure I understand what you want to build."
+> "Here's what I see: [2-4 sentence summary — stack, relevant existing code, conventions]."
+> *(If prior artifacts found)* "I found [grill session / spec / domain docs] at `[paths]` — I'll build on those decisions."
+> "Let me make sure I understand what you want to build."
 >
 > [END — wait]
 
@@ -394,6 +409,13 @@ As a [who], I want [what], so that [why].
 
 ### Anti-Criteria
 - [ ] ISC-A-1: ...
+
+## Prior Decisions
+[Reference any grill sessions, specs, or domain documentation that informed this plan. Summarize key decisions carried forward. Omit this section if none exist.]
+- **Spec:** `[path]` | **Grill artifact:** `[path]`
+- **Domain docs:** `[CONTEXT.md / ADR paths if applicable]`
+- [Key decision 1 carried forward]
+- [Key decision 2 carried forward]
 
 ## Approach
 [High-level technical approach — which option we picked and why]
