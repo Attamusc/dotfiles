@@ -223,6 +223,7 @@ Skills provide specialized instructions for specific tasks. Load them when the c
 | Researching external docs or libraries | `researcher` |
 | Verifying implementation against integration contracts | `verify-integration` |
 | Automating browser interactions | `playwright-cli` |
+| Handing off the conversation to a fresh agent/session | `handoff` |
 
 **The `commit` skill is mandatory for every single commit.**
 
