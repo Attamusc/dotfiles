@@ -25,5 +25,8 @@
   ],
   "tui.input.newLine": [
     "ctrl+enter"
+  ],
+  "app.models.clearAll": [
+    "ctrl+shift+l"
   ]
 }
