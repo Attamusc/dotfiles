@@ -69,6 +69,12 @@ When domain relationships are being discussed, stress-test them with specific sc
 
 When the user states how something works, check whether the code agrees. If you find a contradiction, surface it: "Your code cancels entire Orders, but you just said partial cancellation is possible — which is right?"
 
+### Surface integration contracts
+
+When the discussion touches an integration surface — an API being consumed, a schema being conformed to, an event format being produced — ask where the source of truth lives. "You're saying the task API accepts these fields — is that defined in a Zod schema? A types file? Where would I look to verify that?"
+
+Capture the answer in the decisions artifact under a dedicated section or inline with the relevant decision. This gives the planner concrete source-of-truth references to ground its claims against.
+
 ### Update CONTEXT.md inline
 
 When a term is resolved, update `CONTEXT.md` right there. Don't batch these up — capture them as they happen. Use the format in [CONTEXT-FORMAT.md](./CONTEXT-FORMAT.md).

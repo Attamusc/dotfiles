@@ -143,10 +143,11 @@ You can execute slash commands yourself using the `execute_command` tool:
 
 | Agent | Purpose | Model |
 |-------|---------|-------|
-| `planner` | Interactive planning agent — clarifies WHAT to build and figures out HOW. Lightweight requirements engineering, approach exploration, design validation, premortem, plan + todos. | Opus 4.6 (medium thinking) |
+| `planner` | Interactive planning agent — clarifies WHAT to build and figures out HOW. Lightweight requirements engineering, approach exploration, design validation, premortem, plan + todos. | Opus 4.7 (medium thinking) |
 | `scout` | Fast codebase reconnaissance | Haiku (fast, cheap) |
 | `worker` | Implements tasks from todos, makes polished commits. Reports back if a todo is missing examples/references. | Sonnet 4.6 |
-| `reviewer` | Reviews code for quality/security | Opus 4.6 |
+| `reviewer` | Reviews code for quality/security | Opus 4.7 |
+| `validator` | Adversarial verification — checks implementation against declared integration contracts | GPT 5.5 |
 | `researcher` | Deep research using parallel.ai tools + code analysis | Sonnet 4.6 |
 
 #### Subagents
@@ -190,6 +191,7 @@ parallel_subagents({
 - **Todos ready to execute** → Spawn `scout` then `worker` agents
 - **Worker reports missing context** → Provide the missing examples/references, update the todo, re-spawn the worker
 - **Code review needed** → Delegate to `reviewer`
+- **Plan declares integration contracts** → Spawn `validator` after worker finishes
 - **Need context first** → Start with `scout`
 - **Web research or external info needed** → Delegate to `researcher`
 
@@ -219,6 +221,7 @@ Skills provide specialized instructions for specific tasks. Load them when the c
 | Running processes in separate terminals | `cmux` |
 | Iterating on a PR until CI passes | `iterate-pr` |
 | Researching external docs or libraries | `researcher` |
+| Verifying implementation against integration contracts | `verify-integration` |
 | Automating browser interactions | `playwright-cli` |
 
 **The `commit` skill is mandatory for every single commit.**
