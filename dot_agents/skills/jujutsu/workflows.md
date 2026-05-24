@@ -115,13 +115,29 @@ jj squash -i
 
 ### Splitting a Commit
 
-```bash
-# Split current commit
-jj split
+> **⚠️ `jj split` is interactive** — it opens a diff editor. Never use it in
+> automated / non-interactive sessions. Instead, use the restore-and-rebase
+> pattern below.
 
-# Opens editor to select which changes go in first commit
-# Remaining changes stay in second commit
+**Non-interactive split pattern** (use this instead of `jj split`):
+
+```bash
+# Starting state: commit X has files A, B, C and you want A,B in one commit and C in another
+
+# 1. Create a new commit before X
+jj new <X-parent> -m "first half"
+
+# 2. Restore the files you want from X into the new commit
+jj restore --from <X-change-id> path/to/fileA path/to/fileB
+
+# 3. Rebase X on top of the new commit
+jj rebase -r <X-change-id> --after @
+
+# 4. Describe the leftover commit
+jj describe <X-change-id> -m "second half"
 ```
+
+This achieves the same result as `jj split` without any interactive prompts.
 
 ### Reordering Commits
 

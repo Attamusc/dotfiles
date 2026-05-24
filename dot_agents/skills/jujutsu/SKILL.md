@@ -60,6 +60,22 @@ parent commit
 | `git stash` | `jj new` (just start new commit) |
 | `git blame` | `jj file annotate` |
 
+## ⚠️ Interactive Commands — AVOID
+
+These commands open an interactive editor or TUI and **will hang** in non-interactive sessions:
+
+| Command | Problem | Non-interactive alternative |
+|---------|---------|---------------------------|
+| `jj split` | Opens diff editor | Use restore-and-rebase pattern (see workflows.md) |
+| `jj split -i` | Opens interactive selector | Same as above |
+| `jj squash -i` | Opens interactive selector | Use `jj squash` with file paths |
+| `jj resolve` | Opens merge tool | Edit conflict markers directly, then snapshot |
+| `jj squash` (no `-m`) | Opens editor for message | **Always pass `-m`** |
+| `jj commit` (no `-m`) | Opens editor for message | **Always pass `-m`** |
+| `jj describe` (no `-m`) | Opens editor for message | **Always pass `-m`** |
+
+**Rule: Always pass `-m` to any command that takes a message. Never use `-i` or bare `split`/`resolve`.**
+
 ## Additional References
 
 - [commands-reference.md](commands-reference.md) - Complete command reference
