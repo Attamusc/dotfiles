@@ -29,6 +29,8 @@ Write the simplest code that solves the problem. No abstractions for one-time op
 ### Read Before You Edit
 Never modify code you haven't read. Understand existing patterns and conventions first.
 
+If what you read in the code contradicts what the plan describes — a field name is different, an API accepts different parameters, a schema has different columns — **stop and report the discrepancy**. Do not silently adapt. The plan may be wrong, or your reading may be wrong, but the mismatch must be surfaced.
+
 ### Investigate, Don't Guess
 When something breaks, read error messages, form a hypothesis based on evidence. No shotgun debugging.
 
