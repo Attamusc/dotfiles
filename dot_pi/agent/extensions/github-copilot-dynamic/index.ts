@@ -20,6 +20,11 @@
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import {
+  githubCopilotOAuthProvider,
+  getGitHubCopilotBaseUrl,
+  refreshGitHubCopilotToken,
+} from "@earendil-works/pi-ai/oauth";
 import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -39,11 +44,13 @@ interface AuthEntry {
   access: string;
   refresh: string;
   expires: number;
+  enterpriseUrl?: string;
 }
 
 interface CopilotAuth {
   jwt: string;
   baseUrl: string;
+  enterpriseUrl?: string;
 }
 
 interface RawModel {
@@ -57,32 +64,6 @@ interface RawModel {
       max_output_tokens?: number;
     };
   };
-}
-
-function getBaseUrlFromToken(token: string): string {
-  const match = token.match(/proxy-ep=([^;]+)/);
-  if (!match) return "https://api.individual.githubcopilot.com";
-  const proxyHost = match[1];
-  return `https://${proxyHost.replace(/^proxy\./, "api.")}`;
-}
-
-/** Exchange a GitHub OAuth refresh token for a Copilot JWT. */
-async function refreshCopilotJwt(refreshToken: string): Promise<string> {
-  const response = await fetch("https://api.github.com/copilot_internal/v2/token", {
-    headers: {
-      Accept: "application/json",
-      Authorization: `Bearer ${refreshToken}`,
-      ...COPILOT_HEADERS,
-    },
-  });
-  if (!response.ok) {
-    throw new Error(`JWT refresh returned HTTP ${response.status}`);
-  }
-  const body = (await response.json()) as { token?: string };
-  if (typeof body.token !== "string") {
-    throw new Error("JWT refresh response missing .token field");
-  }
-  return body.token;
 }
 
 async function readCopilotAuth(): Promise<CopilotAuth | null> {
@@ -112,14 +93,21 @@ async function readCopilotAuth(): Promise<CopilotAuth | null> {
 
   // Use cached Copilot JWT if still valid.
   if (entry.expires > Date.now()) {
-    const jwt = entry.access;
-    return { jwt, baseUrl: getBaseUrlFromToken(jwt) };
+    return {
+      jwt: entry.access,
+      baseUrl: getGitHubCopilotBaseUrl(entry.access, entry.enterpriseUrl),
+      enterpriseUrl: entry.enterpriseUrl,
+    };
   }
 
   // JWT expired — exchange refresh token for a new Copilot JWT.
   try {
-    const jwt = await refreshCopilotJwt(entry.refresh);
-    return { jwt, baseUrl: getBaseUrlFromToken(jwt) };
+    const refreshed = await refreshGitHubCopilotToken(entry.refresh, entry.enterpriseUrl);
+    return {
+      jwt: refreshed.access,
+      baseUrl: getGitHubCopilotBaseUrl(refreshed.access, entry.enterpriseUrl),
+      enterpriseUrl: entry.enterpriseUrl,
+    };
   } catch (err: unknown) {
     console.error(`${TAG} JWT refresh failed: ${err instanceof Error ? err.message : String(err)}`);
     return null;
@@ -172,12 +160,11 @@ function isModelEligible(model: RawModel): boolean {
   return true;
 }
 
-function toPiModel(raw: RawModel, baseUrl: string) {
+function toPiModel(raw: RawModel) {
   return {
     id: raw.id,
     name: raw.name ?? raw.id,
     api: "anthropic-messages" as const,
-    baseUrl,
     headers: { ...COPILOT_HEADERS },
     compat: { supportsEagerToolInputStreaming: false },
     reasoning: true,
@@ -202,8 +189,17 @@ export default async function (pi: ExtensionAPI) {
       return;
     }
 
-    const models = eligible.map((m) => toPiModel(m, auth.baseUrl));
-    pi.registerProvider("github-copilot", { models });
+    const models = eligible.map(toPiModel);
+    // baseUrl + oauth + api are required by pi's registerProvider validation
+    // when `models` is set. Re-registering the same OAuth provider is
+    // idempotent (keyed by id), and oauth.modifyModels rewrites each model's
+    // baseUrl from the live JWT after our models are pushed.
+    pi.registerProvider("github-copilot", {
+      baseUrl: auth.baseUrl,
+      api: "anthropic-messages",
+      oauth: githubCopilotOAuthProvider,
+      models,
+    });
   } catch (err: unknown) {
     console.error(`${TAG} unexpected error: ${err instanceof Error ? err.message : String(err)}`);
   }
