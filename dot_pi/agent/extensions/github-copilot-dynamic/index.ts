@@ -160,13 +160,30 @@ function isModelEligible(model: RawModel): boolean {
   return true;
 }
 
+/** Derive compat flags from model id to match pi-ai's static registry. */
+function getCompat(id: string): Record<string, boolean> {
+  // Adaptive-thinking models: claude-opus-4.6+, claude-sonnet-4.6+
+  if (/^claude-(opus|sonnet)-4\.[6-9]/.test(id)) {
+    return { forceAdaptiveThinking: true };
+  }
+  // Gemini / GPT / Grok: no streaming, no developer role, no reasoning effort
+  if (/^(gemini|gpt-4|grok)/.test(id)) {
+    return { supportsStore: false, supportsDeveloperRole: false, supportsReasoningEffort: false };
+  }
+  // Haiku / Sonnet 4.5: eager tool streaming off
+  if (/^claude-(haiku|sonnet)-4\.5/.test(id)) {
+    return { supportsEagerToolInputStreaming: false };
+  }
+  return {};
+}
+
 function toPiModel(raw: RawModel) {
   return {
     id: raw.id,
     name: raw.name ?? raw.id,
     api: "anthropic-messages" as const,
     headers: { ...COPILOT_HEADERS },
-    compat: { supportsEagerToolInputStreaming: false },
+    compat: getCompat(raw.id),
     reasoning: true,
     input: ["text", "image"] as ("text" | "image")[],
     cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
