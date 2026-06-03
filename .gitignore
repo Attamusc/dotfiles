@@ -1,3 +1,8 @@
 .vscode
 .local-skills/
 .data-private/
+
+# Runtime artifacts created by external tools running in this directory.
+# Not chezmoi source.
+/.pi/
+/.opencode/
