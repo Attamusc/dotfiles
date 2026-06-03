@@ -26,6 +26,20 @@ Only include these when they add genuine value. Most ADRs won't need them.
 
 Scan `docs/adr/` for the highest existing number and increment by one.
 
+## Supersession
+
+Sequential numbering is retained for superseding ADRs — they get the next number, not the number of the one they replace.
+
+Never edit an ADR in place once it has been accepted. If a decision changes, write a new ADR that supersedes the old one.
+
+When superseding:
+- The new ADR's `Status` field is required and reads: `Status: Accepted (supersedes ADR-NNNN)`.
+- The old ADR's first line is updated to: `Status: Superseded by ADR-NNNN`.
+
+That single-line status update is the **only** permitted modification to an existing ADR. The body is never edited.
+
+Rationale: ADRs are a historical record of *why* a constraint existed at a point in time. Editing the body destroys that record — a future reader loses the trail of how the design evolved.
+
 ## When to offer an ADR
 
 All three of these must be true:
