@@ -7,7 +7,7 @@ argument-hint: "<what to explore>"
 
 You are running the **BBQ workflow** — a grill-with-docs session that keeps asking until decisions are clear enough to hand off to the full planning loop.
 
-**Announce at start:** "🔥 Starting BBQ — I'll grill this topic until we have clear decisions, then we'll roll straight into planning and execution."
+**Announce at start:** "🔥 Starting BBQ — I'll grill this topic until we have clear decisions, run an adversarial review on those decisions, then roll into planning and execution (pausing if the decisions don't survive review)."
 
 ---
 
@@ -19,6 +19,11 @@ Phase 1: Quick Assessment (main session — 30s orientation)
 Phase 2: Scout (autonomous — codebase context for the grill)
     ↓
 Phase 3: Grill Session (interactive — resolve all decisions)
+    ↓
+Phase 3.5: Adversarial Review of Decisions  ← NEW
+    ↓
+    SURVIVES / WITH CAVEATS → continue
+    WOUNDED / DOES NOT SURVIVE → ⏸️ PAUSE
     ↓
 Phase 4: Transition to /plan (with grill artifact as input)
 ```
@@ -121,9 +126,62 @@ Then tell the user: "Grill complete. Exit this session (Ctrl+D) to start the pla
 
 ---
 
+## Phase 3.5: Adversarial Review of Decisions
+
+Decisions are too consequential to silently propagate into planning. AR-1 catches unsupported assumptions, logical gaps, and missing alternatives before they corrupt the plan — when they're cheapest to fix. This phase runs autonomously after the grill session closes and before handing off to `/plan`. Spec: D9 of `~/.pi/agent/grill/2026-06-03-adversarial-reviewer.md`.
+
+1. **Note the grill artifact path** from the Phase 3 output (e.g. `grill/<date>-<topic>.md`).
+
+2. **Spawn the adversarial reviewer** in research mode, scoped to the decisions:
+
+```typescript
+subagent({
+  name: "AR-1: BBQ $@",
+  agent: "adversarial-reviewer",
+  interactive: false,
+  task: `Mode: research
+Target: <grill-artifact-path>
+Scope: decisions
+Flags: steelman=false emit_json=false`,
+});
+```
+
+3. **Wait for AR-1 to finish.** It writes its review artifact to `~/.pi/agent/reviews/<slug>-<timestamp>.md` and prints the path.
+
+4. **Read the verdict** from the artifact header (first line under the title).
+
+5. **Branch on verdict:**
+
+   - **`SURVIVES`** → Proceed to Phase 4 with no interruption. Print:
+     ```
+     ✅ Decisions survived adversarial review. Proceeding to /plan.
+     ```
+
+   - **`SURVIVES WITH CAVEATS`** → Append the AR-1 caveats to the grill artifact as a "Known Constraints (from AR-1)" section, then proceed to Phase 4 automatically. Print:
+     ```
+     ⚠️ Decisions survived with caveats. Caveats folded into <grill-artifact-path>. Proceeding to /plan.
+     ```
+
+   - **`WOUNDED`** or **`DOES NOT SURVIVE`** → **PAUSE. Do NOT transition to /plan.** Print:
+     ```
+     ⏸️ BBQ PAUSED — Decisions did not survive adversarial review.
+
+     Verdict: <WOUNDED|DOES NOT SURVIVE>
+     Review artifact: <path>
+     Grill artifact: <grill-artifact-path>
+
+     Next steps:
+     1. Read the review at <path>
+     2. Address Tier-1 objections by updating <grill-artifact-path>
+     3. Re-run AR-1 manually: `/review <grill-artifact-path> --scope decisions`
+     4. When the verdict is SURVIVES or SURVIVES WITH CAVEATS, manually invoke /plan with the updated grill artifact
+     ```
+
+---
+
 ## Phase 4: Transition to Plan
 
-Once the grill session closes and produces its artifact:
+Once Phase 3.5 has returned SURVIVES or SURVIVES WITH CAVEATS and produces its artifact:
 
 1. Read the grill artifact
 2. Invoke `/plan` with the topic and a reference to the grill artifact:

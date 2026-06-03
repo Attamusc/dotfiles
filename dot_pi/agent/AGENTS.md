@@ -149,6 +149,7 @@ You can execute slash commands yourself using the `execute_command` tool:
 | `reviewer` | Reviews code for quality/security | Opus 4.7 |
 | `validator` | Adversarial verification — checks implementation against declared integration contracts | GPT 5.5 |
 | `researcher` | Deep research using parallel.ai tools + code analysis | Sonnet 4.6 |
+| `adversarial-reviewer` | Adversarial review of changes or research positions — proves the target wrong with tiered, well-cited evidence. Posture is structural, no balanced mode. | Opus 4.7 (medium thinking) |
 
 #### Subagents
 
@@ -180,7 +181,8 @@ parallel_subagents({
 
 **Slash commands:**
 - `/plan <what to build>` — start the full planning workflow (investigate → scout → planner → execute → review)
-- `/bbq <what to explore>` — start a grill-with-docs session that produces decisions, then flows into `/plan`
+- `/bbq <what to explore>` — start a grill-with-docs session that produces decisions, runs adversarial review on those decisions (Phase 3.5), then flows into `/plan`
+- `/review [args]` — adversarial review of a change, PR, file, URL, or raw claim. See `~/.pi/agent/prompts/review.md` for full syntax. Output lands in `~/.pi/agent/reviews/`.
 - `/subagent <agent> <task>` — spawn a subagent by name
 - `/iterate [task]` — fork session into interactive subagent for quick fixes
 
@@ -190,7 +192,8 @@ parallel_subagents({
 - **Complex domain or terminology to resolve first** → Start with `/bbq` to grill, then plan
 - **Todos ready to execute** → Spawn `scout` then `worker` agents
 - **Worker reports missing context** → Provide the missing examples/references, update the todo, re-spawn the worker
-- **Code review needed** → Delegate to `reviewer`
+- **Code review needed** → Delegate to `reviewer` (quality/security/maintainability)
+- **Need to prove a claim or change wrong** → Delegate to `adversarial-reviewer` (correctness/evidence/citation integrity). Complementary to `reviewer`, not a replacement.
 - **Plan declares integration contracts** → Spawn `validator` after worker finishes
 - **Need context first** → Start with `scout`
 - **Web research or external info needed** → Delegate to `researcher`
@@ -224,6 +227,9 @@ Skills provide specialized instructions for specific tasks. Load them when the c
 | Verifying implementation against integration contracts | `verify-integration` |
 | Automating browser interactions | `playwright-cli` |
 | Handing off the conversation to a fresh agent/session | `handoff` |
+| Verifying citations in a document say what the author claims | `adversarial-shepardize` |
+| Adversarial review of a research position or claim | `adversarial-review-research` (invoked by `adversarial-reviewer`) |
+| Adversarial review of a code change or PR | `adversarial-review-change` (invoked by `adversarial-reviewer`) |
 
 **The `commit` skill is mandatory for every single commit.**
 

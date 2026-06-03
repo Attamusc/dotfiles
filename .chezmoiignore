@@ -1,2 +1,9 @@
 install.sh
 .github
+
+# Pi agent runtime artifacts — session-local, do not version
+.pi/agent/grill/
+.pi/agent/plans/
+.pi/agent/research/
+.pi/agent/reviews/*
+!.pi/agent/reviews/README.md
