@@ -81,15 +81,29 @@ When a term is resolved, update `CONTEXT.md` right there. Don't batch these up �
 
 `CONTEXT.md` should be totally devoid of implementation details. Do not treat `CONTEXT.md` as a spec, a scratch pad, or a repository for implementation decisions. It is a glossary and nothing else.
 
-### Offer ADRs sparingly
+### Manifestation Plan
 
-Only offer to create an ADR when all three are true:
+Grill artifacts are **ephemeral by default**. A decision that needs to outlive this session must escape into a durable artifact before the grill closes. There are three durable destinations:
 
-1. **Hard to reverse** — the cost of changing your mind later is meaningful
-2. **Surprising without context** — a future reader will wonder "why did they do it this way?"
-3. **The result of a real trade-off** — there were genuine alternatives and you picked one for specific reasons
+- **ADR** (`docs/adr/NNNN-slug.md`) — a cross-cutting constraint or design rule that constrains future work.
+- **Agent-file update** (`AGENTS.md`, skill files) — a convention agents must follow.
+- **Code** — the decision IS the implementation and flows through a plan to a worker.
 
-If any of the three is missing, skip the ADR. Use the format in [ADR-FORMAT.md](./ADR-FORMAT.md).
+Plans are ephemeral happy-path output — they consume a grill and produce code/ADRs/agent updates, then die.
+
+**Decision rule:** *"If someone deletes this grill artifact tomorrow, does this decision lose its reason for existing?"*
+- Yes + constrains future work → **ADR**
+- Yes + IS the code → flows through plan to worker, no separate tracking needed
+- Yes + how agents should work → **agent-file update**
+- No → stays in the grill, dies with it
+
+**Code comments are not a tracked manifestation type.** Workers decide form (comment, variable name, test name) as normal craft.
+
+**Self-containment rule:** Manifestation artifacts are self-contained OR reference an ADR. They never reference a grill or a plan.
+
+**Exit gate:** The grill cannot close until every resolved decision is either listed in the Manifestation Plan or explicitly marked working-memory-only with a one-line rationale.
+
+The grill agent never edits a durable file itself; it proposes entries for the planner. Use the format in [ADR-FORMAT.md](./ADR-FORMAT.md).
 
 ### Write a decisions artifact at the end
 
@@ -116,6 +130,9 @@ write_artifact(name: "grill/YYYY-MM-DD-<topic>.md", content: "...")
 
 ### {Decision 2 title}
 ...
+
+## Manifestation Plan
+- **{ADR | agent-file | code}**: {path or "(new ADR — slug TBD)"} — {one-line what + why}
 
 ## Domain Updates
 - {List CONTEXT.md terms added/modified and any ADRs created, with file paths}
