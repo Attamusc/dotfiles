@@ -43,9 +43,27 @@ Use these steps when the repo has `.jj/`:
 2. Review `jj st` and `jj diff` to understand the current changes (limit to argument-specified files if provided).
 3. (Optional) Run `jj log --no-graph -r 'ancestors(@, 50)' -T 'description.first_line() ++ "\n"'` to see commonly used scopes.
 4. If there are ambiguous extra files, ask the user for clarification before committing.
-5. Commit:
-   - **All changes:** `jj commit -m "<subject>" -m "<body>"` (each `-m` becomes a separate paragraph).
-   - **Specific files only:** `jj commit -m "<subject>" -m "<body>" <filesets>` — this keeps the specified files in the finalized commit and moves the remaining changes into the new working copy.
+5. Commit. **Choose the path based on the body:**
+
+   - **Trivial single-line subject, no body** (e.g. `fix: typo`):
+     - All changes: `jj commit -m "<subject>"`
+     - Specific files: `jj commit -m "<subject>" <filesets>`
+
+   - **Multi-paragraph body, OR any body containing backticks / `$(...)` / em-dashes / non-ASCII punctuation** — go via a tempfile to avoid shell injection (see the `jujutsu` skill's "Safe message passing" section for the full rationale):
+     1. Use the agent's `write` tool to put the full commit message (subject line, blank line, body paragraphs) into `/tmp/jj-commit-msg.txt`. **Do not** use `cat <<EOF` — heredocs still expand backticks and `$()`.
+     2. Apply it:
+        - All changes:
+          ```bash
+          jj describe --stdin < /tmp/jj-commit-msg.txt
+          jj new
+          ```
+        - Specific files only (`jj commit` does not support `--stdin`, so use a placeholder then rewrite):
+          ```bash
+          jj commit <filesets> -m "placeholder"
+          jj describe @- --stdin < /tmp/jj-commit-msg.txt
+          ```
+
+   Avoid `jj commit -m "<subject>" -m "<body>"` for anything non-trivial — each `-m` is a separate shell-evaluated argument, and prose bodies have repeatedly triggered backtick execution and Unicode mangling.
 
 > **jj mental model:** There is no staging area. The working copy (`@`) IS a commit.
 > `jj commit` describes the current working copy and creates a new empty `@` on top.

@@ -76,6 +76,36 @@ These commands open an interactive editor or TUI and **will hang** in non-intera
 
 **Rule: Always pass `-m` to any command that takes a message. Never use `-i` or bare `split`/`resolve`.**
 
+## ⚠️ Safe message passing
+
+**Bash evaluates backticks and `$(...)` inside `-m "..."` strings BEFORE jj ever sees them — even when backslash-escaped.** Non-ASCII characters (em-dashes, smart quotes) can also get mangled by shell unescaping, especially across multiple `-m` flags.
+
+Real failure mode: a commit body containing inline code like `` `cd foo && jj git init --colocate` `` will *execute* the inner command (creating a nested repo, breaking the surrounding snapshot), then ship a commit description with the backticks stripped out.
+
+**Threshold:**
+
+- **Short single-line subjects** (`jj commit -m "fix: typo in README"`) — fine.
+- **Anything multi-line, anything containing backticks or `$(...)`, anything with em-dashes or non-ASCII punctuation** — go via a tempfile.
+
+**Safe pattern:**
+
+```bash
+# Step 1: write the message using the agent's `write` tool to e.g. /tmp/jj-msg.txt.
+# Do NOT use `cat <<EOF` — heredocs still expand backticks and $() unless the
+# delimiter is quoted ('EOF'), and it's easy to forget.
+
+# Step 2: apply it. Only `jj describe` supports --stdin; `jj commit` does not.
+jj describe --stdin < /tmp/jj-msg.txt
+jj new   # if you wanted `jj commit` semantics (advance @ to a new empty change)
+```
+
+For partial-file commits (where you'd normally write `jj commit <filesets> -m ...`):
+
+```bash
+jj commit <filesets> -m "placeholder"           # creates the split, with a throwaway message
+jj describe @- --stdin < /tmp/jj-msg.txt        # rewrite the real description from the file
+```
+
 ## Additional References
 
 - [commands-reference.md](commands-reference.md) - Complete command reference
