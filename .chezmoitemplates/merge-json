@@ -1,0 +1,53 @@
+{{- /* merge-json: shallow-merges a public JSON file with an optional private JSON file.
+
+       Required parameters:
+         public      — path (relative to chezmoi source dir) to the committed JSON
+         private     — path (relative to chezmoi source dir) to the gitignored override
+         sourceDir   — typically `.chezmoi.sourceDir`
+
+       Optional parameters:
+         wrapKey     — if set, the value at this key in each file is extracted, the
+                       extracted dicts are shallow-merged, and the result is re-wrapped
+                       under the same key. Use this when both files have the shape
+                       {"<wrapKey>": {...}} and you want to merge the inner dicts
+                       (e.g. MCP server registries).
+                       If unset, the two documents are shallow-merged at the top level.
+
+       Semantics:
+         - Public is required; private is optional (template no-ops the override if absent).
+         - Private values override public via sprig `merge` (destination wins; private is dst).
+         - "Shallow" merge means only top-level (or wrapKey-level) keys are compared;
+           nested objects are replaced wholesale, not deep-merged.
+
+       Usage:
+         {{ template "merge-json" (dict
+              "public" ".data/pi/agent/settings.json"
+              "private" ".data-private/pi/agent/settings.json"
+              "sourceDir" .chezmoi.sourceDir) }}
+
+         {{ template "merge-json" (dict
+              "public" ".data/pi/agent/mcp.json"
+              "private" ".data-private/pi/agent/mcp.json"
+              "sourceDir" .chezmoi.sourceDir
+              "wrapKey" "mcpServers") }} */ -}}
+{{- $public := include .public | mustFromJson -}}
+{{- $privatePath := joinPath .sourceDir .private -}}
+{{- $hasPrivate := stat $privatePath -}}
+{{- $wrapKey := index . "wrapKey" | default "" -}}
+{{- if $wrapKey -}}
+{{-   $publicInner := index $public $wrapKey | default dict -}}
+{{-   $mergedInner := $publicInner -}}
+{{-   if $hasPrivate -}}
+{{-     $private := include .private | mustFromJson -}}
+{{-     $privateInner := index $private $wrapKey | default dict -}}
+{{-     $mergedInner = merge $privateInner $publicInner -}}
+{{-   end -}}
+{{ dict $wrapKey $mergedInner | toPrettyJson }}
+{{- else -}}
+{{-   $merged := $public -}}
+{{-   if $hasPrivate -}}
+{{-     $private := include .private | mustFromJson -}}
+{{-     $merged = merge $private $public -}}
+{{-   end -}}
+{{ $merged | toPrettyJson }}
+{{- end -}}

@@ -1,0 +1,13 @@
+{{- /* Render the pre-push hook pattern file from .data-private/ if present.
+
+       The patterns themselves never enter committed history -- they live in
+       .data-private/chezmoi-hooks/pattern (gitignored). This template is the
+       only tracked artifact connecting the rendered runtime file to its
+       gitignored source.
+
+       If the private source is absent (e.g. fresh clone before private data is
+       installed), the rendered file is empty and the hook becomes a no-op. */ -}}
+{{- $privatePath := joinPath .chezmoi.sourceDir ".data-private/chezmoi-hooks/pattern" -}}
+{{- if stat $privatePath -}}
+{{ include ".data-private/chezmoi-hooks/pattern" }}
+{{- end -}}

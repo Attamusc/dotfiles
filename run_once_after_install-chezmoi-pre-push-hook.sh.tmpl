@@ -1,0 +1,26 @@
+#!/bin/bash
+#
+# Symlink the chezmoi-managed pre-push hook into this dotfiles repo's
+# .git/hooks/ so it's wired up automatically on a fresh clone after first
+# `chezmoi apply`. Idempotent (run_once_ + ln -sfn).
+#
+# Scope: only this repo. We don't touch global git hooks config.
+
+set -euo pipefail
+
+HOOK_SRC="{{ .chezmoi.homeDir }}/.local/share/chezmoi-hooks/pre-push"
+HOOKS_DIR="{{ .chezmoi.sourceDir }}/.git/hooks"
+HOOK_DST="${HOOKS_DIR}/pre-push"
+
+if [ ! -d "$HOOKS_DIR" ] ; then
+  echo "chezmoi pre-push: skip — .git/hooks not present at $HOOKS_DIR" >&2
+  exit 0
+fi
+
+if [ ! -f "$HOOK_SRC" ] ; then
+  echo "chezmoi pre-push: skip — hook source not found at $HOOK_SRC" >&2
+  exit 0
+fi
+
+ln -sfn "$HOOK_SRC" "$HOOK_DST"
+echo "chezmoi pre-push: installed $HOOK_DST → $HOOK_SRC"
