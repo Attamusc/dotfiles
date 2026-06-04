@@ -1,1 +1,1 @@
-{{- template "merge-mcp-json" (dict "public" ".data/mcphub/servers.json" "private" ".data-private/mcphub/servers.json" "sourceDir" .chezmoi.sourceDir) -}}
+{{- template "merge-json" (dict "public" ".data/mcphub/servers.json" "private" ".data-private/mcphub/servers.json" "sourceDir" .chezmoi.sourceDir "wrapKey" "mcpServers") -}}
