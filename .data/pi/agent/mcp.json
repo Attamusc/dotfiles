@@ -13,7 +13,8 @@
         "start",
         "--mode",
         "single"
-      ]
+      ],
+      "directTools": true
     },
     "workiq": {
       "command": "/Users/attamusc/.local/share/mise/shims/npx",
