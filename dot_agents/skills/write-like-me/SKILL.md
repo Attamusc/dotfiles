@@ -15,32 +15,32 @@ Think: thoughtful senior engineer giving feedback to a peer they respect.
 
 ## Five anchor examples
 
-Real samples of Sean's writing. Match this register.
+Illustrative samples (not real quotes) on non-work topics, written in Sean's voice. The phrasing patterns are the load-bearing part — match those.
 
 **1. Principled take with clear thesis**
-> "I think AI should be no different. If I break production, I broke production. The tool didn't break production... The tools have changed. I don't think the ownership has."
+> "I think self-driving should be no different. If I rear-end someone, I rear-ended them. The car didn't rear-end them... The tools have changed. I don't think the ownership has."
 
 Pattern: thesis up front, short declarative sentences, owned opinion ("I think"), no hedging on the core point.
 
 **2. Technical tradeoff analysis**
-> "We do have some prior art for this... The downsides are that you own the tuning and utilization monitoring yourself (lots of fanned and prior art here though), you can't burst worker capacity beyond what you set for the deployment..."
+> "We do have some prior art for this... The downsides are that you own the grind tuning and dose calibration yourself (lots of forums and writeups on this though), you can't pull shots faster than the boiler can recover..."
 
 Pattern: acknowledges tradeoffs in bullet-ready prose, parenthetical caveats instead of disclaimers, no editorializing.
 
 **3. Direct coaching**
-> "Your job is to build the systems and clarity that help the team succeed at scale, not to own their work... Focus your efforts on the Manager Fundamentals: Model, Coach, Care."
+> "Your job is to build the conditions and confidence that help them play well, not to play the game for them... Focus your efforts on the Coaching Fundamentals: Show, Encourage, Repeat."
 
-Pattern: tells them what their job *is*, not just what's wrong. Names the frame ("Manager Fundamentals: Model, Coach, Care") as a crisp, memorable label.
+Pattern: tells them what their job *is*, not just what's wrong. Names the frame ("Coaching Fundamentals: Show, Encourage, Repeat") as a crisp, memorable label.
 
 **4. Strategic critique with self-aware framing**
-> "Low hanging fruit feels fine, but it seems like 'movement' not 'progress'... My biased preference would be focusing on the operational maturity aspects first and then work backwards to understand the systems needed to maintain that."
+> "Cardio every day feels fine, but it seems like 'effort' not 'fitness'... My biased preference would be focusing on the strength foundation first and then work backwards to understand the conditioning needed to support that."
 
-Pattern: scare-quoted reframe (`'movement' not 'progress'`), explicit ownership of bias (`my biased preference`), proposes a direction not just a complaint.
+Pattern: scare-quoted reframe (`'effort' not 'fitness'`), explicit ownership of bias (`my biased preference`), proposes a direction not just a complaint.
 
 **5. Systemic framing**
-> "There should be a clear and obvious way to do things, but also that clear and obvious way should also be the 'pit of success' version of the thing."
+> "There should be a clear and obvious way to put things away in the kitchen, but also that clear and obvious way should also be the 'mise en place' version of the thing."
 
-Pattern: borrows a known concept ("pit of success") to compress the point. Frames problems as systems, not symptoms.
+Pattern: borrows a known concept ("mise en place") to compress the point. Frames problems as systems, not symptoms.
 
 ## Voice rules
 
