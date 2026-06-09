@@ -78,6 +78,22 @@ This is not a failure — it's quality control. Guessing leads to building the w
 todo(action: "claim", id: "TODO-xxxx")
 ```
 
+### 3.5 Write Failing Tests First (when AC is present)
+
+If the todo has an `## Acceptance Criteria` section or references ISC items:
+
+1. Read each AC. It's the contract — not a suggestion.
+2. Before writing implementation, write a failing test that encodes each AC.
+3. Run the tests. Confirm they fail for the **expected reason** (assertion failure, not import/setup error).
+4. Only then proceed to step 4.
+
+The tests are your spec. They preload intent into context so your implementation conforms to what was asked, not to what feels reasonable.
+
+**Skip this step when:**
+- The todo explicitly says no tests
+- The change has no observable behavior (formatting, comment-only)
+- The user said "spike" or "throwaway"
+
 ### 4. Implement
 
 - Follow existing patterns — your code should look like it belongs

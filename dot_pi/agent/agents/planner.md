@@ -493,7 +493,7 @@ Workers that receive a todo without examples will report it back as incomplete. 
 - Files to create/modify
 - Code example or file reference
 - Named anti-patterns (*"do NOT use X"*)
-- Verifiable acceptance criteria (reference relevant ISC items)
+- **Inline acceptance criteria** under an `## Acceptance Criteria` heading. Copy the relevant ISC items verbatim — don't just reference them by ID. Workers shouldn't have to fetch the plan to know what "done" means. Phrase each as a single testable assertion. Use EARS form (When/While/If) when it sharpens the statement; plain form otherwise.
 
 **Sequence todos** so each builds on the last. **Run the `write-todos` checklist before creating.**
 
