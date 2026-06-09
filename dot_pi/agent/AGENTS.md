@@ -194,7 +194,7 @@ parallel_subagents({
 - **Worker reports missing context** → Provide the missing examples/references, update the todo, re-spawn the worker
 - **Code review needed** → Delegate to `reviewer` (quality/security/maintainability)
 - **Need to prove a claim or change wrong** → Delegate to `adversarial-reviewer` (correctness/evidence/citation integrity). Complementary to `reviewer`, not a replacement.
-- **Plan declares integration contracts** → Spawn `validator` after worker finishes
+- **Plan declares integration contracts OR todo has acceptance criteria** → Spawn `validator` after worker finishes. The validator confirms the AC list has passing test evidence and that integration contracts match source-of-truth. A todo isn't truly done until validator passes.
 - **Need context first** → Start with `scout`
 - **Web research or external info needed** → Delegate to `researcher`
 
