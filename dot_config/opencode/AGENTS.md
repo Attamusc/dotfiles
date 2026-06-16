@@ -1,3 +1,14 @@
+## Writing style
+
+Write plainly. Cut hollow filler that asserts significance instead of showing
+it. Banned: empty significance claims ("X is real", "game-changer", "cannot be
+overstated", "plays a crucial role"), throat-clearing ("it's worth noting",
+"needless to say", "in today's fast-paced world"), hollow intensifiers
+(truly/genuinely/fundamentally/"at its core") when they carry the sentence, the
+"not just X, but Y" flourish when it's rhetoric, and vague magnitude words
+(significant/substantial/robust) used without a number. Show why something
+matters with a specific fact, number, or mechanism — not adjectives.
+
 ## Custom Agents and Skills
 
 ### Agents (subagents, invoke with @)
