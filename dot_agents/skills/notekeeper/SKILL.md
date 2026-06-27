@@ -1,6 +1,6 @@
 ---
 name: notekeeper
-description: "Captures and retrieves project knowledge — decisions made, patterns learned, gotchas discovered, and architectural context in a .notes/ directory. Use when recording a decision, capturing a learning, documenting a pattern, noting a gotcha, or retrieving past project context. Triggers: 'record decision', 'capture learning', 'what did we decide about', 'project notes', 'add to gotchas', 'document pattern', 'note this', 'remember that', 'log this decision'."
+description: "Captures and retrieves project knowledge — decisions made, patterns learned, gotchas discovered, and architectural context in a .notes/ directory. Use when recording a decision, capturing a learning, documenting a pattern, noting a gotcha, or retrieving past project context. Triggers: 'record decision', 'capture learning', 'document pattern', 'add to gotchas', 'what did we decide about', 'project notes'."
 ---
 
 # Notekeeper

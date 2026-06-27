@@ -1,6 +1,6 @@
 ---
 name: jujutsu
-description: Guide to Jujutsu (jj) version control system. Use when working with commits, branches, pull requests, PRs, version control, rebasing, pushing, or when the user mentions jj, git, or version control operations.
+description: Guide to Jujutsu (jj) version control system. Use when working with commits, branches, pull requests, rebasing, or pushing, or when the user mentions jj, git, or version control.
 ---
 
 # Jujutsu (jj) Version Control Guide

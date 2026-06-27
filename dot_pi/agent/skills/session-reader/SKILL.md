@@ -1,6 +1,6 @@
 ---
 name: session-reader
-description: Efficiently read and analyze pi agent session JSONL files. Use when asked to "read a session", "review a session", "analyze a session", "what happened in this session", "load session", "parse session", "session history", or given a .jsonl session file path.
+description: Efficiently read and analyze pi agent session JSONL files. Use when asked to "read a session", "analyze a session", "what happened in this session", or given a .jsonl session file path.
 ---
 
 # Read Pi Sessions

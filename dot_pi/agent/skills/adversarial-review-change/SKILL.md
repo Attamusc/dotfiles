@@ -1,6 +1,6 @@
 ---
 name: adversarial-review-change
-description: Change-mode review procedure for the adversarial-reviewer agent. Fires when the target is a code diff, GitHub PR URL, or working-tree diff. Runs pipeline S1 → S2 → S4 → S7 → S8 (S3 steelman is opt-in).
+description: Change-mode review procedure for the adversarial-reviewer agent. Fires when the target is a code diff, GitHub PR URL, or working-tree diff. Invoked by the agent's turn-1 dispatch.
 ---
 
 # Adversarial Review — Change Mode

@@ -1,6 +1,6 @@
 ---
 name: jungle-book
-description: "Relentless codebase analysis that classifies every recurring pattern into three buckets — positive (reinforce), negative (fix), inbetween (decide) — and produces a portable artifact with migration paths. Use when asked to 'analyze the codebase', 'assess codebase health', 'find friction', 'what's good and bad here', 'codebase review', 'architecture assessment', 'jungle-book', 'run jungle-book', or any request for an honest, opinionated evaluation of codebase patterns and conventions. Works on whole codebases by default; accepts an optional scope."
+description: "Relentless codebase analysis that classifies every recurring pattern into three buckets — positive (reinforce), negative (fix), inbetween (decide) — and produces a portable artifact with migration paths. Use when asked to run 'jungle-book', 'analyze the codebase', 'assess codebase health', or 'find friction' — any honest, opinionated evaluation of codebase patterns and conventions. Works on whole codebases by default; accepts an optional scope."
 ---
 
 # Jungle-Book

@@ -1,6 +1,6 @@
 ---
 name: obsidian-cli
-description: "Obsidian CLI patterns for vault operations. Use when creating notes, setting properties, searching, querying Bases, managing links, or running eval commands against the vault. Triggers: 'obsidian cli', 'vault command', 'run obsidian command', 'create note', 'set property', 'search vault', 'query base'."
+description: "Obsidian CLI patterns for vault operations. Use when creating notes, setting properties, searching, querying Bases, managing links, or running eval commands against the vault. Triggers: 'obsidian cli', 'vault command', 'run obsidian command'."
 ---
 
 # Obsidian CLI Reference
