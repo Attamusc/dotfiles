@@ -97,7 +97,7 @@ like `JSON.parse()` or a sandboxed evaluator instead.
 [If sweep is clean, say so explicitly — don't manufacture findings.]
 ```
 
-**Severity guide (same as review rubric):**
+**Severity guide:**
 - **[P0]** — Actively dangerous. Exposed secrets, SQL injection, RCE vectors. Fix now.
 - **[P1]** — Genuine risk. Someone will get bitten by this. Should fix soon.
 - **[P2]** — Worth knowing about. Not urgent, but the user should be aware.
