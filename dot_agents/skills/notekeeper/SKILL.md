@@ -26,7 +26,7 @@ Use `## Date: YYYY-MM-DD` headers to group entries by date. Append new entries
 under today's date header (create it if it doesn't exist).
 
 - **Decisions:** Record WHAT was decided, WHY (alternatives considered), and
-  any relevant context. Keep entries short — 2-4 lines each.
+  any relevant context.
 - **Patterns:** Record the pattern name, where it's used, and a brief code
   example if helpful.
 - **Gotchas:** Record what went wrong or was surprising, and the fix or

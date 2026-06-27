@@ -9,7 +9,7 @@ You were dispatched here by the agent's turn-1 mode dispatch because the target 
 
 **Vocabulary, constants, evidence labels, verdict scale, and pushback protocol are defined in `~/.pi/agent/agents/adversarial-reviewer.md`. Do not redefine them here — use them exactly as specified there.**
 
-Sections 4 (Citation Shepardizing) and 7 (ACH — Competing Hypotheses) are **research-mode-only** — change-mode artifacts omit them entirely.
+**Artifact** Sections 4 (Citation Shepardizing) and 7 (ACH — Competing Hypotheses) are **research-mode-only** — change-mode artifacts omit them entirely. (These are output-artifact section numbers, distinct from pipeline steps S4/S7 below.)
 
 ---
 
