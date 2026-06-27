@@ -1,0 +1,34 @@
+theme = "rose_pine_moon"
+
+[editor]
+bufferline = "always"
+line-number = "relative"
+cursorline = true
+color-modes = true
+
+[editor.cursor-shape]
+insert = "bar"
+normal = "block"
+select = "underline"
+
+[editor.file-picker]
+hidden = false
+
+[editor.statusline]
+left = ["mode", "spinner", "file-name", "file-modification-indicator"]
+center = []
+right = ["diagnostics", "selections", "position", "file-encoding", "file-line-ending", "file-type"]
+separator = "│"
+
+# jj → normal mode (escape) in insert mode
+[keys.insert]
+j = { j = "normal_mode" }
+# Ctrl-S saves from insert mode (Cmd-S is not bindable in terminal Helix; see divergence note)
+C-s = ["normal_mode", ":write"]
+
+[keys.normal]
+# Ctrl-S saves from normal mode
+C-s = ":write"
+# space-e → file picker (Helix has no sidebar file explorer; file picker is the closest analogue)
+# NOTE: divergence from LazyVim's space-e (neo-tree sidebar) — see gap-assessment note
+"space" = { e = "file_picker" }

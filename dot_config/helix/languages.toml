@@ -1,0 +1,16 @@
+# Helix language server configuration
+# Merges with (and overrides) built-in languages.toml defaults.
+#
+# yamlls: formatting disabled to match LazyVim langs.lua
+# (see dot_config/nvim/lua/plugins/langs.lua — yamlls.settings.yaml.format.enable = false)
+
+[language-server.yaml-language-server]
+command = "yaml-language-server"
+args = ["--stdio"]
+
+[language-server.yaml-language-server.config]
+yaml.format.enable = false
+
+[[language]]
+name = "yaml"
+language-servers = ["yaml-language-server"]
