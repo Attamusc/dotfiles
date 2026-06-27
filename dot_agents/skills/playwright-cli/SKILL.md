@@ -101,58 +101,12 @@ playwright-cli tab-close 2
 playwright-cli tab-select 0
 ```
 
-### Storage
-
-```bash
-playwright-cli state-save
-playwright-cli state-save auth.json
-playwright-cli state-load auth.json
-
-# Cookies
-playwright-cli cookie-list
-playwright-cli cookie-list --domain=example.com
-playwright-cli cookie-get session_id
-playwright-cli cookie-set session_id abc123
-playwright-cli cookie-set session_id abc123 --domain=example.com --httpOnly --secure
-playwright-cli cookie-delete session_id
-playwright-cli cookie-clear
-
-# LocalStorage
-playwright-cli localstorage-list
-playwright-cli localstorage-get theme
-playwright-cli localstorage-set theme dark
-playwright-cli localstorage-delete theme
-playwright-cli localstorage-clear
-
-# SessionStorage
-playwright-cli sessionstorage-list
-playwright-cli sessionstorage-get step
-playwright-cli sessionstorage-set step 3
-playwright-cli sessionstorage-delete step
-playwright-cli sessionstorage-clear
-```
-
-### Network
-
-```bash
-playwright-cli route "**/*.jpg" --status=404
-playwright-cli route "https://api.example.com/**" --body='{"mock": true}'
-playwright-cli route-list
-playwright-cli unroute "**/*.jpg"
-playwright-cli unroute
-```
-
 ### DevTools
 
 ```bash
 playwright-cli console
 playwright-cli console warning
 playwright-cli network
-playwright-cli run-code "async page => await page.context().grantPermissions(['geolocation'])"
-playwright-cli tracing-start
-playwright-cli tracing-stop
-playwright-cli video-start
-playwright-cli video-stop video.webm
 ```
 
 ### Install
@@ -236,15 +190,6 @@ playwright-cli click e4
 playwright-cli fill e7 "test"
 playwright-cli console
 playwright-cli network
-playwright-cli close
-```
-
-```bash
-playwright-cli open https://example.com
-playwright-cli tracing-start
-playwright-cli click e4
-playwright-cli fill e7 "test"
-playwright-cli tracing-stop
 playwright-cli close
 ```
 
