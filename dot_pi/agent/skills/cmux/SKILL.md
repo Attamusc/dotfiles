@@ -114,79 +114,37 @@ cmux send-key --surface <ref> escape    # Escape
 
 ## Patterns
 
-### Pattern 1: Start a dev server in a new tab
+### Patterns 1–4: spawn → send → poll → close
+
+All single-process patterns share this skeleton:
 
 ```bash
-# Create a tab and capture its surface ref
+# 1. Spawn — create a tab and capture its surface ref
 SURFACE=$(cmux new-surface --type terminal | awk '{print $2}')
 sleep 0.5
 
-# Send the command
-cmux send --surface $SURFACE 'cd /path/to/project && npm run dev\n'
+# 2. Send — run your command
+cmux send --surface $SURFACE '<command>\n'
 
-# Poll until ready
+# 3. Poll — wait for output (adapt to the variant below)
 for i in $(seq 1 30); do
   OUTPUT=$(cmux read-screen --surface $SURFACE --lines 20)
   if echo "$OUTPUT" | grep -qi "ready\|listening\|started\|compiled"; then
-    echo "Server is ready"
+    echo "Ready"
     break
   fi
   sleep 1
 done
 
-# ... do work against the server ...
-
-# Clean up when done
+# 4. Close — clean up when done
 cmux close-surface --surface $SURFACE
 ```
 
-### Pattern 2: Run tests in a tab and read results
+**Variant — test runner:** replace the poll loop with a fixed wait and use `--scrollback --lines 200` to capture full output: `sleep 10 && cmux read-screen --surface $SURFACE --scrollback --lines 200`.
 
-```bash
-SURFACE=$(cmux new-surface --type terminal | awk '{print $2}')
-sleep 0.5
-cmux send --surface $SURFACE 'cd /path/to/project && npm test\n'
-sleep 10
-cmux read-screen --surface $SURFACE --scrollback --lines 200
-cmux close-surface --surface $SURFACE
-```
+**Variant — interactive session:** omit the poll loop; repeat `cmux send` / `sleep 1` / `cmux read-screen --lines 30` for each command in sequence.
 
-### Pattern 3: Interactive session — send multiple commands
-
-```bash
-SURFACE=$(cmux new-surface --type terminal | awk '{print $2}')
-sleep 0.5
-
-cmux send --surface $SURFACE 'git status\n'
-sleep 1
-cmux read-screen --surface $SURFACE --lines 30
-
-cmux send --surface $SURFACE 'git log --oneline -5\n'
-sleep 1
-cmux read-screen --surface $SURFACE --lines 30
-
-cmux close-surface --surface $SURFACE
-```
-
-### Pattern 4: Monitor multiple processes
-
-```bash
-S_API=$(cmux new-surface --type terminal | awk '{print $2}')
-S_WEB=$(cmux new-surface --type terminal | awk '{print $2}')
-sleep 0.5
-
-cmux send --surface $S_API 'cd ./api && npm run dev\n'
-cmux send --surface $S_WEB 'cd ./web && npm run dev\n'
-
-# Check on any of them
-sleep 3
-cmux read-screen --surface $S_API --lines 20
-cmux read-screen --surface $S_WEB --lines 20
-
-# Clean up
-cmux close-surface --surface $S_API
-cmux close-surface --surface $S_WEB
-```
+**Variant — multi-process:** spawn one surface per process (`S_API`, `S_WEB`, …), send to each, then read and close each surface independently.
 
 ### Pattern 5: Split pane for side-by-side view
 
@@ -199,12 +157,9 @@ cmux new-split down    # Terminal split below
 
 ## Important Notes
 
-- **Prefer tabs over workspaces** — use `new-surface` to keep things grouped
 - **Always clean up** surfaces when done — don't leave orphaned terminals
 - **Use `--lines`** with read-screen to avoid dumping huge scrollback buffers
 - **Surface refs are ephemeral** — `surface:16` may refer to a different
   surface next time. Always capture the ref from command output
 - **Poll, don't guess** — there's no "wait for output" command, so poll
   `read-screen` in a loop when waiting for specific output
-- **`\n` is literal** — the cmux CLI interprets `\n` as a newline character
-  in `send` commands, which presses Enter

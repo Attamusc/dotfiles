@@ -114,8 +114,3 @@ When given a scope (module, feature area, set of files):
 ## Constraints
 
 - **One artifact per run.** No side effects on CONTEXT.md, AGENTS.md, ADRs, or other project files. If those need updating, it's a finding in the artifact.
-- **Leverage must be concrete.** Every positive pattern's leverage field must describe a specific change scenario. "Good separation of concerns" is not leverage. "Adding a new webhook type requires only a new file in `handlers/` and a line in the registry" is leverage.
-- **Migration paths must point at positive patterns.** No abstract recommendations. "Make it look like *this thing you already have*."
-- **Glossary terms are the only architectural vocabulary.** Pattern, Friction, Creep, Signal, Drift, Grain. Nothing else.
-- **3 scout maximum.** Hard cap.
-- **Scouts describe, jungle-book judges.** Classification happens in synthesis, not during exploration.

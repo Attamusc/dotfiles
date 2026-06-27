@@ -67,7 +67,7 @@ obsidian property:remove path="atlas/notes/My Note.md" name=status
 ```
 
 **Key behaviors:**
-- `type=list` appends to an existing list; it does not replace it.
+- `type=list` appends to an existing list; it does not replace it. **Caveat:** rapid successive calls can race and replace instead of append — when adding multiple list values, either batch them in quick succession and verify with `property:read`, or add a brief pause between calls.
 - Wikilink values like `[[path/to/note]]` are stored as proper Obsidian links, not plain strings.
 - Omitting `type=` defaults to text. Always specify `type=` for non-text properties.
 
@@ -263,51 +263,6 @@ All CLI commands fail if Obsidian is not running. Check for this condition:
 obsidian daily:path 2>/dev/null || echo "ERROR: Obsidian is not running. Start Obsidian and try again."
 ```
 
-## Workflow Patterns
-
-### Post-Action Daily Note Logging
-
-After creating investigation notes, capturing articles, or completing other vault-write tasks, optionally append a summary to today's daily note for an activity trail:
-
-```bash
-# After an incident investigation
-obsidian daily:append content="- Investigated [[atlas/notes/Availability Incident - <name> <date>]]: <one-line summary>"
-
-# After capturing an article
-obsidian daily:append content="- Saved [[atlas/notes/<Article Title> - <Author>]]: <brief description>"
-```
-
-### Vault Health Checks
-
-Use link graph commands for periodic vault maintenance:
-
-```bash
-# Find all broken/unresolved links
-obsidian unresolved format=json
-
-# Find orphan notes (no incoming links — may need linking or cleanup)
-obsidian orphans format=json
-
-# Check what links to a specific note (before considering deletion)
-obsidian backlinks path="atlas/notes/Some Note.md" format=json
-```
-
-### Task Review
-
-Query tasks across the vault or within specific notes:
-
-```bash
-# All incomplete tasks in the vault
-obsidian tasks format=json
-
-# Tasks in today's daily note
-obsidian daily:path  # get path first
-obsidian tasks path="<daily-note-path>" format=json
-
-# Toggle a task complete
-obsidian task path="<note-path>" line=<line-number>
-```
-
 ## Vault Structure Reference
 
 | Path | Purpose |
@@ -324,17 +279,8 @@ obsidian task path="<note-path>" line=<line-number>
 
 | Operation | Use CLI | Use File Tools |
 |-----------|---------|----------------|
-| Create a single note | `obsidian create` | - |
-| Set/read/remove properties | `property:set/read/remove` | - |
 | Bulk-create 100+ notes | - | Node.js scripts (performance) |
-| Search vault content | `obsidian search` | - |
-| Query a Base collection | `base:query` | - |
-| Move/rename notes | `obsidian move/rename` | - |
 | Read note content | `obsidian read` | Read tool (also fine) |
-| Append/prepend content | `obsidian append/prepend` | - |
-| Advanced plugin queries | `obsidian eval` | - |
-| Find unresolved links | `obsidian unresolved` | - |
-| Check backlinks | `obsidian backlinks` | - |
 
 ## References
 

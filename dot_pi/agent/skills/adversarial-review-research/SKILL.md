@@ -248,11 +248,3 @@ Sections in order (per D6, research-mode subset):
 
 **Print the output file path at the end of every session.**
 
----
-
-## Wiring Notes for Wave 4 (bbq.md integration)
-
-- This skill is invoked by `adversarial-reviewer.md` dispatch logic (D4) — no additional wiring needed in the skill file.
-- The `--steelman` flag is parsed in the agent file; if present, the agent passes it when loading this skill. Check for it at S3.
-- The `--emit-json` flag triggers sidecar JSON output — the agent file owns this; this skill does not need to handle it directly.
-- S6 calls `adversarial-shepardize` — ensure that skill is listed in the agent's `skills:` frontmatter (it already is in `adversarial-reviewer.md`).
