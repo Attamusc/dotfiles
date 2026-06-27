@@ -1,6 +1,6 @@
 ---
 name: adversarial-review-research
-description: Research-mode review procedure for adversarial-reviewer. Fires when the target is a `.md`/`.txt` file, URL, or raw claim text. Invoked by the agent's turn-1 dispatch. Runs pipeline S1 → S2 → (S3 opt-in) → S6 → S4 → S5 → S7 → S8.
+description: Research-mode review procedure for adversarial-reviewer. Fires when the target is a `.md`/`.txt` file, URL, or raw claim text. Invoked by the agent's turn-1 dispatch.
 ---
 
 # Adversarial Review — Research Mode

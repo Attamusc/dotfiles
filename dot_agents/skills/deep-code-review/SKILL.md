@@ -1,6 +1,6 @@
 ---
 name: deep-code-review
-description: Run an extremely strict maintainability review for abstraction quality, giant files, and spaghetti-condition growth. Use for a deep code review, deep code quality audit, strict maintainability review, or "review this branch harshly". Adapted from cursor team-kit's thermo-nuclear-code-quality-review.
+description: Run an extremely strict maintainability review for abstraction quality, giant files, and spaghetti-condition growth. Use for a "deep code review", "strict maintainability review", or "review this branch harshly".
 model: opus
 ---
 
@@ -190,3 +190,7 @@ Treat these as presumptive blockers unless the author can justify them clearly:
 - the PR duplicates an existing helper or puts logic in the wrong layer when there is a clear canonical home
 
 If those conditions are not met, leave explicit, actionable feedback and push for a cleaner decomposition.
+
+---
+
+_Adapted from cursor team-kit's thermo-nuclear-code-quality-review._

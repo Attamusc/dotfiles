@@ -1,6 +1,6 @@
 ---
 name: verify-integration
-description: "Verify implementation against declared integration contracts. Use when checking that code matches API schemas, DB schemas, event formats, or other contract surfaces. Triggers: 'verify integration', 'check contracts', 'validate against schema', 'does this match the API', 'contract verification'."
+description: "Verify implementation against declared integration contracts. Use when checking that code matches API schemas, DB schemas, event formats, or other contract surfaces. Triggers: 'verify integration', 'check contracts', 'does this match the API'."
 ---
 
 # Integration Verification
