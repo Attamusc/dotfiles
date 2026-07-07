@@ -105,12 +105,28 @@ The user's existing 7 agent files run unchanged on the fork.
 > void. The load-bearing evidence (edxeth non-liftable, aphotic dead,
 > ~79-line patch) carries the decision on its own.
 >
-> **Test-baseline consequence:** the 6 failing tests recorded in SG4 were
-> measured on the *tainted* local checkout, whose copilot-cli commits
-> modified `pi-extension/subagents/index.ts` (+129 lines) — the same
-> tool-registration/discovery area those tests exercise. The clean-fork
-> baseline must be re-measured in Phase P3 before the accept-vs-fix
-> decision on pre-existing failures.
+> **Test-baseline resolution (P3, corrected).** SG4 reported 6 failing
+> tests, which I first mis-attributed to copilot-cli taint and then to
+> `@mariozechner/pi-tui` version drift. Both were wrong. The real cause,
+> found in P3: **`PI_DENY_TOOLS` environment contamination.** Subagents
+> run with `PI_DENY_TOOLS=subagent,subagent_interrupt,...` injected (pi
+> blocks recursive spawning); the extension's `shouldRegister()` honours
+> it, so those tools never registered into the mock API and the
+> "is it registered?" assertions failed. That is why the suite was green
+> in a plain shell (no `PI_DENY_TOOLS`) but 123/6 under every subagent.
+> Fixed correctly by isolating `PI_DENY_TOOLS` in the test harness
+> (commit `5681171`) — not by pinning. Suite is now 129/129 with or
+> without `PI_DENY_TOOLS` set.
+>
+> **Lineage migration (P3).** The fork's dependency lineage was migrated
+> from `@mariozechner/*` to `@earendil-works/*` (commit `a3e7da3`) to match
+> the pi runtime the user actually runs (`@earendil-works/pi-coding-agent`
+> 0.80.3). This was pursued during the (wrong) drift diagnosis but kept on
+> its own merits: it aligns the test suite's linked library family with the
+> runtime. It is independent of the test fix and does not itself fix any
+> failure. Diverging the fork's deps from HazAT (which targets
+> `@mariozechner`) is consistent with the diverge-freely posture; the
+> rebase cost of that divergence is the user's per D2.
 
 **Shepardizing.** `aphotic/pi-mux-subagents` confirmed "Repository not
 found" via `git ls-remote` on 2026-07-06 — not a live option and not
