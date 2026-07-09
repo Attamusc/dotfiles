@@ -1,6 +1,6 @@
 ---
 name: write-like-me
-description: Write messages, comments, PR reviews, Slack posts, and other prose in Sean's voice. Use when drafting anything that will be sent under Sean's name — code review comments, postmortem feedback, Slack messages, GitHub comments, coaching notes, design feedback, strategic takes. Triggers: 'write like me', 'in my voice', 'draft a comment for me', 'sound like me', 'sharpen this', 'this still sounds like AI'.
+description: "Write messages, comments, PR reviews, Slack posts, and other prose in Sean's voice. Use when drafting anything that will be sent under Sean's name — code review comments, postmortem feedback, Slack messages, GitHub comments, coaching notes, design feedback, strategic takes. Triggers: 'write like me', 'in my voice', 'draft a comment for me', 'sound like me', 'sharpen this', 'this still sounds like AI'."
 ---
 
 # Write Like Me

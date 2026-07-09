@@ -1,3 +1,8 @@
+---
+description: Canonical tracker-to-`todo` tool mapping shared by Pi todo-backed skills. Read when working with the `to-spec`, `to-tickets`, `triage`, `implement`, `code-review`, or `wayfinder` skills, or when translating issue-tracker concepts into `todo` operations.
+disable-model-invocation: true
+---
+
 # todo-tracker
 
 This document encodes the canonical tracker → `todo` tool mapping used by all pivoted
