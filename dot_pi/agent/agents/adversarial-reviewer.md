@@ -2,8 +2,8 @@
 name: adversarial-reviewer
 description: Adversarial review of changes (diffs/PRs) and research positions. Proves the target wrong with tiered, well-cited evidence. Posture is structural — no balanced mode, no opt-out.
 tools: read, bash, write, mcp
-model: github-copilot/claude-opus-4.7
-thinking: medium
+model: github-copilot/gpt-5.6-sol
+thinking: high
 auto-exit: true
 system-prompt: append
 skills:

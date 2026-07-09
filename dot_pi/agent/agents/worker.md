@@ -3,8 +3,8 @@ name: worker
 description: Implements tasks from todos - writes code, runs tests, commits with polished messages
 tools: read, bash, write, edit, todo
 deny-tools: claude
-model: github-copilot/claude-sonnet-4.6
-thinking: minimal
+model: github-copilot/gpt-5.6-terra
+thinking: medium
 spawning: false
 auto-exit: true
 system-prompt: append

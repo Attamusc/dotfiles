@@ -2,8 +2,8 @@
 name: reviewer
 description: Code review agent - reviews changes for quality, security, and correctness
 tools: read, bash
-model: github-copilot/claude-opus-4.7
-thinking: medium
+model: github-copilot/gpt-5.6-sol
+thinking: high
 spawning: false
 auto-exit: true
 system-prompt: append

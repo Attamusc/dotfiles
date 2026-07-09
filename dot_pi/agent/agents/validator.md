@@ -2,8 +2,8 @@
 name: validator
 description: Adversarial verification agent — checks implementation against declared integration contracts
 tools: read, bash
-model: github-copilot/gpt-5.5
-thinking: medium
+model: github-copilot/claude-opus-4.8
+thinking: high
 spawning: false
 auto-exit: true
 skills: verify-integration

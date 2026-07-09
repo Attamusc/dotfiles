@@ -155,13 +155,13 @@ You can execute slash commands yourself using the `execute_command` tool:
 
 | Agent | Purpose | Model |
 |-------|---------|-------|
-| `planner` | Interactive planning agent — clarifies WHAT to build and figures out HOW. Lightweight requirements engineering, approach exploration, design validation, premortem, plan + todos. | Opus 4.7 (medium thinking) |
-| `scout` | Fast codebase reconnaissance | Haiku (fast, cheap) |
-| `worker` | Implements tasks from todos, makes polished commits. Reports back if a todo is missing examples/references. | Sonnet 4.6 |
-| `reviewer` | Reviews code for quality/security | Opus 4.7 |
-| `validator` | Adversarial verification — checks implementation against declared integration contracts | GPT 5.5 |
-| `researcher` | Deep research using parallel.ai tools + code analysis | Sonnet 4.6 |
-| `adversarial-reviewer` | Adversarial review of changes or research positions — proves the target wrong with tiered, well-cited evidence. Posture is structural, no balanced mode. | Opus 4.7 (medium thinking) |
+| `planner` | Interactive planning agent — clarifies WHAT to build and figures out HOW. Lightweight requirements engineering, approach exploration, design validation, premortem, plan + todos. | GPT-5.6-sol (medium thinking) |
+| `scout` | Fast codebase reconnaissance | GPT-5.6-luna (fast, cheap) |
+| `worker` | Implements tasks from todos, makes polished commits. Reports back if a todo is missing examples/references. | GPT-5.6-terra |
+| `reviewer` | Reviews code for quality/security | GPT-5.6-sol |
+| `validator` | Adversarial verification — checks implementation against declared integration contracts | Opus 4.8 (opposition model) |
+| `researcher` | Deep research using parallel.ai tools + code analysis | GPT-5.6-terra |
+| `adversarial-reviewer` | Adversarial review of changes or research positions — proves the target wrong with tiered, well-cited evidence. Posture is structural, no balanced mode. | GPT-5.6-sol (medium thinking) |
 
 #### Subagents
 
