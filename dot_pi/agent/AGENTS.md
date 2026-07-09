@@ -229,6 +229,11 @@ Skills provide specialized instructions for specific tasks. Load them when the c
 | Building web components, pages, or frontend interfaces | `frontend-design` |
 | Working with GitHub PRs, issues, CI | `github` |
 | Asked to simplify/clean up/refactor code | `code-simplifier` |
+| Diagnosing a hard bug or performance regression ("debug this", broken/failing/slow) | `diagnosing-bugs` |
+| Designing or deepening a module's interface / deciding where a seam goes | `codebase-design` |
+| Building or sharpening the domain model / ubiquitous language / recording an ADR | `domain-modeling` |
+| Building a feature or fixing a bug test-first (red-green-refactor) | `tdd` |
+| Building a throwaway prototype to answer a design question | `prototype` |
 | Stress-testing a plan or design ("grill me") | `grill-me` |
 | Stress-testing a plan against domain model / glossary | `grill-with-docs` |
 | Reading or analyzing a pi session JSONL file | `session-reader` |
@@ -242,8 +247,16 @@ Skills provide specialized instructions for specific tasks. Load them when the c
 | Verifying citations in a document say what the author claims | `adversarial-shepardize` |
 | Adversarial review of a research position or claim | `adversarial-review-research` (invoked by `adversarial-reviewer`) |
 | Adversarial review of a code change or PR | `adversarial-review-change` (invoked by `adversarial-reviewer`) |
+| Turning the current conversation into a spec/PRD (published as a todo) | `to-spec` |
+| Breaking a plan/spec/conversation into tracer-bullet tickets (todos with `Blocked by:` edges) | `to-tickets` |
+| Moving issues/todos through a triage state machine (categorise, verify, brief) | `triage` |
+| Working a spec or todo frontier through to committed code | `implement` |
+| Two-axis review of a diff (Standards + Spec) via parallel subagents | `code-review` |
+| Planning work too big for one session as a map of investigation todos | `wayfinder` |
 
 **The `commit` skill is mandatory for every single commit.**
+
+The `todo`-backed skills (`to-spec`, `to-tickets`, `triage`, `implement`, `code-review`, `wayfinder`) share one adapter reference — `~/.pi/agent/skills/todo-tracker.md` — which maps tracker concepts (issues, labels, states, blocking edges, frontier, claim) onto the file-based `todo` tool. Read it before using any of them.
 
 ---
 
@@ -259,5 +272,6 @@ The following MCP servers are configured via `mcp.json` and bridged through `pi-
 
 ## Skills Layout
 
-- **Shared skills** (`~/.agents/skills/`): agents-md, codebase-investigation, code-simplifier, datadog-incident-investigation, frontend-design, github, iterate-pr, learn-codebase, notekeeper, obsidian-article-capture, obsidian-cli, obsidian-vault-conventions, playwright-cli, researcher, skill-creator
-- **Pi-only skills** (`~/.pi/agent/skills/`): add-mcp-server, cmux, commit, session-reader
+- **Shared skills** (`~/.agents/skills/`): agents-md, codebase-design, codebase-investigation, code-simplifier, datadog-incident-investigation, diagnosing-bugs, domain-modeling, frontend-design, github, iterate-pr, learn-codebase, notekeeper, obsidian-article-capture, obsidian-cli, obsidian-vault-conventions, playwright-cli, prototype, researcher, skill-creator, tdd
+- **Pi-only skills** (`~/.pi/agent/skills/`): add-mcp-server, cmux, code-review, commit, implement, session-reader, to-spec, to-tickets, triage, wayfinder
+- **Pi-only skill reference** (`~/.pi/agent/skills/todo-tracker.md`): the tracker→`todo` adapter shared by the `todo`-backed skills above.
