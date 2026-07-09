@@ -5,14 +5,16 @@
   "packages": [
     "git:github.com/nicobailon/pi-mcp-adapter",
     "git:github.com/HazAT/glimpse",
-    "git:github.com/HazAT/pi-interactive-subagents",
+    "/Users/attamusc/projects/github.com/Attamusc/pi-interactive-subagents",
     "git:github.com/HazAT/pi-autoresearch",
     "git:github.com/carderne/pi-nvim",
-    "/Users/attamusc/projects/github.com/Attamusc/pi-cmux"
+    "/Users/attamusc/projects/github.com/Attamusc/pi-cmux",
+    "/Users/attamusc/projects/github.com/Attamusc/pi-herdr"
   ],
   "extensions": [
     "+extensions/smart-sessions/index.ts",
-    "/Users/attamusc/projects/github.com/Attamusc/pi-television"
+    "/Users/attamusc/projects/github.com/Attamusc/pi-television",
+    "/Users/attamusc/projects/github.com/Attamusc/pi-hunk-review.nvim/pi-extension/hunk-review"
   ],
   "theme": "rose-pine-moon",
   "hideThinkingBlock": false,
