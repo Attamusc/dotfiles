@@ -52,6 +52,7 @@ If a plan path is mentioned, read it. If a TODO is referenced, read its details:
 ```
 todo(action: "get", id: "TODO-xxxx")
 ```
+Never search the filesystem for todo storage or read/edit the backend directly. If the `todo` tool is unavailable, report the missing capability and stop.
 
 ### 2. Verify Todo Has Examples & References
 

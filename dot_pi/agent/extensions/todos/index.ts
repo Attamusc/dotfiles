@@ -38,6 +38,7 @@ import fs from "node:fs/promises";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import crypto from "node:crypto";
 import os from "node:os";
+import { migrateLegacyTodos, projectScopeSlug, scopedTodosDir } from "./scope.mjs";
 import {
 	Container,
 	type Focusable,
@@ -706,16 +707,12 @@ class TodoDetailOverlayComponent {
 	}
 }
 
-function getProjectSlug(cwd: string): string {
-	return path.basename(cwd);
-}
-
 function getTodosDir(cwd: string): string {
 	const overridePath = process.env[TODO_PATH_ENV];
 	if (overridePath && overridePath.trim()) {
 		return path.resolve(cwd, overridePath.trim());
 	}
-	return path.join(GLOBAL_PI_DIR, getProjectSlug(cwd), "todos");
+	return scopedTodosDir(cwd, GLOBAL_PI_DIR);
 }
 
 function getTodosDirLabel(cwd: string): string {
@@ -723,7 +720,7 @@ function getTodosDirLabel(cwd: string): string {
 	if (overridePath && overridePath.trim()) {
 		return path.resolve(cwd, overridePath.trim());
 	}
-	return path.join("~/.pi/history", getProjectSlug(cwd), "todos");
+	return path.join("~/.pi/history", projectScopeSlug(cwd), "todos");
 }
 
 function getTodoSettingsPath(todosDir: string): string {
@@ -1422,6 +1419,9 @@ async function deleteTodo(
 
 export default function todosExtension(pi: ExtensionAPI) {
 	pi.on("session_start", async (_event, ctx) => {
+		if (!process.env[TODO_PATH_ENV]?.trim()) {
+			await migrateLegacyTodos(ctx.cwd, GLOBAL_PI_DIR);
+		}
 		const todosDir = getTodosDir(ctx.cwd);
 		await ensureTodosDir(todosDir);
 		const settings = await readTodoSettings(todosDir);
@@ -1443,6 +1443,9 @@ export default function todosExtension(pi: ExtensionAPI) {
 			"Title is the short summary; body is long-form markdown notes (update replaces, append adds). " +
 			"Todo ids are shown as TODO-<hex>; id parameters accept TODO-<hex> or the raw hex filename. " +
 			"Claim tasks before working on them to avoid conflicts, and close them when complete.",
+		promptGuidelines: [
+			"Use todo to retrieve TODO-<hex> references; never search for or edit the todo storage backend directly.",
+		],
 		parameters: TodoParams,
 
 		async execute(_toolCallId, params, _signal, _onUpdate, ctx) {

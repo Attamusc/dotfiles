@@ -2,9 +2,10 @@
   "$schema": "https://opencode.ai/config.json",
   "mcp": {
     "datadog": {
-      "type": "remote",
-      "url": "https://mcp.datadoghq.com/api/unstable/mcp-server/mcp?",
-      "headers": {},
+      "type": "local",
+      "command": [
+        "/Users/attamusc/.local/bin/datadog_mcp_cli"
+      ],
       "enabled": true
     },
     "kusto": {

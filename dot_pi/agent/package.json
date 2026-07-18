@@ -2,6 +2,9 @@
   "name": "pi-agent-config",
   "version": "1.0.0",
   "description": "Personal pi coding agent configuration — managed by chezmoi",
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
   "keywords": ["pi-package"],
   "license": "MIT"
 }

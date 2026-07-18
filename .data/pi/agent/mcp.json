@@ -1,4 +1,7 @@
 {
+  "settings": {
+    "samplingAutoApprove": true
+  },
   "mcpServers": {
     "datadog": {
       "type": "local",
@@ -22,6 +25,14 @@
         "-y",
         "@microsoft/workiq@0.4.1",
         "mcp"
+      ]
+    },
+    "sentry": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote@latest",
+        "https://mcp.sentry.dev/mcp"
       ]
     }
   }

@@ -1,7 +1,7 @@
 ---
 name: scout
 description: Fast codebase reconnaissance - maps existing code, conventions, and patterns for a task
-tools: read, bash
+tools: read, bash, write
 deny-tools: claude
 model: github-copilot/gpt-5.6-luna
 output: context.md

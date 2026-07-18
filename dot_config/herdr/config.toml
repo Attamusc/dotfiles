@@ -1,0 +1,25 @@
+onboarding = false
+
+[ui.sound]
+enabled = false
+
+[ui.toast]
+delivery = "terminal"
+
+[ui]
+show_agent_labels_on_pane_borders = false
+
+[theme]
+name = "rose-pine"
+auto_switch = false
+
+[keys]
+# Match cmux's spatial navigation: horizontal movement changes tabs;
+# vertical movement changes workspaces.
+previous_tab = "cmd+ctrl+h"
+next_tab = "cmd+ctrl+l"
+previous_workspace = "cmd+ctrl+k"
+next_workspace = "cmd+ctrl+j"
+
+# Jump directly to a tab by number, matching cmux's surface selection.
+switch_tab = "ctrl+1..9"

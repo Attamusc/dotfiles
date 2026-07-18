@@ -169,10 +169,12 @@ Subagents spawn visible pi sessions in cmux terminals. The user can watch progre
 
 The `agent` parameter loads defaults from `~/.pi/agent/agents/<name>.md`. Model, tools, skills, thinking — all inherited. Explicit params override agent defaults.
 
+Before spawning work keyed by `TODO-…`, fetch it with `todo(action: "get", ...)` and include its resolved scope, constraints, references, and acceptance criteria in the task. Never hand a child only an opaque todo ID.
+
 ```typescript
 // Use existing agent definitions — full transparency
 subagent({ name: "Scout", agent: "scout", interactive: false, task: "Analyze the codebase..." })
-subagent({ name: "Worker", agent: "worker", interactive: false, task: "Implement TODO-xxxx..." })
+subagent({ name: "Worker", agent: "worker", interactive: false, task: "Implement TODO-xxxx.\n\nResolved task: [paste scope, constraints, references, and acceptance criteria]" })
 subagent({ name: "Reviewer", agent: "reviewer", interactive: false, task: "Review recent changes..." })
 subagent({ name: "Researcher", agent: "researcher", interactive: false, task: "Research [topic]..." })
 
