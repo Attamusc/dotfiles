@@ -30,6 +30,7 @@ import {
 import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { getCompat, getThinkingLevelMap } from "./model-mapping.mjs";
 
 // Re-declared from pi-ai's COPILOT_HEADERS (not exported by pi-ai).
 const COPILOT_HEADERS: Record<string, string> = {
@@ -64,6 +65,10 @@ interface RawModel {
     limits?: {
       max_context_window_tokens?: number;
       max_output_tokens?: number;
+    };
+    supports?: {
+      adaptive_thinking?: boolean;
+      reasoning_effort?: string[];
     };
   };
 }
@@ -162,23 +167,6 @@ function isModelEligible(model: RawModel): boolean {
   return true;
 }
 
-/** Derive compat flags from model id to match pi-ai's static registry. */
-function getCompat(id: string): Record<string, boolean> {
-  // Adaptive-thinking models: claude-opus-4.6+, claude-sonnet-4.6+
-  if (/^claude-(opus|sonnet)-4\.[6-9]/.test(id)) {
-    return { forceAdaptiveThinking: true };
-  }
-  // Gemini / GPT / Grok: no streaming, no developer role, no reasoning effort
-  if (/^(gemini|gpt-4|grok)/.test(id)) {
-    return { supportsStore: false, supportsDeveloperRole: false, supportsReasoningEffort: false };
-  }
-  // Haiku / Sonnet 4.5: eager tool streaming off
-  if (/^claude-(haiku|sonnet)-4\.5/.test(id)) {
-    return { supportsEagerToolInputStreaming: false };
-  }
-  return {};
-}
-
 /**
  * Derive the API protocol from a model id. Mirrors the static github-copilot
  * registry in pi-ai's models.generated.js — Copilot proxies multiple upstream
@@ -203,8 +191,9 @@ function toPiModel(raw: RawModel) {
     name: raw.name ?? raw.id,
     api: getApi(raw.id),
     headers: { ...COPILOT_HEADERS },
-    compat: getCompat(raw.id),
+    compat: getCompat(raw),
     reasoning: true,
+    thinkingLevelMap: getThinkingLevelMap(raw),
     input: ["text", "image"] as ("text" | "image")[],
     cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
     contextWindow: raw.capabilities?.limits?.max_context_window_tokens ?? 128000,

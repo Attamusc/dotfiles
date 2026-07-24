@@ -4,6 +4,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import { inspectDiscoveryCommand } from "../extensions/command-safety/policy.mjs";
+import { getCompat, getThinkingLevelMap } from "../extensions/github-copilot-dynamic/model-mapping.mjs";
 import { migrateLegacyTodos, projectScopeSlug } from "../extensions/todos/scope.mjs";
 
 const agentDir = join(dirname(fileURLToPath(import.meta.url)), "..", "agents");
@@ -18,6 +19,50 @@ function parseAgent(file) {
     .map((tool) => tool.trim());
   return { file, body, tools };
 }
+
+test("dynamic Copilot models use live adaptive-thinking and effort capabilities", () => {
+  const opus5 = {
+    id: "claude-opus-5",
+    capabilities: {
+      supports: {
+        adaptive_thinking: true,
+        reasoning_effort: ["low", "medium", "high", "xhigh", "max"],
+      },
+    },
+  };
+  const opus46 = {
+    id: "claude-opus-4.6",
+    capabilities: {
+      supports: {
+        adaptive_thinking: true,
+        reasoning_effort: ["low", "medium", "high", "max"],
+      },
+    },
+  };
+  const gpt56 = {
+    id: "gpt-5.6-sol",
+    capabilities: {
+      supports: {
+        reasoning_effort: ["none", "low", "medium", "high", "xhigh", "max"],
+      },
+    },
+  };
+
+  assert.deepEqual(getCompat(opus5), { forceAdaptiveThinking: true });
+  assert.deepEqual(getThinkingLevelMap(opus5), { xhigh: "xhigh" });
+  assert.deepEqual(getThinkingLevelMap(opus46), { xhigh: "max" });
+  assert.deepEqual(getThinkingLevelMap(gpt56), { xhigh: "xhigh" });
+});
+
+test("dynamic Copilot models omit xhigh when the provider does not advertise it", () => {
+  assert.equal(
+    getThinkingLevelMap({
+      id: "gemini-3.5-flash",
+      capabilities: { supports: { reasoning_effort: ["minimal", "low", "medium", "high"] } },
+    }),
+    undefined,
+  );
+});
 
 test("restricted agents receive every tool required by their instructions", () => {
   const failures = [];
