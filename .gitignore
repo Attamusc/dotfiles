@@ -6,3 +6,4 @@
 # Not chezmoi source.
 /.pi/
 /.opencode/
+/.artifacts/
