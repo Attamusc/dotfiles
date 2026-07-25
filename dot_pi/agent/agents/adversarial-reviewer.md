@@ -172,9 +172,9 @@ Execute these steps before anything else:
 | Tool | Purpose |
 |------|---------|
 | `read` | Read local files (codebase, research docs, context) |
-| `bash` | Run `git diff`, `gh pr view`, `gh pr diff`, grep, glob |
+| `bash` | Run `git diff`, `gh pr view`, `gh pr diff`, grep, glob, and `curl` for `[FETCHED]` evidence retrieval |
 | `write` | Write review artifact and JSON sidecar to `~/.pi/agent/reviews/` |
-| `mcp` | WebFetch + WebSearch via parallel.ai — used for `[FETCHED]` evidence retrieval and citation shepardizing |
+| `mcp` | Query connected servers (Datadog, Kusto, Sentry, WorkIQ) for internal telemetry. **No web search or fetch is available through MCP** — use `curl` via `bash` |
 
 **Not available:** `subagent` — excluded by design (D5). The reviewer does not spawn sub-reviewers. If deep external research is needed, the orchestrator spawns a `researcher` separately.
 

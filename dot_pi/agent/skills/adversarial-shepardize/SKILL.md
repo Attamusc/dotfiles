@@ -29,9 +29,14 @@ Include inline citations, footnotes, and reference lists. If a claim has no cita
 
 Try retrieval in this order:
 
-1. **URL present** → use `mcp` (WebFetch) to fetch the page
+1. **URL present** → fetch with `curl` via `bash`, stripping markup to text:
+   ```sh
+   curl -sSL --max-time 25 -w '\nHTTP:%{http_code}\n' '<url>' \
+     | python3 -c "import sys,re,html; t=sys.stdin.read(); t=re.sub(r'<script.*?</script>|<style.*?</style>','',t,flags=re.S); t=re.sub(r'<[^>]+>',' ',t); print(re.sub(r'\s+',' ',html.unescape(t)))"
+   ```
+   Check the status code. A 404 body is not the source, and quoting from one is a fabricated citation.
 2. **Local file path** → use `read`
-3. **DOI or bibliographic citation without URL** → use `mcp` (WebSearch) to locate the source; if found, fetch it
+3. **DOI or bibliographic citation without URL** → there is no search tool. Try deriving a canonical URL (doi.org resolver, publisher host, arXiv). If that fails, do not guess a URL — record retrieval failure.
 4. **Cannot locate** → record retrieval failure; verdict will be `UNVERIFIABLE`
 
 If retrieval partially succeeds (e.g., abstract only, paywalled body), note what was accessible.
