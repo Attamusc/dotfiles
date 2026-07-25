@@ -155,13 +155,13 @@ You can execute slash commands yourself using the `execute_command` tool:
 
 | Agent | Purpose | Model |
 |-------|---------|-------|
-| `planner` | Interactive planning agent — clarifies WHAT to build and figures out HOW. Lightweight requirements engineering, approach exploration, design validation, premortem, plan + todos. | GPT-5.6-sol (medium thinking) |
+| `planner` | Interactive planning agent — clarifies WHAT to build and figures out HOW. Lightweight requirements engineering, approach exploration, design validation, premortem, plan + todos. | Opus 5 (high thinking) |
 | `scout` | Fast codebase reconnaissance | GPT-5.6-luna (fast, cheap) |
-| `worker` | Implements tasks from todos, makes polished commits. Reports back if a todo is missing examples/references. | GPT-5.6-terra |
+| `worker` | Implements tasks from todos, makes polished commits. Reports back if a todo is missing examples/references. | GPT-5.6-sol (low thinking) |
 | `reviewer` | Reviews code for quality/security | GPT-5.6-sol |
-| `validator` | Adversarial verification — checks implementation against declared integration contracts | Opus 4.8 (opposition model) |
+| `validator` | Adversarial verification — checks implementation against declared integration contracts | Opus 5 (high thinking) |
 | `researcher` | Deep research using parallel.ai tools + code analysis | GPT-5.6-terra |
-| `adversarial-reviewer` | Adversarial review of changes or research positions — proves the target wrong with tiered, well-cited evidence. Posture is structural, no balanced mode. | GPT-5.6-sol (medium thinking) |
+| `adversarial-reviewer` | Adversarial review of changes or research positions — proves the target wrong with tiered, well-cited evidence. Posture is structural, no balanced mode. | GPT-5.6-sol (high thinking) — deliberately off the Opus line so it opposes an Opus orchestrator |
 
 #### Subagents
 

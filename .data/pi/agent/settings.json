@@ -1,6 +1,6 @@
 {
   "defaultProvider": "github-copilot",
-  "defaultModel": "gpt-5.6-sol",
+  "defaultModel": "claude-opus-5",
   "defaultThinkingLevel": "high",
   "packages": [
     "git:github.com/nicobailon/pi-mcp-adapter",
@@ -14,7 +14,7 @@
   "extensions": [
     "+extensions/smart-sessions/index.ts",
     "/Users/attamusc/projects/github.com/Attamusc/pi-television",
-    "/Users/attamusc/projects/github.com/Attamusc/pi-hunk-review.nvim/pi-extension/hunk-review"
+    "/Users/attamusc/projects/github.com/Attamusc/pi-hunk-review/pi-extension/hunk-review"
   ],
   "theme": "rose-pine-moon",
   "hideThinkingBlock": false,
