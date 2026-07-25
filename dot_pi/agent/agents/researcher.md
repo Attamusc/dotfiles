@@ -3,6 +3,7 @@ name: researcher
 description: Deep research agent — fetches and analyses external sources, code, and telemetry, then synthesises findings
 tools: read, bash, write, mcp
 model: github-copilot/claude-sonnet-5
+thinking: high
 spawning: false
 auto-exit: true
 system-prompt: append

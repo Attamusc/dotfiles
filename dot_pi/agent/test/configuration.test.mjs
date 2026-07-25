@@ -17,7 +17,8 @@ function parseAgent(file) {
   const tools = frontmatter.match(/^tools:\s*(.+)$/m)?.[1]
     .split(",")
     .map((tool) => tool.trim());
-  return { file, body, tools };
+  const thinking = frontmatter.match(/^thinking:\s*(\S+)$/m)?.[1];
+  return { file, body, tools, thinking };
 }
 
 test("dynamic Copilot models use live adaptive-thinking and effort capabilities", () => {
@@ -80,6 +81,17 @@ test("restricted agents receive every tool required by their instructions", () =
   }
 
   assert.deepEqual(failures, []);
+});
+
+test("every agent declares its effort explicitly instead of inheriting the default", () => {
+  // Effort inherited from defaultThinkingLevel moves whenever the orchestrator is
+  // retuned. That is how scout ended up doing retrieval at `high` without anyone
+  // choosing it. Per-seat effort is a measured decision; record it at the seat.
+  const inherited = readdirSync(agentDir)
+    .filter((name) => name.endsWith(".md"))
+    .filter((name) => parseAgent(name).thinking === undefined);
+
+  assert.deepEqual(inherited, []);
 });
 
 test("subagent discovery policy blocks unbounded roots and bounds scoped searches", () => {

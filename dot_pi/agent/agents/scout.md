@@ -4,6 +4,7 @@ description: Fast codebase reconnaissance - maps existing code, conventions, and
 tools: read, bash, write
 deny-tools: claude
 model: github-copilot/gpt-5.6-luna
+thinking: low
 output: context.md
 spawning: false
 auto-exit: true
