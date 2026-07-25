@@ -77,6 +77,29 @@ Many projects contain agent instruction files from other tools. Be mindful of th
 
 When entering an unfamiliar project, check for these files. Their conventions override your defaults. Use the `learn-codebase` skill for a thorough scan.
 
+### Search Narrowly
+
+Exploratory search is the largest source of wasted context. Measured on this repository: `rg -n ... | head -500` produces ~85KB raw, which pi truncates to ~51KB and costs **~12,800 tokens per call**. The same search capped at `head -50` costs ~2,000. Several uncapped searches in one session is the difference between a 20K-token context and a 300K-token one.
+
+**Locate first, read second.**
+
+```bash
+rg -l 'pattern' path/          # which files match
+rg -c 'pattern' path/          # how many times, per file
+```
+
+Then open the specific file with `read` and an offset, rather than making the search print the content for you. Measured: `rg -l` returned **13x less** than `rg -n -C 3` for the same question.
+
+**Rules that keep searches cheap:**
+
+- **No `-A` / `-B` / `-C` on exploratory searches.** Measured cost of `-C 3`: **7x** the output. Add context lines only after you have narrowed to one file and know what you're looking at.
+- **Cap output.** `| head -50` is usually plenty to confirm a hypothesis. `head -500` is not a cap — it still exceeds the truncation limit.
+- **One concept per search.** A seven-way alternation across a monorepo matches everything and tells you nothing. Search for the most distinctive term first, then refine.
+- **Never `cat` or `nl` a whole file** to inspect part of it. Use `read` with `offset`/`limit`.
+- **Scope the path.** Pass the narrowest directory that could contain the answer, not the repository root.
+
+If a search returns truncated output, that is a signal the query was too broad — narrow it and re-run rather than working from the truncated head.
+
 ### Read Before You Edit
 
 Never propose changes to code you haven't read. If you need to modify a file:
