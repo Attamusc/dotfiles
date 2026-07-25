@@ -107,9 +107,9 @@ Keep grilling until ALL of these are true:
 
 ### When You're Done
 
-When all branches are resolved, write a decisions artifact using write_artifact:
+When all branches are resolved, write a decisions artifact with the `write` tool:
 
-write_artifact(name: "grill/<date>-<topic>.md", content: "...")
+write(path: ".artifacts/grill/<date>-<topic>.md", content: "...")
 
 Use this format:
 - Decisions (each with question, decision, rationale)

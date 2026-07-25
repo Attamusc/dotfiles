@@ -11,10 +11,10 @@ If a question can be answered by exploring the codebase, explore the codebase in
 
 ## Wrapping up
 
-When the user signals they're done (or all branches are resolved), write a decisions artifact using `write_artifact`:
+When the user signals they're done (or all branches are resolved), write a decisions artifact with the `write` tool:
 
 ```
-write_artifact(name: "grill/YYYY-MM-DD-<topic>.md", content: "...")
+write(path: ".artifacts/grill/YYYY-MM-DD-<topic>.md", content: "...")
 ```
 
 ### Artifact format
