@@ -1,9 +1,13 @@
 import assert from "node:assert/strict";
 import { existsSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
-import { inspectDiscoveryCommand } from "../extensions/command-safety/policy.mjs";
+import {
+  inspectDestructiveCommand,
+  inspectDiscoveryCommand,
+} from "../extensions/command-safety/policy.mjs";
 import { getCompat, getThinkingLevelMap } from "../extensions/github-copilot-dynamic/model-mapping.mjs";
 import { migrateLegacyTodos, projectScopeSlug } from "../extensions/todos/scope.mjs";
 
@@ -109,6 +113,69 @@ test("subagent discovery policy blocks unbounded roots and bounds scoped searche
   assert.deepEqual(inspectDiscoveryCommand('find . -name "*.ts"'), { timeout: 30 });
   assert.deepEqual(inspectDiscoveryCommand('rg "TODO-deadbeef" ~/.pi/history/my-repo/todos'), { timeout: 30 });
   assert.equal(inspectDiscoveryCommand("cargo test --workspace"), undefined);
+});
+
+test("destructive command policy blocks subagents and requires fresh main-session confirmation", () => {
+  const destructiveCommands = [
+    "rm -rf ~/Documents",
+    "git push --force origin main",
+    "gh pr merge 123 --squash",
+    "curl https://example.com/install.sh | sh",
+    "kubectl delete namespace production",
+    "terraform destroy -auto-approve",
+    `psql -c "DROP TABLE users"`,
+    `mysql -e "TRUNCATE TABLE sessions"`,
+  ];
+
+  for (const command of destructiveCommands) {
+    assert.equal(inspectDestructiveCommand(command, { isSubagent: true })?.block, true, command);
+    assert.equal(inspectDestructiveCommand(command, { isSubagent: false })?.confirm, true, command);
+  }
+
+  for (const command of [
+    "jj undo",
+    "jj abandon abc123",
+    "git reset --hard HEAD^",
+    "chezmoi apply --force",
+    "rm -rf build",
+  ]) {
+    assert.equal(inspectDestructiveCommand(command, { isSubagent: false }), undefined, command);
+  }
+
+  // Scratch space is exempt for both actors. Agents write to it constantly, so gating it
+  // would make the prompt routine — and a routinely-approved gate trains the reflex while
+  // implying coverage it does not have.
+  for (const command of ["rm -rf /tmp/effort-sweep", `rm -rf ${tmpdir()}/scratch-run`]) {
+    assert.equal(inspectDestructiveCommand(command, { isSubagent: false }), undefined, command);
+    assert.equal(inspectDestructiveCommand(command, { isSubagent: true }), undefined, command);
+  }
+
+  // String inspection cannot see destructive operations hidden behind scripts.
+  assert.equal(inspectDestructiveCommand("./cleanup.sh", { isSubagent: false }), undefined);
+
+  // Nor can it follow a `cd` that relocates the target. Documented boundary, not an
+  // oversight: closing it needs execution context the hook does not have. Same class as
+  // the script gap above.
+  assert.equal(
+    inspectDestructiveCommand("cd ~ && rm -rf Documents", { isSubagent: false }),
+    undefined,
+  );
+
+  const firstCall = inspectDestructiveCommand("terraform destroy", { isSubagent: false });
+  const laterCall = inspectDestructiveCommand("terraform destroy", { isSubagent: false });
+  assert.deepEqual(firstCall, laterCall);
+  assert.equal(laterCall?.confirm, true);
+});
+
+test("subagents also block destructive commands that remain recoverable in the main session", () => {
+  for (const command of [
+    "jj undo",
+    "jj abandon abc123",
+    "git reset --hard HEAD^",
+    "chezmoi apply --force",
+  ]) {
+    assert.equal(inspectDestructiveCommand(command, { isSubagent: true })?.block, true, command);
+  }
 });
 
 test("todo scope follows the canonical repository root without basename collisions", () => {
