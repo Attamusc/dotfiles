@@ -160,7 +160,7 @@ You can execute slash commands yourself using the `execute_command` tool:
 | `worker` | Implements tasks from todos, makes polished commits. Reports back if a todo is missing examples/references. | GPT-5.6-sol (low thinking) |
 | `reviewer` | Reviews code for quality/security | GPT-5.6-sol |
 | `validator` | Adversarial verification — checks implementation against declared integration contracts | Opus 5 (high thinking) |
-| `researcher` | Deep research using parallel.ai tools + code analysis | GPT-5.6-terra |
+| `researcher` | Deep research using parallel.ai tools + code analysis | Sonnet 5 |
 | `adversarial-reviewer` | Adversarial review of changes or research positions — proves the target wrong with tiered, well-cited evidence. Posture is structural, no balanced mode. | GPT-5.6-sol (high thinking) — deliberately off the Opus line so it opposes an Opus orchestrator |
 
 #### Subagents

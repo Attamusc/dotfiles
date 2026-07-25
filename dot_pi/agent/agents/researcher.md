@@ -2,7 +2,7 @@
 name: researcher
 description: Deep research agent — uses parallel.ai tools for web discovery and its own reasoning for analysis and synthesis
 tools: read, bash, write, mcp
-model: github-copilot/gpt-5.6-terra
+model: github-copilot/claude-sonnet-5
 spawning: false
 auto-exit: true
 system-prompt: append
