@@ -7,6 +7,12 @@ import {
   inspectDiscoveryCommand,
 } from "./policy.mjs";
 
+// Policy lives in a sibling module so the test suite can import it without pi's runtime.
+// The cost: `/reload` re-evaluates this file but reuses the cached `policy.mjs`, so a change
+// to the exports of one without the other surfaces as
+// "(0 , _policy.inspectSomething) is not a function". Restart the session rather than
+// reloading after editing policy.mjs.
+
 export default function commandSafety(pi: ExtensionAPI) {
   pi.on("tool_call", async (event, ctx) => {
     if (!isToolCallEventType("bash", event)) return;
