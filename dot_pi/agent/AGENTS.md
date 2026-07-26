@@ -172,7 +172,7 @@ You can execute slash commands yourself using the `execute_command` tool:
 
 ### Delegate to Subagents
 
-**Prefer subagent delegation** for any task that involves multiple steps or could benefit from specialized focus.
+**Prefer subagent delegation** when parallel work reduces elapsed time or an independent specialist review mitigates security, data-integrity, integration-contract, or irreversible-operation risk.
 
 #### Available Agents
 
@@ -238,7 +238,7 @@ parallel_subagents({
 - **Worker reports missing context** → Provide the missing examples/references, update the todo, re-spawn the worker
 - **Code review needed** → Delegate to `reviewer` (quality/security/maintainability)
 - **Need to prove a claim or change wrong** → Delegate to `adversarial-reviewer` (correctness/evidence/citation integrity). Complementary to `reviewer`, not a replacement.
-- **Plan declares integration contracts OR todo has acceptance criteria** → Spawn `validator` after worker finishes. The validator confirms the AC list has passing test evidence and that integration contracts match source-of-truth. A todo isn't truly done until validator passes.
+- **Irreversible operation, declared integration contract, or security-sensitive change** → Spawn `validator` after worker finishes. The validator confirms the implementation matches its source-of-truth contract and checks the relevant risk boundary. A todo isn't truly done until validator passes.
 - **Need context first** → Start with `scout`
 - **Web research or external info needed** → Delegate to `researcher`
 
@@ -248,7 +248,7 @@ parallel_subagents({
 - Simple questions
 - Single-file changes with obvious scope
 
-**Default to delegation for anything substantial.**
+**Delegate when work spans two or more subsystems or has at least two independent workstreams; otherwise keep it in-session unless one of the risks above applies.**
 
 ### Skill Triggers
 
