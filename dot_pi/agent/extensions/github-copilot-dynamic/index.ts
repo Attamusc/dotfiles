@@ -27,6 +27,16 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { getCompat, getThinkingLevelMap } from "./model-mapping.mjs";
 
+// Re-declared from pi-ai's COPILOT_HEADERS (not exported by pi-ai).
+const COPILOT_HEADERS: Record<string, string> = {
+  "User-Agent": "GitHubCopilotChat/0.35.0",
+  "Editor-Version": "vscode/1.107.0",
+  "Editor-Plugin-Version": "copilot-chat/0.35.0",
+  "Copilot-Integration-Id": "vscode-chat",
+};
+
+const TAG = "[github-copilot-dynamic]";
+
 // Vendored from pi-ai. These lived at `@earendil-works/pi-ai/oauth` until 0.82.1 moved
 // them behind the package exports map, where no public subpath reaches them. The logic
 // parses a token format GitHub controls, not a pi abstraction, so a local copy is more
@@ -38,15 +48,40 @@ function getGitHubCopilotBaseUrl(token: string, enterpriseDomain?: string): stri
   return "https://api.individual.githubcopilot.com";
 }
 
-// Re-declared from pi-ai's COPILOT_HEADERS (not exported by pi-ai).
-const COPILOT_HEADERS: Record<string, string> = {
-  "User-Agent": "GitHubCopilotChat/0.35.0",
-  "Editor-Version": "vscode/1.107.0",
-  "Editor-Plugin-Version": "copilot-chat/0.35.0",
-  "Copilot-Integration-Id": "vscode-chat",
-};
-
-const TAG = "[github-copilot-dynamic]";
+/**
+ * Mint a short-lived Copilot JWT from the stored GitHub token.
+ *
+ * Copilot JWTs last about 30 minutes, so a session started any later than that after the
+ * last use finds `auth.json` stale. Skipping discovery in that case made the extension
+ * non-deterministic — it silently fell back to pi's static registry depending on how
+ * recently pi had run. Minting one costs a single GET.
+ *
+ * The result is deliberately not written back to `auth.json`. pi owns that file and
+ * refreshes on its own schedule; writing from here would race it. This token is used for
+ * the /models call and discarded.
+ */
+async function mintCopilotJwt(refreshToken: string, enterpriseDomain?: string): Promise<string | null> {
+  const domain = enterpriseDomain || "github.com";
+  try {
+    const response = await fetch(`https://api.${domain}/copilot_internal/v2/token`, {
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${refreshToken}`,
+        ...COPILOT_HEADERS,
+      },
+    });
+    if (!response.ok) {
+      console.error(`${TAG} token mint failed: HTTP ${response.status}`);
+      return null;
+    }
+    const raw: unknown = await response.json();
+    const token = (raw as { token?: unknown })?.token;
+    return typeof token === "string" ? token : null;
+  } catch (err: unknown) {
+    console.error(`${TAG} token mint failed: ${err instanceof Error ? err.message : String(err)}`);
+    return null;
+  }
+}
 
 interface AuthEntry {
   type: string;
@@ -113,12 +148,18 @@ async function readCopilotAuth(): Promise<CopilotAuth | null> {
     };
   }
 
-  // JWT expired. pi refreshes it natively on the next request, so rather than vendoring
-  // the token-exchange path, defer: skip discovery this run and fall back to pi's built-in
-  // Copilot registry. The previous implementation also gave up here whenever a refresh
-  // failed, and the built-in list is a far better fallback now than it was then.
-  console.error(`${TAG} cached Copilot JWT expired, using pi's built-in model list this run`);
-  return null;
+  // JWT expired. Mint a fresh one rather than skipping discovery, otherwise whether the
+  // dynamic model list appears depends on how recently pi last ran.
+  const minted = await mintCopilotJwt(entry.refresh, entry.enterpriseUrl);
+  if (!minted) {
+    console.error(`${TAG} could not mint a Copilot JWT, using pi's built-in model list this run`);
+    return null;
+  }
+  return {
+    jwt: minted,
+    baseUrl: getGitHubCopilotBaseUrl(minted, entry.enterpriseUrl),
+    enterpriseUrl: entry.enterpriseUrl,
+  };
 }
 
 async function fetchModels(auth: CopilotAuth): Promise<RawModel[] | null> {
