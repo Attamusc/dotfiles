@@ -22,15 +22,21 @@
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import {
-  githubCopilotOAuthProvider,
-  getGitHubCopilotBaseUrl,
-  refreshGitHubCopilotToken,
-} from "@earendil-works/pi-ai/oauth";
 import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { getCompat, getThinkingLevelMap } from "./model-mapping.mjs";
+
+// Vendored from pi-ai. These lived at `@earendil-works/pi-ai/oauth` until 0.82.1 moved
+// them behind the package exports map, where no public subpath reaches them. The logic
+// parses a token format GitHub controls, not a pi abstraction, so a local copy is more
+// stable than the import was.
+function getGitHubCopilotBaseUrl(token: string, enterpriseDomain?: string): string {
+  const match = token?.match(/proxy-ep=([^;]+)/);
+  if (match) return `https://${match[1].replace(/^proxy\./, "api.")}`;
+  if (enterpriseDomain) return `https://copilot-api.${enterpriseDomain}`;
+  return "https://api.individual.githubcopilot.com";
+}
 
 // Re-declared from pi-ai's COPILOT_HEADERS (not exported by pi-ai).
 const COPILOT_HEADERS: Record<string, string> = {
@@ -107,18 +113,12 @@ async function readCopilotAuth(): Promise<CopilotAuth | null> {
     };
   }
 
-  // JWT expired — exchange refresh token for a new Copilot JWT.
-  try {
-    const refreshed = await refreshGitHubCopilotToken(entry.refresh, entry.enterpriseUrl);
-    return {
-      jwt: refreshed.access,
-      baseUrl: getGitHubCopilotBaseUrl(refreshed.access, entry.enterpriseUrl),
-      enterpriseUrl: entry.enterpriseUrl,
-    };
-  } catch (err: unknown) {
-    console.error(`${TAG} JWT refresh failed: ${err instanceof Error ? err.message : String(err)}`);
-    return null;
-  }
+  // JWT expired. pi refreshes it natively on the next request, so rather than vendoring
+  // the token-exchange path, defer: skip discovery this run and fall back to pi's built-in
+  // Copilot registry. The previous implementation also gave up here whenever a refresh
+  // failed, and the built-in list is a far better fallback now than it was then.
+  console.error(`${TAG} cached Copilot JWT expired, using pi's built-in model list this run`);
+  return null;
 }
 
 async function fetchModels(auth: CopilotAuth): Promise<RawModel[] | null> {
@@ -216,16 +216,15 @@ export default async function (pi: ExtensionAPI) {
     }
 
     const models = eligible.map(toPiModel);
-    // baseUrl + oauth are required by pi's registerProvider validation when
-    // `models` is set. Per-model `api` (set by getApi above) satisfies the
-    // per-model api requirement, so no provider-level `api` fallback is needed
-    // — omitting it makes the multi-protocol shape explicit. Re-registering
-    // the same OAuth provider is idempotent (keyed by id), and
-    // oauth.modifyModels rewrites each model's baseUrl from the live JWT
-    // after our models are pushed.
+    // `models` replaces the provider's model list, which is the whole point: pi's built-in
+    // registry is static (29 definitions in 0.82.1, filtered to entitlements), so a model
+    // GitHub ships today stays invisible until pi cuts a release. This list comes from the
+    // live /models response instead.
+    //
+    // No `oauth` is supplied. pi's built-in github-copilot provider already owns the
+    // credential, and re-registering the same id keeps that auth while swapping the models.
     pi.registerProvider("github-copilot", {
       baseUrl: auth.baseUrl,
-      oauth: githubCopilotOAuthProvider,
       models,
     });
   } catch (err: unknown) {
