@@ -90,7 +90,7 @@ Warn if a server with the same name already exists and confirm before overwritin
 
 ## Step 5: Verify
 
-1. Run `/reload` to pick up the new config
+1. Ask the user to run `/reload` to pick up the new config
 2. Use `mcp({ connect: "server-name" })` to test the connection
 3. Use `mcp({ server: "server-name" })` to list available tools
 4. Report success or troubleshoot connection errors

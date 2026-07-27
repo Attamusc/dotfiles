@@ -162,13 +162,9 @@ Only ask questions that require human judgment or preference. Before asking, con
 - Can I try something and see if it works? → Do it
 - Can I make a reasonable default choice? → Do it
 
-When you have multiple questions, use `/answer` to open a structured Q&A interface.
+When you have multiple questions, ask them together as plain text and end your turn. The user opens the structured Q&A interface with `ctrl+.` if they want it — don't invoke `/answer` yourself.
 
-### Self-Invoke Commands
-
-You can execute slash commands yourself using the `execute_command` tool:
-- **Run `/answer`** after asking multiple questions — don't make the user invoke it
-- **Send follow-up prompts** to yourself
+Slash commands are the user's to run. You have no way to invoke one; emitting `/reload` as text does nothing. When a command is needed, ask the user to run it.
 
 ### Delegate to Subagents
 

@@ -496,7 +496,7 @@ export default function (pi: ExtensionAPI) {
       if (entry.type === "message") {
         const msg = entry.message;
         if ("role" in msg && msg.role === "assistant") {
-          // Accept "stop" and "toolUse" (for self-invoked /answer via execute_command)
+          // "toolUse" covers a turn interrupted mid-tool-call that still asked questions
           if (msg.stopReason !== "stop" && msg.stopReason !== "toolUse") {
             ctx.ui.notify(`Last assistant message incomplete (${msg.stopReason})`, "error");
             return;
@@ -600,10 +600,5 @@ export default function (pi: ExtensionAPI) {
   pi.registerShortcut("ctrl+.", {
     description: "Extract and answer questions",
     handler: answerHandler,
-  });
-
-  // Listen for trigger from other extensions (e.g., execute_command tool)
-  pi.events.on("trigger:answer", (ctx: ExtensionContext) => {
-    answerHandler(ctx);
   });
 }
