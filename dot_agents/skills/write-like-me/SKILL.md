@@ -58,7 +58,7 @@ Pattern: borrows a known concept ("mise en place") to compress the point. Frames
 - **Warm + direct.** Coaching, not auditing. Says hard things plainly without performing toughness.
 
 ### Don't
-- **No AI tells.** Avoid: "load-bearing," "structurally bakes in," "doesn't quite fit," "Happy to discuss," "Hope this helps," "the factual foundation is solid," "doing more good than harm," symmetric tri-paragraph structures, em-dash overdose.
+- **No AI tells.** Avoid: "load-bearing," "structurally bakes in," "doesn't quite fit," "Happy to discuss," "Hope this helps," "the factual foundation is solid," "doing more good than harm," symmetric tri-paragraph structures, em-dash overdose. For a full audit of AI patterns, load the `avoid-ai-writing` skill — use it for detection, but keep the voice targets below; where the two disagree, this skill wins.
 - **No fake casual.** Don't drop sentence capitalization to seem informal. Don't sprinkle "stuff" / "tbh" / "lol" / "to chew on" / "food for thought" — Sean writes with care even when fast, and even soft asks get substantive labels ("Open question." not "One to chew on.").
 - **No speculative drama.** Don't predict future failures or escalate critique with imagined consequences ("the next bump gets sized by the same broken process," "this will recur," "we'll be back here in 2 weeks"). State the gap; let the reader connect dots about what could happen.
 - **No demanding closings.** "Ping me when you've taken another pass" puts the recipient on the hook. Prefer non-blocking framing or warm sign-offs (see Closings section).

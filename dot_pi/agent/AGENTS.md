@@ -281,8 +281,11 @@ Skills provide specialized instructions for specific tasks. Load them when the c
 | Working a spec or todo frontier through to committed code | `implement` |
 | Two-axis review of a diff (Standards + Spec) via parallel subagents | `code-review` |
 | Planning work too big for one session as a map of investigation todos | `wayfinder` |
+| Auditing or rewriting prose to strip AI tells ("make this sound less like AI") | `avoid-ai-writing` |
 
 **The `commit` skill is mandatory for every single commit.**
+
+For prose going out under Sean's name, `write-like-me` sets the target voice and `avoid-ai-writing` supplies the audit checklist. Where they disagree, `write-like-me` wins.
 
 The `todo`-backed skills (`to-spec`, `to-tickets`, `triage`, `implement`, `code-review`, `wayfinder`) share one adapter reference — `~/.pi/agent/skills/todo-tracker.md` — which maps tracker concepts (issues, labels, states, blocking edges, frontier, claim) onto the file-based `todo` tool. Read it before using any of them.
 
@@ -300,6 +303,6 @@ The following MCP servers are configured via `mcp.json` and bridged through `pi-
 
 ## Skills Layout
 
-- **Shared skills** (`~/.agents/skills/`): agents-md, codebase-design, codebase-investigation, code-simplifier, datadog-incident-investigation, diagnosing-bugs, domain-modeling, frontend-design, github, iterate-pr, learn-codebase, notekeeper, obsidian-article-capture, obsidian-cli, obsidian-vault-conventions, playwright-cli, prototype, researcher, skill-creator, tdd
+- **Shared skills** (`~/.agents/skills/`): agents-md, avoid-ai-writing, codebase-design, codebase-investigation, code-simplifier, datadog-incident-investigation, diagnosing-bugs, domain-modeling, frontend-design, github, iterate-pr, learn-codebase, notekeeper, obsidian-article-capture, obsidian-cli, obsidian-vault-conventions, playwright-cli, prototype, researcher, skill-creator, tdd
 - **Pi-only skills** (`~/.pi/agent/skills/`): add-mcp-server, cmux, code-review, commit, implement, session-reader, to-spec, to-tickets, triage, wayfinder
 - **Pi-only skill reference** (`~/.pi/agent/skills/todo-tracker.md`): the tracker→`todo` adapter shared by the `todo`-backed skills above.
