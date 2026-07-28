@@ -7,9 +7,9 @@ import { test } from "node:test";
 import {
   inspectDestructiveCommand,
   inspectDiscoveryCommand,
-} from "../extensions/command-safety/policy.mjs";
-import { getCompat, getThinkingLevelMap } from "../extensions/github-copilot-dynamic/model-mapping.mjs";
-import { migrateLegacyTodos, projectScopeSlug } from "../extensions/todos/scope.mjs";
+} from "../extensions/command-safety/policy.ts";
+import { getCompat, getThinkingLevelMap } from "../extensions/github-copilot-dynamic/model-mapping.ts";
+import { migrateLegacyTodos, projectScopeSlug } from "../extensions/todos/scope.ts";
 
 const agentDir = join(dirname(fileURLToPath(import.meta.url)), "..", "agents");
 

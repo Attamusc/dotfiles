@@ -38,7 +38,7 @@ import fs from "node:fs/promises";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import crypto from "node:crypto";
 import os from "node:os";
-import { migrateLegacyTodos, projectScopeSlug, scopedTodosDir } from "./scope.mjs";
+import { migrateLegacyTodos, projectScopeSlug, scopedTodosDir } from "./scope.ts";
 import {
 	Container,
 	type Focusable,

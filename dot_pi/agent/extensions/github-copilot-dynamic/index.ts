@@ -25,7 +25,7 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { getCompat, getThinkingLevelMap } from "./model-mapping.mjs";
+import { getCompat, getThinkingLevelMap } from "./model-mapping.ts";
 
 // Re-declared from pi-ai's COPILOT_HEADERS (not exported by pi-ai).
 const COPILOT_HEADERS: Record<string, string> = {

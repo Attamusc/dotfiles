@@ -5,13 +5,14 @@ import {
 import {
   inspectDestructiveCommand,
   inspectDiscoveryCommand,
-} from "./policy.mjs";
+} from "./policy.ts";
 
 // Policy lives in a sibling module so the test suite can import it without pi's runtime.
-// The cost: `/reload` re-evaluates this file but reuses the cached `policy.mjs`, so a change
-// to the exports of one without the other surfaces as
-// "(0 , _policy.inspectSomething) is not a function". Restart the session rather than
-// reloading after editing policy.mjs.
+// The sibling must stay `.ts`: pi hands `.mjs` to Node's native ESM loader, whose module map
+// is keyed by URL and never invalidated, so a `.mjs` sibling stays frozen at whatever the
+// process loaded at startup while `/reload` re-evaluates this file. Any skew between the two
+// then surfaces as "(0 , _policy.inspectSomething) is not a function" until pi is restarted.
+// jiti transpiles `.ts` itself and re-evaluates it on every reload, so both files stay in step.
 
 export default function commandSafety(pi: ExtensionAPI) {
   pi.on("tool_call", async (event, ctx) => {
