@@ -68,12 +68,12 @@ parallel_subagents({
   agents: [
     {
       name: "Standards Review",
-      agent: "worker",
+      agent: "reviewer",
       task: `<Standards prompt — see below>`
     },
     {
       name: "Spec Review",
-      agent: "worker",
+      agent: "reviewer",
       task: `<Spec prompt — see below>`
     }
   ]

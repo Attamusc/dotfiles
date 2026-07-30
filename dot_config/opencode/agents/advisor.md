@@ -5,7 +5,7 @@ description: >
   Use when you want a second opinion, are stuck on a design decision, need
   help debugging a tricky issue, or want someone to poke holes in your approach.
 mode: subagent
-model: github-copilot/claude-opus-4.6
+model: github-copilot/claude-opus-5
 tools:
   write: false
   edit: false

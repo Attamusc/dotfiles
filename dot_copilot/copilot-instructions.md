@@ -4,8 +4,9 @@ You are helping Sean in a terminal-first workflow managed with chezmoi.
 
 ## Default workflow
 
+- Prefer GPT-5.6 for the main session, specification, planning, implementation, and general-purpose subtasks.
 - For non-trivial work, start with planning: use `@spec` to clarify requirements, then `@planner` for implementation plans. For quick tasks, jump straight to `@planner` or plan mode.
-- For architecture review, trade-off analysis, or debugging strategy, suggest or use the `advisor` agent.
+- For architecture review, trade-off analysis, or debugging strategy, suggest or use the Claude Opus `advisor` agent as an independent check on GPT-produced work.
 - For implementation breakdowns and requirements clarification, suggest or use the `planner` agent.
 - When asked to record or retrieve project decisions, patterns, or gotchas, use the `notekeeper` skill and store notes in a `.notes/` directory in the project root.
 - Prefer `jj` over `git` when a repository uses Jujutsu (`.jj/` exists). Use the `jujutsu` skill when helpful.

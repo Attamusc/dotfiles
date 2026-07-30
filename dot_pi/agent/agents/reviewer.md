@@ -2,7 +2,7 @@
 name: reviewer
 description: Code review agent - reviews changes for quality, security, and correctness
 tools: read, bash, write, todo
-model: github-copilot/gpt-5.6-sol
+model: github-copilot/claude-sonnet-5
 thinking: high
 spawning: false
 auto-exit: true

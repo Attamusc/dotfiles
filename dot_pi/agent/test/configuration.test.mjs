@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { existsSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { tmpdir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import {
@@ -11,7 +11,10 @@ import {
 import { getCompat, getThinkingLevelMap } from "../extensions/github-copilot-dynamic/model-mapping.ts";
 import { migrateLegacyTodos, projectScopeSlug } from "../extensions/todos/scope.ts";
 
-const agentDir = join(dirname(fileURLToPath(import.meta.url)), "..", "agents");
+const testDir = dirname(fileURLToPath(import.meta.url));
+const sourceTreeRoot = join(testDir, "..", "..", "..");
+const runningFromSource = existsSync(join(sourceTreeRoot, ".data", "pi", "agent", "settings.json"));
+const agentDir = join(testDir, "..", "agents");
 
 function parseAgent(file) {
   const source = readFileSync(join(agentDir, file), "utf8");
@@ -21,8 +24,9 @@ function parseAgent(file) {
   const tools = frontmatter.match(/^tools:\s*(.+)$/m)?.[1]
     .split(",")
     .map((tool) => tool.trim());
+  const model = frontmatter.match(/^model:\s*(\S+)$/m)?.[1];
   const thinking = frontmatter.match(/^thinking:\s*(\S+)$/m)?.[1];
-  return { file, body, tools, thinking };
+  return { file, body, tools, model, thinking };
 }
 
 test("dynamic Copilot models use live adaptive-thinking and effort capabilities", () => {
@@ -96,6 +100,74 @@ test("every agent declares its effort explicitly instead of inheriting the defau
     .filter((name) => parseAgent(name).thinking === undefined);
 
   assert.deepEqual(inherited, []);
+});
+
+test("fleet routes GPT producers to independent Claude reviewers", () => {
+  const expectedModels = {
+    "adversarial-reviewer.md": "github-copilot/claude-opus-5",
+    "planner.md": "github-copilot/gpt-5.6-sol",
+    "researcher.md": "github-copilot/gpt-5.6-terra",
+    "reviewer.md": "github-copilot/claude-sonnet-5",
+    "scout.md": "github-copilot/gpt-5.6-luna",
+    "validator.md": "github-copilot/claude-opus-5",
+    "worker.md": "github-copilot/gpt-5.6-sol",
+  };
+
+  for (const [file, model] of Object.entries(expectedModels)) {
+    assert.equal(parseAgent(file).model, model, file);
+  }
+
+  const settingsPath = runningFromSource
+    ? join(sourceTreeRoot, ".data", "pi", "agent", "settings.json")
+    : join(testDir, "..", "settings.json");
+  const settings = JSON.parse(readFileSync(settingsPath, "utf8"));
+  assert.equal(settings.defaultProvider, "github-copilot");
+  assert.equal(settings.defaultModel, "gpt-5.6-sol");
+});
+
+test("OpenCode and Copilot prefer GPT with a Claude advisor boundary", () => {
+  const openCodeRoot = runningFromSource
+    ? join(sourceTreeRoot, "dot_config", "opencode")
+    : join(homedir(), ".config", "opencode");
+  const openCodeSettings = JSON.parse(readFileSync(join(openCodeRoot, "opencode.jsonc"), "utf8"));
+  assert.equal(openCodeSettings.model, "github-copilot/gpt-5.6-sol");
+
+  const openCodeModels = {
+    "advisor.md": "github-copilot/claude-opus-5",
+    "planner.md": "github-copilot/gpt-5.6-sol",
+    "spec.md": "github-copilot/gpt-5.6-sol",
+  };
+  for (const [file, model] of Object.entries(openCodeModels)) {
+    const source = readFileSync(join(openCodeRoot, "agents", file), "utf8");
+    assert.equal(source.match(/^model:\s*(\S+)$/m)?.[1], model, file);
+  }
+
+  const copilotSettingsPath = runningFromSource
+    ? join(sourceTreeRoot, "dot_copilot", "private_settings.json")
+    : join(homedir(), ".copilot", "settings.json");
+  const copilotSettings = JSON.parse(readFileSync(copilotSettingsPath, "utf8"));
+  assert.equal(copilotSettings.model, "gpt-5.6-sol");
+  assert.equal(copilotSettings.subagents.agents.advisor.model, "claude-opus-5");
+  assert.equal(copilotSettings.subagents.agents.planner.model, "gpt-5.6-sol");
+  assert.equal(copilotSettings.subagents.agents.spec.model, "gpt-5.6-sol");
+});
+
+test("nested utilities and code review preserve their routing boundaries", () => {
+  const extensionRoot = join(testDir, "..", "extensions");
+  const answerSource = readFileSync(join(extensionRoot, "answer", "index.ts"), "utf8");
+  assert.match(answerSource, /const EXTRACTION_MODEL_ID = "gpt-5\.6-luna";/);
+
+  const smartSessionsSource = readFileSync(join(extensionRoot, "smart-sessions", "index.ts"), "utf8");
+  assert.match(smartSessionsSource, /const LUNA_MODEL_ID = "gpt-5\.6-luna";/);
+  assert.ok(
+    smartSessionsSource.indexOf('find("github-copilot", LUNA_MODEL_ID)') <
+      smartSessionsSource.indexOf('find("anthropic", HAIKU_MODEL_ID)'),
+    "smart sessions must prefer Copilot Luna before the Anthropic fallback",
+  );
+
+  const codeReviewSource = readFileSync(join(testDir, "..", "skills", "code-review", "SKILL.md"), "utf8");
+  const reviewAgents = [...codeReviewSource.matchAll(/^\s+agent: "([^"]+)",$/gm)].map((match) => match[1]);
+  assert.deepEqual(reviewAgents, ["reviewer", "reviewer"]);
 });
 
 test("subagent discovery policy blocks unbounded roots and bounds scoped searches", () => {

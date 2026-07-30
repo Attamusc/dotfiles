@@ -16,15 +16,15 @@ matters with a specific fact, number, or mechanism — not adjectives.
 - **@spec** — Clarifies WHAT to build. Interviews about intent, scope,
   effort level, and success criteria, then writes a structured spec to
   `docs/specs/*.md`. Read-only for source code, never plans architecture.
-  Uses `claude-opus-4.6`. Use when requirements are unclear or you want to
+  Uses `gpt-5.6-sol`. Use when requirements are unclear or you want to
   nail down exactly what "done" looks like before planning.
 - **@planner** — Figures out HOW to build it. Takes a spec (or request),
   explores approaches, validates design, runs a premortem, and produces a
   structured plan in `docs/plans/*.md`. Read-only for source code, never
-  writes code. Uses `claude-opus-4.6`. Use for any non-trivial task.
+  writes code. Uses `gpt-5.6-sol`. Use for any non-trivial task.
 - **@advisor** — Senior architect for bouncing ideas, reviewing approaches,
   and debugging strategy. Fully read-only, gives direct opinions. Uses
-  `claude-opus-4.6`.
+  `claude-opus-5` as an independent check on GPT-produced work.
 
 ### Skill Discovery
 

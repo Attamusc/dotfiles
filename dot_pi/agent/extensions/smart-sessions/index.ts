@@ -6,6 +6,7 @@ const skillPattern = /^\/skill:(\S+)\s*([\s\S]*)/;
 const SUMMARY_PROMPT =
   "Summarize the user's request in 5-10 words max. Output ONLY the summary, nothing else. No quotes, no punctuation at the end.";
 
+const LUNA_MODEL_ID = "gpt-5.6-luna";
 const HAIKU_MODEL_ID = "claude-haiku-4-5";
 
 async function pickCheapModel(ctx: {
@@ -15,13 +16,13 @@ async function pickCheapModel(ctx: {
     getApiKeyAndHeaders: (m: Model<Api>) => Promise<{ ok: true; apiKey?: string; headers?: Record<string, string> } | { ok: false; error: string }>;
   };
 }): Promise<{ model: Model<Api>; apiKey?: string; headers?: Record<string, string> } | null> {
-  // Try github-copilot provider first for haiku (copilot uses dot notation: 4.5)
-  const copilotHaiku = ctx.modelRegistry.find("github-copilot", "claude-haiku-4.5");
-  if (copilotHaiku) {
-    const auth = await ctx.modelRegistry.getApiKeyAndHeaders(copilotHaiku);
-    if (auth.ok) return { model: copilotHaiku, apiKey: auth.apiKey, headers: auth.headers };
+  // Prefer the cheapest GPT-5.6 tier through GitHub Copilot.
+  const copilotLuna = ctx.modelRegistry.find("github-copilot", LUNA_MODEL_ID);
+  if (copilotLuna) {
+    const auth = await ctx.modelRegistry.getApiKeyAndHeaders(copilotLuna);
+    if (auth.ok) return { model: copilotLuna, apiKey: auth.apiKey, headers: auth.headers };
   }
-  // Fall back to anthropic provider
+  // Fall back to Anthropic's cheap model when Copilot Luna is unavailable.
   const haiku = ctx.modelRegistry.find("anthropic", HAIKU_MODEL_ID);
   if (haiku) {
     const auth = await ctx.modelRegistry.getApiKeyAndHeaders(haiku);

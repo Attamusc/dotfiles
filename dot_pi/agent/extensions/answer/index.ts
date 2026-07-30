@@ -73,10 +73,10 @@ Example output:
 }`;
 
 const PROVIDER_ID = "github-copilot";
-const HAIKU_MODEL_ID = "claude-haiku-4.5";
+const EXTRACTION_MODEL_ID = "gpt-5.6-luna";
 
 /**
- * Prefer Haiku for extraction (fast, cheap), otherwise fallback to the current model.
+ * Prefer Luna for extraction (fast, cheap), otherwise fall back to the current model.
  */
 async function selectExtractionModel(
   currentModel: Model<Api>,
@@ -85,9 +85,9 @@ async function selectExtractionModel(
     hasConfiguredAuth: (model: Model<Api>) => boolean;
   },
 ): Promise<Model<Api>> {
-  const haikuModel = modelRegistry.find(PROVIDER_ID, HAIKU_MODEL_ID);
-  if (haikuModel && modelRegistry.hasConfiguredAuth(haikuModel)) {
-    return haikuModel;
+  const extractionModel = modelRegistry.find(PROVIDER_ID, EXTRACTION_MODEL_ID);
+  if (extractionModel && modelRegistry.hasConfiguredAuth(extractionModel)) {
+    return extractionModel;
   }
 
   return currentModel;
@@ -517,7 +517,7 @@ export default function (pi: ExtensionAPI) {
       return;
     }
 
-    // Select the best model for extraction (prefer Codex mini, then haiku)
+    // Prefer Luna for extraction, then fall back to the current model.
     const extractionModel = await selectExtractionModel(ctx.model, ctx.modelRegistry);
 
     // Run extraction with loader UI

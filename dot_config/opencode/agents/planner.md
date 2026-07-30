@@ -5,7 +5,7 @@ description: >
   plan in docs/plans/. Never writes code. Use when the task has multiple steps,
   unclear requirements, or when you want to think before building.
 mode: subagent
-model: github-copilot/claude-opus-4.6
+model: github-copilot/gpt-5.6-sol
 permission:
   edit: allow
   bash:
