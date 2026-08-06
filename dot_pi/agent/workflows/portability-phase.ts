@@ -123,6 +123,37 @@ function assertSameDiff(expected: CapturedDiff, actual: CapturedDiff, stage: str
   }
 }
 
+export function patchWhitespaceFailures(patch: string): number[] {
+  const failures: number[] = [];
+  let inHunk = false;
+  for (const [index, rawLine] of patch.split("\n").entries()) {
+    const line = rawLine.endsWith("\r") ? rawLine.slice(0, -1) : rawLine;
+    if (line.startsWith("diff --git ")) {
+      inHunk = false;
+      continue;
+    }
+    if (line.startsWith("@@")) {
+      inHunk = true;
+      continue;
+    }
+    if (!inHunk || !line.startsWith("+")) continue;
+    const added = line.slice(1);
+    const conflictMarker = /^(?:<{7}(?: .*)?|\|{7}(?: .*)?|={7}|>{7}(?: .*)?)$/;
+    if (/[ \t]+$/.test(added) || conflictMarker.test(added)) failures.push(index + 1);
+  }
+  return failures;
+}
+
+function checkPatchWhitespace(wf: WorkflowContext, patch: string): void {
+  wf.log("check_start", { label: "diff whitespace", source: "captured isolated patch" });
+  const failures = patchWhitespaceFailures(patch);
+  if (failures.length > 0) {
+    wf.log("check_end", { label: "diff whitespace", status: 1, failures: failures.length });
+    throw new Error(`captured isolated patch has whitespace/conflict-marker errors at patch lines: ${failures.slice(0, 20).join(", ")}`);
+  }
+  wf.log("check_end", { label: "diff whitespace", status: 0 });
+}
+
 function createValidationCopy(isolated: string, destination: string, liveRoot: string): void {
   fs.cpSync(isolated, destination, {
     recursive: true,
@@ -263,7 +294,7 @@ export default async function (wf: WorkflowContext) {
     createValidationCopy(isolated, validationCopy, wf.cwd);
     const bashSyntax = runExact(wf, "bash syntax", "bash", ["-n", "scripts/check-portability.sh"], validationCopy);
     const portabilityCheck = runExact(wf, "portability check", "bash", ["scripts/check-portability.sh"], validationCopy, 256 * 1024);
-    runExact(wf, "diff whitespace", "git", ["diff", "--check", "HEAD"], isolated);
+    checkPatchWhitespace(wf, diff.patch);
     assertSameDiff(diff, isolatedDiff(isolated, isolatedVcs, isolatedChangeId), "validation");
     assertProtectedState("after-validation");
 
@@ -288,7 +319,7 @@ export default async function (wf: WorkflowContext) {
         "--- ORCHESTRATOR VALIDATION ---",
         `bash -n status: 0${bashSyntax ? `\n${bashSyntax}` : ""}`,
         portabilityCheck,
-        "git diff --check HEAD status: 0",
+        "captured patch whitespace/conflict check status: 0",
       ].join("\n\n"),
     });
 

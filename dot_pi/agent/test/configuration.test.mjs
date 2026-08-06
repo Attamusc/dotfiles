@@ -10,6 +10,7 @@ import {
 } from "../extensions/command-safety/policy.ts";
 import { getCompat, getThinkingLevelMap } from "../extensions/github-copilot-dynamic/model-mapping.ts";
 import { migrateLegacyTodos, projectScopeSlug } from "../extensions/todos/scope.ts";
+import { patchWhitespaceFailures } from "../workflows/portability-phase.ts";
 
 const testDir = dirname(fileURLToPath(import.meta.url));
 const sourceTreeRoot = join(testDir, "..", "..", "..");
@@ -292,4 +293,26 @@ test("todo scope migrates the legacy basename directory once", async () => {
   } finally {
     rmSync(temp, { recursive: true, force: true });
   }
+});
+
+test("portability workflow checks added patch lines without mistaking headers", () => {
+  const header = [
+    "diff --git a/example b/example",
+    "--- a/example",
+    "+++ b/example",
+    "@@ -0,0 +1,7 @@",
+  ];
+  const clean = [...header, "+normal", "+type C = ++value;"].join("\n");
+  assert.deepEqual(patchWhitespaceFailures(clean), []);
+
+  const invalid = [
+    ...header,
+    "+++value   ",
+    "+trailing-tab\t\r",
+    "+<<<<<<<",
+    "+||||||| base",
+    "+=======",
+    "+>>>>>>> branch",
+  ].join("\n");
+  assert.equal(patchWhitespaceFailures(invalid).length, 6);
 });
