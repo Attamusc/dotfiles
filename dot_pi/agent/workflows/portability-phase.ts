@@ -18,6 +18,19 @@ const PROTECTED_TRACKED_PATHS = new Set([
   "dot_config/nvim/lua/plugins/pi-hunk-review.lua",
 ]);
 
+function safeDiagnostic(error: unknown, cwd: string): string {
+  if (typeof error !== "object" || error === null || !("stderr" in error)) return "no diagnostic output";
+  const stderr = Buffer.isBuffer(error.stderr) ? error.stderr.toString("utf8") : String(error.stderr ?? "");
+  const redacted = stderr
+    .replaceAll(cwd, "<workspace>")
+    .replaceAll(os.homedir(), "<home>")
+    .trim()
+    .split("\n")
+    .slice(-20)
+    .join("\n");
+  return redacted.slice(-4_000) || "no diagnostic output";
+}
+
 function runExact(
   wf: WorkflowContext,
   label: string,
@@ -40,7 +53,7 @@ function runExact(
   } catch (error) {
     const status = typeof error === "object" && error !== null && "status" in error ? error.status : "unknown";
     wf.log("command_end", { label, status });
-    throw new Error(`${label} failed with status ${status}`);
+    throw new Error(`${label} failed with status ${status}:\n${safeDiagnostic(error, cwd)}`);
   }
 }
 
@@ -107,6 +120,26 @@ function isolatedDiff(cwd: string, vcs: "jj" | "git", changeId: string): Capture
 function assertSameDiff(expected: CapturedDiff, actual: CapturedDiff, stage: string): void {
   if (expected.digest !== actual.digest || JSON.stringify(expected.paths) !== JSON.stringify(actual.paths)) {
     throw new Error(`isolated change drifted after ${stage}; refusing integration`);
+  }
+}
+
+function createValidationCopy(isolated: string, destination: string, liveRoot: string): void {
+  fs.cpSync(isolated, destination, {
+    recursive: true,
+    filter: (source) => {
+      const relative = path.relative(isolated, source);
+      return relative !== ".git"
+        && !relative.startsWith(`.git${path.sep}`)
+        && relative !== ".jj"
+        && !relative.startsWith(`.jj${path.sep}`);
+    },
+  });
+  for (const protectedPath of PROTECTED_TRACKED_PATHS) {
+    const source = path.join(liveRoot, protectedPath);
+    const target = path.join(destination, protectedPath);
+    if (!fs.existsSync(source)) continue;
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.copyFileSync(source, target);
   }
 }
 
@@ -177,7 +210,7 @@ export default async function (wf: WorkflowContext) {
       timeoutMs: SPAWN_TIMEOUT_MS,
       task: [
         "Implement the resolved Fedora portability task below in your isolated VCS workspace.",
-        "Read the plan and repository conventions first. Edit only task-owned tracked paths.",
+        "The ignored `.pi` plan is intentionally absent from isolated workspaces. The resolved task below is authoritative; do not require or attempt to read the plan path it cites. Read tracked repository conventions and edit only task-owned tracked paths.",
         "Do not access absolute paths outside your isolated workspace. Do not inspect, create, edit, move, or remove `.data-private`, `.local-skills`, home-local configuration, credentials, or the four protected tracked paths named by the plan.",
         "You intentionally have no shell tool. Do not run tests, commit, stage, invoke workflows, or update todos; the orchestrator performs exact validation and integration.",
         "--- RESOLVED TASK ---",
@@ -201,6 +234,17 @@ export default async function (wf: WorkflowContext) {
     const isolatedVcs = implementation.isolation.vcs;
     const isolatedChangeId = implementation.isolation.changeId;
     const diff = isolatedDiff(isolated, isolatedVcs, isolatedChangeId);
+    if (diff.paths.length === 0) {
+      await wf.cleanupIsolation();
+      return wf.report({
+        stage,
+        error: "Isolated worker produced no changed paths.",
+        implementation: implementation.output,
+        trackedGitStatus: vcsStatus(wf.cwd),
+        protectedIgnoredState: "unchanged",
+        usageTotal: wf.usage(),
+      });
+    }
     const protectedChanges = diff.paths.filter((changedPath) => PROTECTED_TRACKED_PATHS.has(changedPath));
     if (protectedChanges.length > 0) {
       await wf.cleanupIsolation();
@@ -215,8 +259,10 @@ export default async function (wf: WorkflowContext) {
     }
 
     stage = "validation";
-    const bashSyntax = runExact(wf, "bash syntax", "bash", ["-n", "scripts/check-portability.sh"], isolated);
-    const portabilityCheck = runExact(wf, "portability check", "bash", ["scripts/check-portability.sh"], isolated, 256 * 1024);
+    const validationCopy = path.join(guardDirectory, "validation-workspace");
+    createValidationCopy(isolated, validationCopy, wf.cwd);
+    const bashSyntax = runExact(wf, "bash syntax", "bash", ["-n", "scripts/check-portability.sh"], validationCopy);
+    const portabilityCheck = runExact(wf, "portability check", "bash", ["scripts/check-portability.sh"], validationCopy, 256 * 1024);
     runExact(wf, "diff whitespace", "git", ["diff", "--check", "HEAD"], isolated);
     assertSameDiff(diff, isolatedDiff(isolated, isolatedVcs, isolatedChangeId), "validation");
     assertProtectedState("after-validation");
