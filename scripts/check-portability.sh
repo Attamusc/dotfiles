@@ -4,13 +4,14 @@ set -euo pipefail
 
 ROOT=$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)
 BASELINE="$ROOT/tests/portability/known-user-paths.txt"
+MERGE_JSON_FIXTURES="$ROOT/tests/portability/fixtures/merge-json"
 
 fail() {
   printf 'error: %s\n' "$*" >&2
   exit 1
 }
 
-for command in awk bash chezmoi comm cp find grep jq mktemp sh sort tar zsh; do
+for command in awk bash cat chezmoi comm cp diff find grep jq mktemp sh sort tar zsh; do
   command -v "$command" >/dev/null 2>&1 || fail "required command not found: $command"
 done
 
@@ -179,6 +180,87 @@ check_shell_files() {
   printf 'ok: %s rendered shell syntax (%d files)\n' "$label" "$count"
 }
 
+check_merge_json_fixture() {
+  local name=$1
+  local status=$2
+  local wrap_key=${3:-}
+  local relative_fixture="tests/portability/fixtures/merge-json/$name"
+  local fixture="$PUBLIC_SOURCE/$relative_fixture"
+  local template="$WORK/merge-json-$name.tmpl"
+  local actual="$WORK/merge-json-$name.actual.json"
+  local expected="$WORK/merge-json-$name.expected.json"
+  local normalized_actual="$WORK/merge-json-$name.actual.normalized.json"
+  local normalized_expected="$WORK/merge-json-$name.expected.normalized.json"
+  local difference="$WORK/merge-json-$name.diff"
+  local invocation
+
+  [[ -f "$fixture/public.json" ]] || fail "missing merge-json fixture input: $relative_fixture/public.json"
+  [[ -f "$fixture/expected.json" ]] || fail "missing merge-json fixture output: $relative_fixture/expected.json"
+
+  if [[ -n "$wrap_key" ]]; then
+    printf -v invocation \
+      '{{ template "merge-json" (dict "public" "%s/public.json" "private" "%s/private.json" "sourceDir" .chezmoi.sourceDir "wrapKey" "%s") }}' \
+      "$relative_fixture" "$relative_fixture" "$wrap_key"
+  else
+    printf -v invocation \
+      '{{ template "merge-json" (dict "public" "%s/public.json" "private" "%s/private.json" "sourceDir" .chezmoi.sourceDir) }}' \
+      "$relative_fixture" "$relative_fixture"
+  fi
+  [[ -f "$PUBLIC_SOURCE/.chezmoitemplates/merge-json" ]] || fail "missing merge-json template"
+  {
+    printf '{{ define "merge-json" }}\n'
+    cat "$PUBLIC_SOURCE/.chezmoitemplates/merge-json"
+    printf '\n{{ end }}\n%s\n' "$invocation"
+  } >"$template"
+
+  HOME="$WORK/home" \
+  XDG_CACHE_HOME="$WORK/cache" \
+  XDG_CONFIG_HOME="$WORK/config" \
+  XDG_DATA_HOME="$WORK/data" \
+    chezmoi \
+      --source "$PUBLIC_SOURCE" \
+      --destination "$WORK/home" \
+      --cache "$WORK/cache/chezmoi" \
+      --config "$WORK/config/chezmoi.toml" \
+      --no-tty \
+      --refresh-externals=never \
+      execute-template --init --file "$template" \
+      >"$actual"
+
+  jq -S . "$fixture/expected.json" >"$normalized_expected"
+  if ! jq -S . "$actual" >"$normalized_actual"; then
+    printf 'error: merge-json fixture rendered invalid JSON: %s\n' "$name" >&2
+    return 1
+  fi
+
+  if diff -u "$normalized_expected" "$normalized_actual" >"$difference"; then
+    if [[ "$status" == pending ]]; then
+      printf 'error: pending merge-json fixture now passes; activate it: %s\n' "$name" >&2
+      return 1
+    fi
+    printf 'ok: merge-json fixture: %s\n' "$name"
+    return 0
+  fi
+
+  if [[ "$status" == pending ]]; then
+    printf 'pending: merge-json fixture: %s (additive array contract not implemented)\n' "$name"
+    return 0
+  fi
+
+  printf 'error: merge-json fixture mismatch: %s\n' "$name" >&2
+  cat "$difference" >&2
+  return 1
+}
+
+check_merge_json_fixtures() {
+  [[ -d "$MERGE_JSON_FIXTURES" ]] || fail "missing merge-json fixtures: $MERGE_JSON_FIXTURES"
+
+  check_merge_json_fixture public-only active
+  check_merge_json_fixture scalar-override active
+  check_merge_json_fixture mcp-map active mcpServers
+  check_merge_json_fixture additive-arrays active
+}
+
 render_platform() {
   local platform=$1
   local architecture=$2
@@ -237,11 +319,11 @@ XDG_DATA_HOME="$WORK/data" \
     >"$WORK/config/chezmoi.toml"
 rm -- "$PUBLIC_SOURCE/.chezmoi.toml.tmpl"
 
+check_merge_json_fixtures
 render_platform darwin arm64 ''
 render_platform linux amd64 fedora
 
 # Extension points for later landing steps:
 # - check_package_manifests: validate one owner per baseline capability.
-# - check_private_merge_fixtures: validate additive arrays and MCP map merging.
 
 printf 'ok: portability checks passed\n'

@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "private-only": {
+      "command": "private-command"
+    },
+    "public-only": {
+      "command": "public-command"
+    },
+    "shared": {
+      "command": "private-command"
+    }
+  }
+}
