@@ -3,8 +3,8 @@
 ## Bootstrap and validation commands
 
 - Bootstrap or re-apply the dotfiles from the repo root with `./install.sh`. This is the canonical entrypoint used by the Linuxbrew cache workflow too.
-- For non-destructive validation, use `chezmoi status`, `chezmoi diff`, and `chezmoi managed`.
-- There is no repo-wide automated test or lint target today, so there is no single-test command to run. Validation is centered on `chezmoi` preview commands plus targeted checks for the files you changed.
+- Run `scripts/check-portability.sh` for the fast, non-mutating repository contract check. Use `chezmoi status`, `chezmoi diff`, and `chezmoi managed` to preview host changes.
+- Validation combines the portability check with targeted checks for the files changed. The portability check renders isolated macOS and Fedora configurations; it never applies home-directory state.
 
 ## High-level architecture
 
@@ -19,6 +19,8 @@
 - Follow `chezmoi` naming rules already used throughout the repo: `dot_` for dotfiles, `.tmpl` for templated files, `executable_` for scripts that must keep execute bits, and `private_` for private paths.
 - Keep shell changes modular. `dot_zshrc.tmpl` is mainly a loader that sources `$ZSH/*.zsh`, `$ZSH/config/*.zsh`, and `$ZSH/completions/*.zsh`; new shell behavior usually belongs in those sourced files, not in the entrypoint.
 - Keep bootstrap changes inside `.chezmoiscripts/` and preserve the numbered ordering. Later scripts rely on `/tmp/chezmoi-utils.sh`, which is generated once by `run_before_00-setup-utils.sh.tmpl`.
+- Treat ignored machine-local roots—especially `.data-private/` and `.local-skills/`—as protected state. Never inject negative-test fixtures into the live source tree. Use a runner-owned temporary copy, and compare `scripts/protected-local-state.py` manifests before and after mutation-capable phases; Git status does not cover ignored files.
+- Read-only reviewers must receive only `read`. Run exact validation commands in the orchestrator, retain their argv/status, and pass bounded results to the reviewer. Use isolated VCS workspaces for mutation-capable portability workers.
 - Add or remove Homebrew dependencies by editing the tap/brew/cask lists in `.chezmoiscripts/run_once_after_10-install-homebrew-deps.sh.tmpl`. Do not scatter standalone `brew install` calls elsewhere.
 - Preserve the repo's source-path-aware Neovim behavior. `dot_config/nvim/lua/config/lazy.lua` and `dot_config/nvim/lua/plugins/coding.lua` deliberately reference `~/.local/share/chezmoi/dot_config/nvim` so plugin metadata and completions work while editing the source repo.
 - Prefer `jj` for repo-local version-control workflows when practical. The repo includes `.jj/`, bootstrap installs `jj`, `dot_config/jj/config.toml` defines local aliases, and `dot_local/bin/executable_pm` assumes `jj git init --colocate` for new local projects.

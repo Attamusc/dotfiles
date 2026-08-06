@@ -11,7 +11,7 @@ fail() {
   exit 1
 }
 
-for command in awk bash cat chezmoi comm cp diff find grep jq mktemp sh sort tar zsh; do
+for command in awk bash cat chezmoi comm cp diff find grep jq mktemp python3 sh sort tar zsh; do
   command -v "$command" >/dev/null 2>&1 || fail "required command not found: $command"
 done
 
@@ -303,6 +303,7 @@ render_platform() {
 
 check_json_files "$PUBLIC_SOURCE" 'public source'
 check_user_paths
+"$ROOT/tests/portability/test-protected-local-state.sh" "$ROOT"
 
 mkdir -p "$WORK/home" "$WORK/cache" "$WORK/config" "$WORK/data"
 HOME="$WORK/home" \
