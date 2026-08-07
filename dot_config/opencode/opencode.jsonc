@@ -1,36 +1,4 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "model": "github-copilot/gpt-5.6-sol",
-  "mcp": {
-    "datadog": {
-      "type": "local",
-      "command": [
-        "/Users/attamusc/.local/bin/datadog_mcp_cli"
-      ],
-      "enabled": true
-    },
-    "kusto": {
-      "type": "local",
-      "command": [
-        "/Users/attamusc/.local/share/mise/shims/npx",
-        "-y",
-        "@azure/mcp@latest",
-        "server",
-        "start",
-        "--mode",
-        "single"
-      ],
-      "enabled": true
-    },
-    "workiq": {
-      "type": "local",
-      "command": [
-        "/Users/attamusc/.local/share/mise/shims/npx",
-        "-y",
-        "@microsoft/workiq",
-        "mcp"
-      ],
-      "enabled": true
-    }
-  }
+  "model": "github-copilot/gpt-5.6-sol"
 }

@@ -1,0 +1,45 @@
+#!/bin/bash
+
+set -euo pipefail
+
+# Public Pi settings SHA-256: {{ include ".data/pi/agent/settings.json" | sha256sum }}
+# Private Pi settings SHA-256: {{ $private := joinPath .chezmoi.sourceDir ".data-private/pi/agent/settings.json" }}{{ if stat $private }}{{ include ".data-private/pi/agent/settings.json" | sha256sum }}{{ else }}absent{{ end }}
+printf '[30 - Pi packages] Reconcile configured packages\n'
+
+{{ if eq .chezmoi.os "darwin" -}}
+if [ -x /opt/homebrew/bin/brew ]; then
+  brew=/opt/homebrew/bin/brew
+elif [ -x /usr/local/bin/brew ]; then
+  brew=/usr/local/bin/brew
+else
+  echo "Homebrew is required to resolve Pi." >&2
+  exit 1
+fi
+brew_prefix=$("$brew" --prefix)
+pi_bin="$brew_prefix/bin/pi"
+{{ else if and (eq .chezmoi.os "linux") (eq .chezmoi.osRelease.id "fedora") (eq .chezmoi.osRelease.versionID "44") -}}
+mise_bin="$HOME/.local/bin/mise"
+config="$HOME/.config/mise/config.toml"
+[[ -x "$mise_bin" && -f "$config" ]] || {
+  echo "mise must install Pi before package reconciliation." >&2
+  exit 1
+}
+pi_bin=$(MISE_GLOBAL_CONFIG_FILE="$config" "$mise_bin" which pi)
+{{ else -}}
+echo "Unsupported platform reached Pi setup." >&2
+exit 1
+{{ end -}}
+
+[[ -x "$pi_bin" ]] || {
+  echo "Pi executable is missing." >&2
+  exit 1
+}
+
+{{ if eq .chezmoi.os "darwin" -}}
+"$pi_bin" --version
+"$pi_bin" update --extensions
+{{ else -}}
+MISE_GLOBAL_CONFIG_FILE="$config" "$mise_bin" exec -- pi --version
+MISE_GLOBAL_CONFIG_FILE="$config" "$mise_bin" exec -- pi update --extensions
+{{ end -}}
+printf '[30 - Pi packages] Configured packages reconciled\n'

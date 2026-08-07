@@ -747,7 +747,7 @@ check_bob_contract() {
   local hook=.chezmoiscripts/run_onchange_after_20-setup-neovim.sh.tmpl
   local mise_hook=run_onchange_after_10-install-mise-tools.sh.tmpl
   local bob_hook=${hook##*/}
-  local pi_hook=run_once_after_30-setup-pi.sh.tmpl
+  local pi_hook=run_onchange_after_30-setup-pi.sh.tmpl
   local old_hook="$PUBLIC_SOURCE/.chezmoiscripts/run_once_after_20-setup-neovim.sh.tmpl"
   local shell_config="$PUBLIC_SOURCE/dot_config/private_zsh/config/zz-bob.zsh"
   local darwin_hook="$WORK/bob-darwin-hook.sh"
@@ -891,6 +891,123 @@ EOF
   printf 'ok: fresh Fedora zsh startup\n'
 }
 
+check_agent_contract() {
+  local settings="$PUBLIC_SOURCE/.data/pi/agent/settings.json"
+  local mcp="$PUBLIC_SOURCE/.data/pi/agent/mcp.json"
+  local opencode="$PUBLIC_SOURCE/dot_config/opencode/opencode.jsonc"
+  local hook=.chezmoiscripts/run_onchange_after_30-setup-pi.sh.tmpl
+  local old_hook="$PUBLIC_SOURCE/.chezmoiscripts/run_once_after_30-setup-pi.sh.tmpl"
+  local darwin_hook="$WORK/pi-darwin-hook.sh"
+  local fedora_hook="$WORK/pi-fedora-hook.sh"
+  local changed_hook="$WORK/pi-changed-hook.sh"
+  local settings_backup="$WORK/pi-settings-backup.json"
+  local settings_changed="$WORK/pi-settings-changed.json"
+  local mise_home="$WORK/pi-fedora-home"
+  local mise_stub="$mise_home/.local/bin/mise"
+  local fake_pi="$mise_home/.local/share/mise/pi"
+  local mise_stub_log="$WORK/mise-stub.log"
+  local mise_stub_expected="$WORK/mise-stub.expected"
+
+  [[ -f "$settings" && -f "$mcp" && -f "$opencode" ]] || fail "missing public agent configuration"
+  [[ -f "$PUBLIC_SOURCE/$hook" ]] || fail "missing Pi package reconciliation hook"
+  [[ ! -e "$old_hook" ]] || fail "warning-only Pi setup hook remains"
+
+  python3 - "$settings" "$mcp" "$opencode" <<'PY'
+import json
+import pathlib
+import re
+import sys
+
+settings=json.loads(pathlib.Path(sys.argv[1]).read_text())
+mcp=json.loads(pathlib.Path(sys.argv[2]).read_text())
+opencode=json.loads(pathlib.Path(sys.argv[3]).read_text())
+expected_packages=[
+    "git:github.com/nicobailon/pi-mcp-adapter",
+    "git:github.com/HazAT/glimpse",
+    "git:github.com/Attamusc/pi-interactive-subagents@f609e7f0a5ab935dc36d3c805928536978563579",
+    "git:github.com/HazAT/pi-autoresearch",
+    "git:github.com/carderne/pi-nvim",
+    "git:github.com/Attamusc/pi-herdr@d975127b94df95a615282ece14b02865b9a2c3d9",
+    "git:github.com/Attamusc/pi-television@c3826bc268e05a1045e1d2339fc5a0cd3fd17a7e",
+]
+assert settings["packages"] == expected_packages
+assert settings["extensions"] == ["+extensions/smart-sessions/index.ts"]
+assert len(settings["packages"]) == len(set(settings["packages"]))
+for package in settings["packages"]:
+    assert "pi-cmux" not in package
+for package in settings["packages"]:
+    if package.startswith("git:github.com/Attamusc/"):
+        assert re.search(r"@[0-9a-f]{40}$", package)
+assert mcp == {"settings": {"samplingAutoApprove": True}, "mcpServers": {}}
+assert opencode == {"$schema": "https://opencode.ai/config.json", "model": "github-copilot/gpt-5.6-sol"}
+for document in (settings, mcp, opencode):
+    encoded=json.dumps(document)
+    assert "/Users/" not in encoded and "/home/" not in encoded
+PY
+
+  render_source_template darwin arm64 '' '' "$hook" "$darwin_hook"
+  render_source_template linux amd64 fedora 44 "$hook" "$fedora_hook"
+  bash -n "$darwin_hook"
+  bash -n "$fedora_hook"
+  grep -Fq '# Public Pi settings SHA-256:' "$PUBLIC_SOURCE/$hook" || \
+    fail "Pi hook is not content-addressed to public settings"
+  grep -Fq '# Private Pi settings SHA-256:' "$PUBLIC_SOURCE/$hook" || \
+    fail "Pi hook is not content-addressed to private settings"
+  grep -Fq '"$pi_bin" update --extensions' "$darwin_hook" || \
+    fail "macOS Pi hook does not reconcile configured extensions"
+  grep -Fq 'brew_prefix=$("$brew" --prefix)' "$darwin_hook" || \
+    fail "macOS Pi ownership is not Homebrew-derived"
+  grep -Fq '"$mise_bin" which pi' "$fedora_hook" || fail "Fedora Pi ownership is not mise-derived"
+  grep -Fq '"$mise_bin" exec -- pi --version' "$fedora_hook" || \
+    fail "Fedora Pi version check does not run inside mise"
+  grep -Fq '"$mise_bin" exec -- pi update --extensions' "$fedora_hook" || \
+    fail "Fedora Pi reconciliation does not run inside mise"
+  ! grep -Eq '"\$pi_bin" install([[:space:]]|$)' "$PUBLIC_SOURCE/$hook" || \
+    fail "Pi hook uses install without a package source"
+  if grep -Eq '\|\|[[:space:]]*(:|true|echo)|not found.*skipping|Warning:' "$PUBLIC_SOURCE/$hook"; then
+    fail "Pi package reconciliation suppresses required failures"
+  fi
+
+  mkdir -p "$(dirname "$mise_stub")" "$(dirname "$fake_pi")" "$mise_home/.config/mise"
+  : >"$mise_home/.config/mise/config.toml"
+  cat >"$mise_stub" <<'EOF'
+#!/bin/sh
+expected="$HOME/.config/mise/config.toml"
+[ "${MISE_GLOBAL_CONFIG_FILE:-}" = "$expected" ] || exit 91
+printf '%s\n' "$*" >>"$MISE_STUB_LOG"
+if [ "${1:-}" = which ] && [ "${2:-}" = pi ]; then
+  printf '%s\n' "$HOME/.local/share/mise/pi"
+  exit 0
+fi
+if [ "${1:-}" = exec ]; then
+  exit 0
+fi
+exit 92
+EOF
+  cat >"$fake_pi" <<'EOF'
+#!/bin/sh
+exit 93
+EOF
+  chmod +x "$mise_stub" "$fake_pi"
+  HOME="$mise_home" MISE_STUB_LOG="$mise_stub_log" PATH=/usr/bin:/bin bash "$fedora_hook" >/dev/null
+  cat >"$mise_stub_expected" <<'EOF'
+which pi
+exec -- pi --version
+exec -- pi update --extensions
+EOF
+  diff -u "$mise_stub_expected" "$mise_stub_log" >/dev/null || \
+    fail "Fedora Pi mise execution arguments are incorrect"
+
+  cp "$settings" "$settings_backup"
+  jq '.portabilityDigestProbe = true' "$settings" >"$settings_changed"
+  cp "$settings_changed" "$settings"
+  render_source_template linux amd64 fedora 44 "$hook" "$changed_hook"
+  cp "$settings_backup" "$settings"
+  cmp -s "$fedora_hook" "$changed_hook" && fail "Pi settings changes do not rerun package reconciliation"
+
+  printf 'ok: portable public Pi and agent configuration\n'
+}
+
 render_platform() {
   local platform=$1
   local architecture=$2
@@ -954,6 +1071,7 @@ check_bootstrap_contract
 check_mise_contract
 check_bob_contract
 check_shell_contract
+check_agent_contract
 rm -- "$PUBLIC_SOURCE/.chezmoi.toml.tmpl"
 check_merge_json_fixtures
 check_package_manifests

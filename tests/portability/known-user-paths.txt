@@ -1,12 +1,3 @@
 # Temporary migration baseline for public, user-specific absolute paths.
 # Keep entries exact and remove them as their configurations become portable.
-.data/pi/agent/mcp.json	/Users/attamusc/.local/bin/datadog_mcp_cli
-.data/pi/agent/mcp.json	/Users/attamusc/.local/share/mise/shims/npx
-.data/pi/agent/settings.json	/Users/attamusc/projects/github.com/Attamusc/pi-cmux
-.data/pi/agent/settings.json	/Users/attamusc/projects/github.com/Attamusc/pi-herdr
-.data/pi/agent/settings.json	/Users/attamusc/projects/github.com/Attamusc/pi-hunk-review/pi-extension/hunk-review
-.data/pi/agent/settings.json	/Users/attamusc/projects/github.com/Attamusc/pi-interactive-subagents
-.data/pi/agent/settings.json	/Users/attamusc/projects/github.com/Attamusc/pi-television
 dot_config/nvim/lua/plugins/pi-hunk-review.lua	/Users/attamusc/projects/github.com/Attamusc/pi-hunk-review/shells/nvim
-dot_config/opencode/opencode.jsonc	/Users/attamusc/.local/bin/datadog_mcp_cli
-dot_config/opencode/opencode.jsonc	/Users/attamusc/.local/share/mise/shims/npx
