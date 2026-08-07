@@ -1,7 +1,6 @@
 [user]
   name = {{ .name }}
   email = {{ .email }}
-  signingkey = {{ .signingkey }}
 [commit]
   ; gpgsign = true
 [alias]
@@ -99,9 +98,6 @@
   user = Attamusc
 [delta]
   features = side-by-side
-[credential]
-	helper = 
-	helper = /usr/local/bin/git-credential-manager
 [color]
   ui = auto
 [color "branch"]
@@ -162,13 +158,9 @@
 	rebase = true
 [init]
 	defaultBranch = main
-[credential "https://dev.azure.com"]
-	useHttpPath = true
-[credential "https://ghe.io"]
-	provider = github
 [ghq]
   root = ~/projects
 [gpg]
   format = ssh
-[gpg "ssh"]
-  program = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
+[include]
+  path = ~/.gitconfig.local

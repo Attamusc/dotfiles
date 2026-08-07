@@ -11,7 +11,7 @@ fail() {
   exit 1
 }
 
-for command in awk bash cat chezmoi comm cp diff find grep jq mktemp python3 sh sort tar zsh; do
+for command in awk bash cat chezmoi comm cp diff find git grep jq mktemp python3 sh sort tar zsh; do
   command -v "$command" >/dev/null 2>&1 || fail "required command not found: $command"
 done
 
@@ -261,6 +261,104 @@ check_merge_json_fixtures() {
   check_merge_json_fixture additive-arrays active
 }
 
+synthetic_git_config() {
+  local home=$1
+  shift
+
+  HOME="$home" \
+  XDG_CONFIG_HOME="$home/.config" \
+  GIT_CONFIG_GLOBAL="$home/.gitconfig" \
+  GIT_CONFIG_NOSYSTEM=1 \
+    git config --global --includes "$@"
+}
+
+check_git_config() {
+  local rendered=$1
+  local platform=$2
+  local public_config="$rendered/.gitconfig"
+  local git_home="$WORK/git-home-$platform"
+  local local_config="$git_home/.gitconfig.local"
+  local value status
+
+  [[ -f "$public_config" ]] || fail "missing rendered Git configuration: $public_config"
+
+  mkdir -p "$git_home/.config"
+  cp -- "$public_config" "$git_home/.gitconfig"
+
+  synthetic_git_config "$git_home" --list >/dev/null || \
+    fail "$platform Git configuration fails when ~/.gitconfig.local is absent"
+
+  value=$(synthetic_git_config "$git_home" --get include.path) || \
+    fail "$platform Git configuration does not include ~/.gitconfig.local"
+  [[ "$value" == '~/.gitconfig.local' ]] || \
+    fail "$platform Git include target is unexpected: $value"
+
+  for key in user.signingkey gpg.program gpg.ssh.program; do
+    if value=$(synthetic_git_config "$git_home" --get "$key"); then
+      fail "$platform public Git configuration sets $key"
+    else
+      status=$?
+      [[ $status -eq 1 ]] || fail "$platform Git query failed for $key"
+    fi
+  done
+
+  if value=$(synthetic_git_config "$git_home" --get-regexp '^credential\.'); then
+    fail "$platform public Git configuration contains credential settings: $value"
+  else
+    status=$?
+    [[ $status -eq 1 ]] || fail "$platform Git credential query failed"
+  fi
+
+  value=$(synthetic_git_config "$git_home" --get user.name) || \
+    fail "$platform public Git configuration lost user.name"
+  [[ -n "$value" ]] || fail "$platform public Git user.name is empty"
+  value=$(synthetic_git_config "$git_home" --get user.email) || \
+    fail "$platform public Git configuration lost user.email"
+  [[ -n "$value" ]] || fail "$platform public Git user.email is empty"
+  [[ $(synthetic_git_config "$git_home" --get core.editor) == nvim ]] || \
+    fail "$platform public Git configuration lost the shared editor"
+  [[ $(synthetic_git_config "$git_home" --get core.pager) == delta ]] || \
+    fail "$platform public Git configuration lost the shared pager"
+  synthetic_git_config "$git_home" --get alias.main-branch >/dev/null || \
+    fail "$platform public Git configuration lost shared aliases"
+  [[ $(synthetic_git_config "$git_home" --get gpg.format) == ssh ]] || \
+    fail "$platform public Git configuration lost the SSH signing baseline"
+
+  if value=$(synthetic_git_config "$git_home" --type=bool --get commit.gpgsign); then
+    [[ "$value" == false ]] || \
+      fail "$platform public Git configuration enables signed commits"
+  else
+    status=$?
+    [[ $status -eq 1 ]] || fail "$platform Git commit.gpgsign query failed"
+  fi
+
+  cat >"$local_config" <<'EOF'
+[credential]
+  helper = synthetic-local-helper
+[user]
+  signingkey = synthetic-local-signing-key
+[commit]
+  gpgsign = true
+[gpg "ssh"]
+  program = /synthetic/local/ssh-signer
+[portability]
+  localIncludeLoaded = true
+EOF
+
+  [[ $(synthetic_git_config "$git_home" --get portability.localIncludeLoaded) == true ]] || \
+    fail "$platform Git configuration did not load ~/.gitconfig.local"
+  [[ $(synthetic_git_config "$git_home" --get credential.helper) == synthetic-local-helper ]] || \
+    fail "$platform local Git configuration did not supply credential settings"
+  [[ $(synthetic_git_config "$git_home" --get user.signingkey) == synthetic-local-signing-key ]] || \
+    fail "$platform local Git configuration did not supply a signing key"
+  [[ $(synthetic_git_config "$git_home" --get gpg.ssh.program) == /synthetic/local/ssh-signer ]] || \
+    fail "$platform local Git configuration did not supply a signing program"
+  [[ $(synthetic_git_config "$git_home" --type=bool --get commit.gpgsign) == true ]] || \
+    fail "$platform local Git configuration did not enable signed commits"
+
+  printf 'ok: %s Git machine-local include behavior\n' "$platform"
+}
+
 render_platform() {
   local platform=$1
   local architecture=$2
@@ -299,6 +397,7 @@ render_platform() {
   printf 'ok: %s public configuration renders without a private overlay\n' "$platform"
   check_json_files "$rendered" "$platform rendered"
   check_shell_files "$rendered" "$platform"
+  check_git_config "$rendered" "$platform"
 }
 
 check_json_files "$PUBLIC_SOURCE" 'public source'
