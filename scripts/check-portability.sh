@@ -66,7 +66,7 @@ check_json_files() {
 
 is_runtime_source() {
   case "$1" in
-    .chezmoi*|.data/*|dot_*|install.sh|run_once_*|tuna/*)
+    .chezmoi*|.data/*|dot_*|install.sh|packages/*|run_*|tuna/*)
       return 0
       ;;
     *)
@@ -891,6 +891,22 @@ EOF
   printf 'ok: fresh Fedora zsh startup\n'
 }
 
+contains_active_cmux_reference() {
+  local file=$1
+  local relative_path=$2
+  local pattern=$3
+
+  if [[ "$relative_path" == dot_config/herdr/config.toml ]]; then
+    grep -E "$pattern" "$file" 2>/dev/null \
+      | grep -Fvx \
+        -e "# Match cmux's spatial navigation: horizontal movement changes tabs;" \
+        -e "# Jump directly to a tab by number, matching cmux's surface selection." \
+      >/dev/null
+    return
+  fi
+  grep -Eq "$pattern" "$file" 2>/dev/null
+}
+
 check_agent_contract() {
   local settings="$PUBLIC_SOURCE/.data/pi/agent/settings.json"
   local mcp="$PUBLIC_SOURCE/.data/pi/agent/mcp.json"
@@ -907,10 +923,36 @@ check_agent_contract() {
   local fake_pi="$mise_home/.local/share/mise/pi"
   local mise_stub_log="$WORK/mise-stub.log"
   local mise_stub_expected="$WORK/mise-stub.expected"
+  local active_runtime_files="$WORK/active-runtime-files"
+  local cmux_heading_probe="$WORK/cmux-heading-probe.md"
+  local cmux_pattern='pi-cmux|CMUX_HOME|skills/cmux|(^|[^[:alnum:]_-])cmux([^[:alnum:]_-]|$)'
+  local relative_path runtime_file
 
   [[ -f "$settings" && -f "$mcp" && -f "$opencode" ]] || fail "missing public agent configuration"
   [[ -f "$PUBLIC_SOURCE/$hook" ]] || fail "missing Pi package reconciliation hook"
   [[ ! -e "$old_hook" ]] || fail "warning-only Pi setup hook remains"
+
+  [[ ! -e "$PUBLIC_SOURCE/dot_pi/agent/skills/cmux" \
+    && ! -L "$PUBLIC_SOURCE/dot_pi/agent/skills/cmux" ]] || \
+    fail "cmux skill path remains in managed runtime"
+  : >"$active_runtime_files"
+  while IFS= read -r -d '' runtime_file; do
+    relative_path=${runtime_file#"$PUBLIC_SOURCE/"}
+    is_runtime_source "$relative_path" || continue
+    printf '%s\n' "$runtime_file" >>"$active_runtime_files"
+  done < <(find "$PUBLIC_SOURCE" \( -type f -o -type l \) -print0)
+  if grep -E 'pi-cmux|CMUX_HOME|skills/cmux|(^|/)cmux(/|$)' "$active_runtime_files" >/dev/null 2>&1; then
+    fail "cmux remains in an active managed runtime path"
+  fi
+  while IFS= read -r runtime_file; do
+    relative_path=${runtime_file#"$PUBLIC_SOURCE/"}
+    if contains_active_cmux_reference "$runtime_file" "$relative_path" "$cmux_pattern"; then
+      fail "cmux remains in active managed runtime configuration"
+    fi
+  done <"$active_runtime_files"
+  printf '%s\n' '### Use cmux' >"$cmux_heading_probe"
+  contains_active_cmux_reference "$cmux_heading_probe" dot_pi/agent/AGENTS.md "$cmux_pattern" || \
+    fail "cmux scanner ignores active Markdown headings"
 
   python3 - "$settings" "$mcp" "$opencode" <<'PY'
 import json

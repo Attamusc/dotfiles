@@ -191,7 +191,7 @@ no case where higher effort changed a correctness outcome, while `scout` at `hig
 
 #### Subagents
 
-Subagents spawn visible pi sessions in cmux terminals. The user can watch progress in real-time and optionally interact. Autonomous agents call `subagent_done` to self-terminate.
+Subagents spawn visible pi sessions in Herdr panes. The user can watch progress in real-time and optionally interact. Autonomous agents call `subagent_done` to self-terminate.
 
 The `agent` parameter loads defaults from `~/.pi/agent/agents/<name>.md`. Model, tools, skills, thinking — all inherited. Explicit params override agent defaults.
 
@@ -266,7 +266,6 @@ Skills provide specialized instructions for specific tasks. Load them when the c
 | Stress-testing a plan against domain model / glossary | `grill-with-docs` |
 | Reading or analyzing a pi session JSONL file | `session-reader` |
 | Adding or configuring an MCP server | `add-mcp-server` |
-| Running processes in separate terminals | `cmux` |
 | Iterating on a PR until CI passes | `iterate-pr` |
 | Researching external docs or libraries | `researcher` |
 | Verifying implementation against integration contracts | `verify-integration` |
