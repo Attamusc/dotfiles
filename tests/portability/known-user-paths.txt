@@ -1,3 +1,2 @@
 # Temporary migration baseline for public, user-specific absolute paths.
 # Keep entries exact and remove them as their configurations become portable.
-dot_config/nvim/lua/plugins/pi-hunk-review.lua	/Users/attamusc/projects/github.com/Attamusc/pi-hunk-review/shells/nvim

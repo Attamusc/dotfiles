@@ -1,17 +1,19 @@
--- pi-hunk-review.nvim — surface a live pi session's working-tree edits inline.
--- Phase 1: cross-repo hunk picker on mini.diff + snacks.
--- Referenced via a local `dir =` until the repo is pushed to GitHub.
+-- pi-hunk-review — surface a live pi session's working-tree edits inline.
 return {
   {
-    dir = "/Users/attamusc/projects/github.com/Attamusc/pi-hunk-review.nvim",
-    name = "pi-hunk-review.nvim",
-    dependencies = { "nvim-mini/mini.diff", "folke/snacks.nvim" },
-    cmd = { "PiHunks", "PiHunkReject", "PiHunkNext", "PiHunkPrev" },
+    "Attamusc/pi-hunk-review",
+    name = "pi-hunk-review",
+    tag = "v0.1.1",
+    init = function(plugin)
+      vim.opt.rtp:prepend(plugin.dir .. "/shells/nvim")
+    end,
+    dependencies = { "folke/snacks.nvim" },
+    cmd = { "PiHunks", "PiHunkNote", "PiHunkSubmit", "PiHunkReject" },
     keys = {
       { "<leader>hh", "<cmd>PiHunks<cr>", desc = "pi-hunks: pick" },
+      { "<leader>hN", "<cmd>PiHunkNote<cr>", desc = "pi-hunks: note" },
+      { "<leader>hs", "<cmd>PiHunkSubmit<cr>", desc = "pi-hunks: submit" },
       { "<leader>hr", "<cmd>PiHunkReject<cr>", desc = "pi-hunks: reject under cursor" },
-      { "<leader>hn", "<cmd>PiHunkNext<cr>", desc = "pi-hunks: next hunk" },
-      { "<leader>hp", "<cmd>PiHunkPrev<cr>", desc = "pi-hunks: prev hunk" },
     },
     -- lazy owns the keymaps above (they load the plugin on first press), so the
     -- plugin's own default keymaps stay off to avoid double registration.

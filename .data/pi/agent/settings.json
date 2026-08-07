@@ -9,7 +9,8 @@
     "git:github.com/HazAT/pi-autoresearch",
     "git:github.com/carderne/pi-nvim",
     "git:github.com/Attamusc/pi-herdr@d975127b94df95a615282ece14b02865b9a2c3d9",
-    "git:github.com/Attamusc/pi-television@c3826bc268e05a1045e1d2339fc5a0cd3fd17a7e"
+    "git:github.com/Attamusc/pi-television@c3826bc268e05a1045e1d2339fc5a0cd3fd17a7e",
+    "git:github.com/Attamusc/pi-hunk-review@v0.1.1"
   ],
   "extensions": [
     "+extensions/smart-sessions/index.ts"

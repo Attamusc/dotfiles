@@ -975,6 +975,7 @@ expected_packages=[
     "git:github.com/carderne/pi-nvim",
     "git:github.com/Attamusc/pi-herdr@d975127b94df95a615282ece14b02865b9a2c3d9",
     "git:github.com/Attamusc/pi-television@c3826bc268e05a1045e1d2339fc5a0cd3fd17a7e",
+    "git:github.com/Attamusc/pi-hunk-review@v0.1.1",
 ]
 assert settings["packages"] == expected_packages
 assert settings["extensions"] == ["+extensions/smart-sessions/index.ts"]
@@ -982,6 +983,8 @@ assert len(settings["packages"]) == len(set(settings["packages"]))
 for package in settings["packages"]:
     assert "pi-cmux" not in package
 for package in settings["packages"]:
+    if package == "git:github.com/Attamusc/pi-hunk-review@v0.1.1":
+        continue
     if package.startswith("git:github.com/Attamusc/"):
         assert re.search(r"@[0-9a-f]{40}$", package)
 assert mcp == {"settings": {"samplingAutoApprove": True}, "mcpServers": {}}
@@ -1099,6 +1102,82 @@ check_herdr_contract() {
   printf 'ok: Herdr-only multiplexer decision contract\n'
 }
 
+check_hunk_review_contract() {
+  local fixture="$PUBLIC_SOURCE/tests/portability/fixtures/pi-hunk-review-release.json"
+  local settings="$PUBLIC_SOURCE/.data/pi/agent/settings.json"
+  local plugin="$PUBLIC_SOURCE/dot_config/nvim/lua/plugins/pi-hunk-review.lua"
+  local lock="$PUBLIC_SOURCE/.data/nvim/lazy-lock.json"
+  local hook=.chezmoiscripts/run_onchange_after_15-install-pi-hunk-review-core.sh.tmpl
+  local hook_name=${hook##*/}
+  local bob_hook=run_onchange_after_20-setup-neovim.sh.tmpl
+  local darwin_arm_hook="$WORK/hunk-core-darwin-arm64.sh"
+  local darwin_x64_hook="$WORK/hunk-core-darwin-x64.sh"
+  local fedora_hook="$WORK/hunk-core-fedora.sh"
+  local rendered_hook
+
+  [[ -f "$fixture" && -f "$settings" && -f "$plugin" && -f "$lock" ]] || \
+    fail "pi-hunk-review integration inputs are incomplete"
+  [[ -f "$PUBLIC_SOURCE/$hook" ]] || fail "missing pi-hunk-review core release hook"
+  [[ "${hook_name#*_after_}" < "${bob_hook#*_after_}" ]] || \
+    fail "pi-hunk-review core must install before Bob/Neovim setup"
+
+  python3 - "$fixture" "$settings" "$lock" <<'PY'
+import json
+import pathlib
+import sys
+
+fixture=json.loads(pathlib.Path(sys.argv[1]).read_text())
+settings=json.loads(pathlib.Path(sys.argv[2]).read_text())
+lock=json.loads(pathlib.Path(sys.argv[3]).read_text())
+expected={
+    "tag": "v0.1.1",
+    "commit": "7330ad702860bbe4e0032f1550d7ce4f123e0be1",
+    "package": "git:github.com/Attamusc/pi-hunk-review@v0.1.1",
+    "checksumsSha256": "4d13bf5e2c132bb9078510b828ee8fedc0bb751b73333639ec6f86459038bd3d",
+    "assets": {
+        "pi-hunk-review-core-v0.1.1-aarch64-apple-darwin.tar.gz": "98ce47fc5d1eba10f9adec421b8b979f52dcd8aacb08e4e60c8a3ac71524cf8e",
+        "pi-hunk-review-core-v0.1.1-x86_64-apple-darwin.tar.gz": "f14f994bf0c69600a070960ff098346df36a08e9ee32ef00e6b5f63b7794dc2e",
+        "pi-hunk-review-core-v0.1.1-x86_64-unknown-linux-gnu.tar.gz": "89bf012a46c9ba96088af626ac9dfd7b4f821f591595ed7525d9d991d2b9185e",
+    },
+}
+assert fixture == expected
+assert settings["packages"].count(expected["package"]) == 1
+assert lock["pi-hunk-review"] == {"branch": "main", "commit": expected["commit"]}
+PY
+
+  grep -Fq '"Attamusc/pi-hunk-review"' "$plugin" || fail "Neovim does not use the remote hunk-review repository"
+  grep -Fq 'tag = "v0.1.1"' "$plugin" || fail "Neovim hunk-review tag is not pinned"
+  grep -Fq 'init = function(plugin)' "$plugin" || fail "Neovim hunk-review lacks nested runtime initialization"
+  grep -Fq 'plugin.dir .. "/shells/nvim"' "$plugin" || fail "Neovim does not prepend the nested hunk-review runtime"
+  grep -Fq 'cmd = { "PiHunks", "PiHunkNote", "PiHunkSubmit", "PiHunkReject" }' "$plugin" || \
+    fail "Neovim hunk-review command contract drifted"
+  if grep -Eq '(^|[[:space:]])dir[[:space:]]*=|/Users/|/home/' "$plugin"; then
+    fail "Neovim hunk-review retains a fixed local checkout"
+  fi
+
+  render_source_template darwin arm64 '' '' "$hook" "$darwin_arm_hook"
+  render_source_template darwin amd64 '' '' "$hook" "$darwin_x64_hook"
+  render_source_template linux amd64 fedora 44 "$hook" "$fedora_hook"
+  for rendered_hook in "$darwin_arm_hook" "$darwin_x64_hook" "$fedora_hook"; do
+    bash -n "$rendered_hook"
+    grep -Fq 'version=v0.1.1' "$rendered_hook" || fail "hunk-review core version is not pinned"
+    grep -Fq 'checksums_sha256=4d13bf5e2c132bb9078510b828ee8fedc0bb751b73333639ec6f86459038bd3d' \
+      "$rendered_hook" || fail "hunk-review checksum manifest is not pinned"
+    grep -Fq 'grep -Fx "$archive_sha256  $archive"' "$rendered_hook" || \
+      fail "hunk-review archive is not verified against SHA256SUMS"
+    grep -Fq 'install -m 755' "$rendered_hook" || fail "hunk-review core is not installed executable"
+    ! grep -Eiq 'cargo|source.build' "$rendered_hook" || fail "hunk-review source-build fallback is forbidden"
+  done
+  grep -Fq 'archive=pi-hunk-review-core-v0.1.1-aarch64-apple-darwin.tar.gz' "$darwin_arm_hook" || \
+    fail "Apple silicon hunk-review asset mapping is wrong"
+  grep -Fq 'archive=pi-hunk-review-core-v0.1.1-x86_64-apple-darwin.tar.gz' "$darwin_x64_hook" || \
+    fail "Intel macOS hunk-review asset mapping is wrong"
+  grep -Fq 'archive=pi-hunk-review-core-v0.1.1-x86_64-unknown-linux-gnu.tar.gz' "$fedora_hook" || \
+    fail "Fedora hunk-review asset mapping is wrong"
+
+  printf 'ok: remote pi-hunk-review release contract\n'
+}
+
 render_platform() {
   local platform=$1
   local architecture=$2
@@ -1164,6 +1243,7 @@ check_bob_contract
 check_shell_contract
 check_agent_contract
 check_herdr_contract
+check_hunk_review_contract
 rm -- "$PUBLIC_SOURCE/.chezmoi.toml.tmpl"
 check_merge_json_fixtures
 check_package_manifests
