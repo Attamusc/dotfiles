@@ -741,6 +741,67 @@ PY
   printf 'ok: shared mise toolchain contract\n'
 }
 
+check_bob_contract() {
+  local hook=.chezmoiscripts/run_onchange_after_20-setup-neovim.sh.tmpl
+  local mise_hook=run_onchange_after_10-install-mise-tools.sh.tmpl
+  local bob_hook=${hook##*/}
+  local pi_hook=run_once_after_30-setup-pi.sh.tmpl
+  local old_hook="$PUBLIC_SOURCE/.chezmoiscripts/run_once_after_20-setup-neovim.sh.tmpl"
+  local shell_config="$PUBLIC_SOURCE/dot_config/private_zsh/config/bob.zsh"
+  local darwin_hook="$WORK/bob-darwin-hook.sh"
+  local fedora_hook="$WORK/bob-fedora-hook.sh"
+  local installation_surfaces="$WORK/neovim-installation-surfaces"
+  local competing_probe="$WORK/competing-neovim-probe.sh"
+  local competing_pattern='^[[:space:]]*([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]+[[:space:]]+)*(([^[:space:]]*/)?brew|"\$brew")[[:space:]]+install[[:space:]].*neovim|^[[:space:]]*([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]+[[:space:]]+)*(sudo[[:space:]]+)?dnf[[:space:]]+install[[:space:]].*neovim|^[[:space:]]*([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]+[[:space:]]+)*(mise|"\$mise"|"\$mise_bin")[[:space:]]+(install|use)[[:space:]].*neovim'
+
+  [[ -f "$PUBLIC_SOURCE/$hook" ]] || fail "missing Bob-managed Neovim hook"
+  [[ -f "$PUBLIC_SOURCE/.chezmoiscripts/$mise_hook" ]] || fail "missing mise toolchain hook"
+  [[ -f "$PUBLIC_SOURCE/.chezmoiscripts/$pi_hook" ]] || fail "missing Pi setup hook"
+  [[ ! -e "$old_hook" ]] || fail "legacy Neovim installation hook remains"
+  [[ -f "$shell_config" ]] || fail "missing Bob shell path configuration"
+  [[ "${mise_hook#*_after_}" < "${bob_hook#*_after_}" \
+    && "${bob_hook#*_after_}" < "${pi_hook#*_after_}" ]] || \
+    fail "mise, Bob, and Pi after-hooks are ordered incorrectly"
+
+  render_source_template darwin arm64 '' '' "$hook" "$darwin_hook"
+  render_source_template linux amd64 fedora 44 "$hook" "$fedora_hook"
+  bash -n "$darwin_hook"
+  bash -n "$fedora_hook"
+
+  grep -Fq 'channel=stable' "$PUBLIC_SOURCE/$hook" || fail "Bob channel is not declared stable"
+  grep -Fq '"$bob_bin" use "$channel"' "$PUBLIC_SOURCE/$hook" || \
+    fail "Bob hook does not idempotently install/use its channel"
+  grep -Fq '$HOME/.local/share/bob/nvim-bin/nvim' "$PUBLIC_SOURCE/$hook" || \
+    fail "Bob hook does not verify the managed Neovim path"
+  grep -Fq '"$nvim_bin" --clean --headless '\''+qa'\''' "$PUBLIC_SOURCE/$hook" || \
+    fail "Bob hook does not run a terminating managed Neovim smoke"
+  grep -Fq 'bob_prefix=$("$brew" --prefix bob)' "$darwin_hook" || \
+    fail "macOS Bob ownership is not Homebrew-derived"
+  grep -Fq '"$mise_bin" which bob' "$fedora_hook" || \
+    fail "Fedora Bob ownership is not mise-derived"
+  if grep -Eq 'bob (uninstall|erase)' "$PUBLIC_SOURCE/$hook"; then
+    fail "destructive Bob rollback behavior remains"
+  fi
+  find "$PUBLIC_SOURCE/.chezmoiscripts" -type f -print >"$installation_surfaces"
+  find "$PUBLIC_SOURCE" -maxdepth 1 -type f -name 'run_*' -print >>"$installation_surfaces"
+  printf '%s\n' "$PUBLIC_SOURCE/install.sh" >>"$installation_surfaces"
+  if xargs grep -E "$competing_pattern" <"$installation_surfaces" >/dev/null 2>&1; then
+    fail "competing direct Neovim installer remains"
+  fi
+  printf '%s\n' 'MISE_GLOBAL_CONFIG_FILE="$config" "$mise_bin" use neovim@stable' >"$competing_probe"
+  grep -Eq "$competing_pattern" "$competing_probe" || \
+    fail "competing Neovim scanner misses environment-prefixed mise commands"
+
+  [[ $(head -n 1 "$shell_config") == 'export PATH="$HOME/.local/share/bob/nvim-bin:$PATH"' ]] || \
+    fail "Bob Neovim path does not precede native package paths"
+  if grep -Fq 'neovim' "$PUBLIC_SOURCE/packages/Brewfile" \
+    || grep -Fq 'neovim' "$PUBLIC_SOURCE/packages/fedora.txt"; then
+    fail "native package manifest competes with Bob for Neovim"
+  fi
+
+  printf 'ok: Bob-managed Neovim authority contract\n'
+}
+
 render_platform() {
   local platform=$1
   local architecture=$2
@@ -802,6 +863,7 @@ XDG_DATA_HOME="$WORK/data" \
 
 check_bootstrap_contract
 check_mise_contract
+check_bob_contract
 rm -- "$PUBLIC_SOURCE/.chezmoi.toml.tmpl"
 check_merge_json_fixtures
 check_package_manifests
