@@ -346,6 +346,8 @@ tig
 tmux
 tree
 wget
+wl-copy
+xdg-open
 zoxide
 zsh
 EOF
@@ -747,7 +749,7 @@ check_bob_contract() {
   local bob_hook=${hook##*/}
   local pi_hook=run_once_after_30-setup-pi.sh.tmpl
   local old_hook="$PUBLIC_SOURCE/.chezmoiscripts/run_once_after_20-setup-neovim.sh.tmpl"
-  local shell_config="$PUBLIC_SOURCE/dot_config/private_zsh/config/bob.zsh"
+  local shell_config="$PUBLIC_SOURCE/dot_config/private_zsh/config/zz-bob.zsh"
   local darwin_hook="$WORK/bob-darwin-hook.sh"
   local fedora_hook="$WORK/bob-fedora-hook.sh"
   local installation_surfaces="$WORK/neovim-installation-surfaces"
@@ -800,6 +802,93 @@ check_bob_contract() {
   fi
 
   printf 'ok: Bob-managed Neovim authority contract\n'
+}
+
+check_shell_contract() {
+  local aliases_template=dot_config/private_zsh/aliases.zsh.tmpl
+  local path_template=dot_config/private_zsh/path.zsh.tmpl
+  local darwin_aliases="$WORK/aliases-darwin.zsh"
+  local fedora_aliases="$WORK/aliases-fedora.zsh"
+  local darwin_path="$WORK/path-darwin.zsh"
+  local fedora_path="$WORK/path-fedora.zsh"
+  local rendered_shell_file
+
+  [[ -f "$PUBLIC_SOURCE/$aliases_template" ]] || fail "missing platform-rendered shell aliases"
+  [[ ! -e "$PUBLIC_SOURCE/dot_config/private_zsh/aliases.zsh" ]] || \
+    fail "untemplated platform aliases remain"
+
+  render_source_template darwin arm64 '' '' "$aliases_template" "$darwin_aliases"
+  render_source_template linux amd64 fedora 44 "$aliases_template" "$fedora_aliases"
+  render_source_template darwin arm64 '' '' "$path_template" "$darwin_path"
+  render_source_template linux amd64 fedora 44 "$path_template" "$fedora_path"
+  for rendered_shell_file in "$darwin_aliases" "$fedora_aliases" "$darwin_path" "$fedora_path"; do
+    zsh -n "$rendered_shell_file"
+  done
+
+  grep -Fq 'alias copy="pbcopy"' "$darwin_aliases" || fail "macOS copy alias is not native"
+  grep -Fq 'alias o="open"' "$darwin_aliases" || fail "macOS open alias is not native"
+  grep -Fq 'alias copy="wl-copy"' "$fedora_aliases" || fail "Fedora copy alias is not Wayland-native"
+  grep -Fq 'alias o="xdg-open"' "$fedora_aliases" || fail "Fedora open alias is not native"
+  ! grep -Eq 'mvim|VDCAssistant|pbcopy|alias o="open"' "$fedora_aliases" || \
+    fail "macOS-only alias leaked into Fedora"
+  ! grep -Eq 'CMUX_HOME|OBSIDIAN_HOME|/Applications|linuxbrew' "$fedora_path" || \
+    fail "macOS/Linuxbrew runtime path leaked into Fedora"
+  ! grep -Fq 'CMUX_HOME' "$darwin_path" || fail "cmux remains in shared shell runtime"
+  [[ ! -e "$PUBLIC_SOURCE/dot_config/private_zsh/config/bob.zsh" ]] || \
+    fail "Bob path still loads before mise activation"
+  grep -Fq 'export PATH="$HOME/.local/share/bob/nvim-bin:$PATH"' \
+    "$PUBLIC_SOURCE/dot_config/private_zsh/config/zz-bob.zsh" || \
+    fail "Bob path precedence was lost"
+  grep -Fq 'if (( $+commands[mise] ));' \
+    "$PUBLIC_SOURCE/dot_config/private_zsh/config/mise-en-place.zsh" || \
+    fail "mise shell activation is not guarded"
+  [[ mise-en-place.zsh < zz-bob.zsh ]] || fail "Bob path must load after mise activation"
+
+  printf 'ok: platform-correct shared shell contract\n'
+}
+
+check_fedora_shell_startup() {
+  local home="$WORK/rendered-linux"
+  local zsh_bin
+
+  zsh_bin=$(command -v zsh)
+  mkdir -p "$home/.local/bin" "$home/.local/share/mise/shims" "$home/.local/share/bob/nvim-bin"
+  cat >"$home/.local/bin/mise" <<'EOF'
+#!/bin/sh
+if [ "${1:-}" = activate ]; then
+  printf '%s\n' 'export PATH="$HOME/.local/share/mise/shims:$PATH"'
+fi
+EOF
+  cat >"$home/.local/share/mise/shims/nvim" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+  cat >"$home/.local/share/bob/nvim-bin/nvim" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+  chmod +x \
+    "$home/.local/bin/mise" \
+    "$home/.local/share/mise/shims/nvim" \
+    "$home/.local/share/bob/nvim-bin/nvim"
+  printf '%s\n' 'export PORTABILITY_LOCALRC=loaded' >"$home/.localrc"
+  env -i \
+    HOME="$home" \
+    ZDOTDIR="$home" \
+    PATH=/usr/bin:/bin \
+    "$zsh_bin" -dfc '
+      source "$ZDOTDIR/.zshrc"
+      [[ $PORTABILITY_LOCALRC == loaded ]]
+      [[ ${aliases[copy]} == wl-copy ]]
+      [[ ${aliases[o]} == xdg-open ]]
+      [[ ${aliases[v]} == nvim ]]
+      [[ $path[1] == "$HOME/.local/share/bob/nvim-bin" ]]
+      [[ $(command -v nvim) == "$HOME/.local/share/bob/nvim-bin/nvim" ]]
+      [[ -z ${CMUX_HOME+x} ]]
+      [[ $PATH != *::* ]]
+    '
+  rm -f "$home/.localrc"
+  printf 'ok: fresh Fedora zsh startup\n'
 }
 
 render_platform() {
@@ -864,10 +953,12 @@ XDG_DATA_HOME="$WORK/data" \
 check_bootstrap_contract
 check_mise_contract
 check_bob_contract
+check_shell_contract
 rm -- "$PUBLIC_SOURCE/.chezmoi.toml.tmpl"
 check_merge_json_fixtures
 check_package_manifests
 render_platform darwin arm64 ''
 render_platform linux amd64 fedora
+check_fedora_shell_startup
 
 printf 'ok: portability checks passed\n'

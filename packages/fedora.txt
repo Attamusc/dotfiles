@@ -19,5 +19,7 @@ tmux
 tree
 util-linux
 wget2-wget
+wl-clipboard
+xdg-utils
 zoxide
 zsh

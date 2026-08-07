@@ -1,0 +1,31 @@
+alias reload!='. ~/.zshrc'
+
+# Easier navigation
+alias ..="cd .."
+alias ...="cd ../.."
+alias ....="cd ../../.."
+alias .....="cd ../../../.."
+alias ~="cd ~"
+alias -- -="cd -"
+alias cdot="chezmoi cd"
+
+# Editor
+alias v="nvim"
+
+# Platform-native terminal helpers
+{{ if eq .chezmoi.os "darwin" -}}
+alias copy="pbcopy"
+alias m="mvim"
+alias o="open"
+alias oo="open ."
+alias zoom-fix="sudo killall VDCAssistant"
+{{ else if and (eq .chezmoi.os "linux") (eq .chezmoi.osRelease.id "fedora") (eq .chezmoi.osRelease.versionID "44") -}}
+alias copy="wl-copy"
+alias o="xdg-open"
+alias oo="xdg-open ."
+{{ end -}}
+
+# ls
+alias l="eza -lah"
+alias ll="eza -l"
+alias la='eza -a'

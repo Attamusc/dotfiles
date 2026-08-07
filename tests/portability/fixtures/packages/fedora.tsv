@@ -19,5 +19,7 @@ tmux	tmux
 tree	tree
 util-linux	chsh
 wget2-wget	wget
+wl-clipboard	wl-copy
+xdg-utils	xdg-open
 zoxide	zoxide
 zsh	zsh
