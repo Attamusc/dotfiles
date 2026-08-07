@@ -148,8 +148,8 @@ gh auth status --hostname github.com
 
 Start Pi inside Herdr, open one child agent in a visible pane, then detach and
 reattach before considering a new host complete. Fedora runtime and SSH
-detach/reattach must be verified on the real machine; static macOS CI is not a
-substitute.
+detach/reattach must be verified on the real machine; the Ubuntu-hosted static
+portability contract check is not a substitute.
 
 ## Rollback
 

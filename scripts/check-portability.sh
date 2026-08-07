@@ -1253,6 +1253,70 @@ check_documentation_contract() {
   printf 'ok: supported-platform and local-ownership documentation\n'
 }
 
+ci_contract_matches() {
+  local workflow=$1
+
+  jq -e '
+    (keys | sort) == ["concurrency", "jobs", "name", "on", "permissions"] and
+    .name == "Portability contracts" and
+    (.on | keys | sort) == ["pull_request", "push", "workflow_dispatch"] and
+    .on.pull_request == {} and
+    .on.push == {"branches": ["main"]} and
+    .on.workflow_dispatch == {} and
+    .permissions == {"contents": "read"} and
+    .concurrency == {
+      "group": "portability-${{ github.ref }}",
+      "cancel-in-progress": true
+    } and
+    (.jobs | keys) == ["check"] and
+    (.jobs.check | keys | sort) == ["name", "runs-on", "steps", "timeout-minutes"] and
+    .jobs.check.name == "Check repository contracts" and
+    .jobs.check["runs-on"] == "ubuntu-latest" and
+    .jobs.check["timeout-minutes"] == 10 and
+    (.jobs.check.steps | length) == 3 and
+    .jobs.check.steps[0] == {
+      "name": "Check out repository",
+      "uses": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262"
+    } and
+    .jobs.check.steps[1].name == "Install checker dependencies" and
+    (.jobs.check.steps[1].run | split("\n")) == [
+      "sudo apt-get update",
+      "sudo apt-get install --yes zsh",
+      "sh -c \"$(curl -fsLS https://get.chezmoi.io)\" -- -b \"$HOME/.local/bin\"",
+      "echo \"$HOME/.local/bin\" >>\"$GITHUB_PATH\""
+    ] and
+    .jobs.check.steps[2] == {
+      "name": "Check portability contracts",
+      "run": "scripts/check-portability.sh"
+    }
+  ' "$workflow" >/dev/null
+}
+
+check_ci_contract() {
+  local workflow="$PUBLIC_SOURCE/.github/workflows/portability.yml"
+  local probe="$WORK/portability-ci-probe.json"
+
+  [[ -f "$workflow" ]] || fail "missing focused portability CI workflow"
+  ci_contract_matches "$workflow" || fail "focused portability CI structure violates its exact contract"
+
+  jq '.on.pull_request_target = {}' "$workflow" >"$probe"
+  ! ci_contract_matches "$probe" || fail "CI contract permits pull_request_target"
+  jq '.permissions.issues = "write"' "$workflow" >"$probe"
+  ! ci_contract_matches "$probe" || fail "CI contract permits write permissions"
+  jq 'del(.jobs.check["timeout-minutes"])' "$workflow" >"$probe"
+  ! ci_contract_matches "$probe" || fail "CI contract permits a missing timeout"
+  jq '.concurrency["cancel-in-progress"] = false' "$workflow" >"$probe"
+  ! ci_contract_matches "$probe" || fail "CI contract permits disabled cancellation"
+  jq '.jobs.check.steps[2].run = "# scripts/check-portability.sh"' "$workflow" >"$probe"
+  ! ci_contract_matches "$probe" || fail "CI contract accepts a commented-out checker"
+  jq '.jobs.check.steps[2].run = "bash ./install.sh"' "$workflow" >"$probe"
+  ! ci_contract_matches "$probe" || fail "CI contract permits bootstrap execution"
+  jq '.jobs.check.steps[2].run = "chezmoi --source . apply"' "$workflow" >"$probe"
+  ! ci_contract_matches "$probe" || fail "CI contract permits alternate apply syntax"
+
+  printf 'ok: focused portability CI contract\n'
+}
+
 render_platform() {
   local platform=$1
   local architecture=$2
@@ -1320,6 +1384,7 @@ check_agent_contract
 check_herdr_contract
 check_hunk_review_contract
 check_documentation_contract
+check_ci_contract
 rm -- "$PUBLIC_SOURCE/.chezmoi.toml.tmpl"
 check_merge_json_fixtures
 check_package_manifests
