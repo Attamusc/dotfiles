@@ -8,22 +8,14 @@ eval "$(/opt/homebrew/bin/brew shellenv)"
 {{   else -}}
 eval "$(/usr/local/bin/brew shellenv)"
 {{   end -}}
-{{ else if stat "/home/linuxbrew/.linuxbrew/bin/brew" -}}
-eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 {{ end -}}
 
 export USER_BIN=$HOME/.config/bin
 
 # Languages
-{{ if eq .chezmoi.os "darwin" -}}
-{{   if eq .chezmoi.arch "arm64" -}}
-export GO_HOME=/opt/homebrew/opt/go/libexec
-{{   else -}}
-export GO_HOME=/usr/local/opt/go/libexec
-{{   end -}}
-{{ else -}}
-export GO_HOME=$(brew --prefix go)/libexec
-{{ end -}}
+if (( $+commands[go] )); then
+  export GO_HOME="$(go env GOROOT)"
+fi
 export CARGO_HOME=$HOME/.cargo
 export GOPATH=$PROJECTS/go-space
 export BUN_HOME=$HOME/.bun

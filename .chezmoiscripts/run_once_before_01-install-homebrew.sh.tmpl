@@ -1,45 +1,31 @@
-{{ if ne .chezmoi.os "windows" -}}
+{{ if eq .chezmoi.os "darwin" -}}
 #!/bin/bash
 
+set -euo pipefail
+
 source /tmp/chezmoi-utils.sh
-
-# Install Homebrew
-
 printf "${green}[01 - homebrew] ${reset}"
+
 {{ if or (lt 0 (atoi (env "SCRIPTS_START_AT"))) (env "SKIP_HOMEBREW_SETUP") -}}
 echo "Skip installing Homebrew"
 exit 0
-{{ else }}
+{{ else -}}
 echo "Install Homebrew"
-{{- end }}
+{{ end -}}
 
 if command -v brew >/dev/null 2>&1; then
   echo "Homebrew already installed, skipping."
   exit 0
 fi
 
-echo "Installing Homebrew..."
+NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
-{{ if (env "CODESPACES") }}
-  sudo mkdir -p /home/linuxbrew/.linuxbrew
-  sudo chown --reference $HOME /home/linuxbrew/.linuxbrew
-  docker pull ghcr.io/attamusc/linuxbrew-cache:latest
-  docker rm -f linuxbrew-cache || true
-  docker create --name linuxbrew-cache ghcr.io/attamusc/linuxbrew-cache:latest true
-  docker cp linuxbrew-cache:/.linuxbrew /home/linuxbrew/
-  docker rm -f linuxbrew-cache || true
-{{ else }}
-  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-{{- end}}
-
-# Add to path immediately to ensure that all the brew install steps execute
-if [ -d /opt/homebrew/bin ]; then
-  eval "$(/opt/homebrew/bin/brew shellenv)"
+if [ -x /opt/homebrew/bin/brew ]; then
+  /opt/homebrew/bin/brew --version
+elif [ -x /usr/local/bin/brew ]; then
+  /usr/local/bin/brew --version
+else
+  echo "Homebrew installer completed without a usable brew executable." >&2
+  exit 1
 fi
-
-if [ -d /home/linuxbrew/.linuxbrew/bin ]; then
-  eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-fi
-
-echo "Homebrew Installed!"
 {{- end }}

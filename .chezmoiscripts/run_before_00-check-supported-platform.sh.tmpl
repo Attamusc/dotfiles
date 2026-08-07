@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -eu
+
+{{- if eq .chezmoi.os "darwin" }}
+exit 0
+{{- else if and (eq .chezmoi.os "linux") (eq .chezmoi.osRelease.id "fedora") (eq .chezmoi.osRelease.versionID "44") }}
+exit 0
+{{- else }}
+echo "Unsupported platform: {{ .chezmoi.os }} {{ .chezmoi.osRelease.id }} {{ .chezmoi.osRelease.versionID }}. Supported targets: macOS and Fedora 44" >&2
+exit 1
+{{- end }}

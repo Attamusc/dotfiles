@@ -90,11 +90,6 @@ check_user_paths() {
 
     if matches=$(LC_ALL=C grep -Eo "$pattern" "$file"); then
       while IFS= read -r user_path; do
-        case "$user_path" in
-          /home/linuxbrew|/home/linuxbrew/*)
-            continue
-            ;;
-        esac
         printf '%s\t%s\n' "$relative_path" "$user_path" >>"$actual"
       done <<<"$matches"
     fi
@@ -494,6 +489,174 @@ EOF
   printf 'ok: %s Git machine-local include behavior\n' "$platform"
 }
 
+render_source_template() {
+  local platform=$1
+  local architecture=$2
+  local os_release=$3
+  local version=$4
+  local template=$5
+  local output=$6
+  local override
+
+  override=$(jq -cn \
+    --arg os "$platform" \
+    --arg arch "$architecture" \
+    --arg home "$WORK/home" \
+    --arg os_release "$os_release" \
+    --arg version "$version" \
+    '{chezmoi: {os: $os, arch: $arch, username: "portability", hostname: "portability", homeDir: $home}}
+     | if $os_release == "" then . else .chezmoi.osRelease = {id: $os_release, versionID: $version} end')
+
+  HOME="$WORK/home" \
+  XDG_CACHE_HOME="$WORK/cache" \
+  XDG_CONFIG_HOME="$WORK/config" \
+  XDG_DATA_HOME="$WORK/data" \
+    chezmoi \
+      --source "$PUBLIC_SOURCE" \
+      --destination "$WORK/home" \
+      --cache "$WORK/cache/chezmoi" \
+      --config "$WORK/config/chezmoi.toml" \
+      --no-tty \
+      --refresh-externals=never \
+      --override-data "$override" \
+      execute-template --init --file "$PUBLIC_SOURCE/$template" \
+      >"$output"
+}
+
+assert_platform_gate_rejects() {
+  local name=$1
+  local script=$2
+  local output
+
+  if output=$(sh "$script" 2>&1); then
+    fail "$name platform gate unexpectedly succeeded"
+  fi
+  grep -Fq 'Supported targets: macOS and Fedora 44' <<<"$output" || \
+    fail "$name platform rejection omitted the supported targets"
+}
+
+check_bootstrap_contract() {
+  local hooks="$PUBLIC_SOURCE/.chezmoiscripts"
+  local guard=run_before_00-check-supported-platform.sh.tmpl
+  local mac_hook=run_onchange_before_10-install-macos-packages.sh.tmpl
+  local fedora_hook=run_onchange_before_10-install-fedora-packages.sh.tmpl
+  local shell_hook=run_once_before_20-configure-fedora-login-shell.sh.tmpl
+  local tpm_hook=run_once_before_30-install-tpm.sh.tmpl
+  local darwin_guard="$WORK/darwin-platform-guard.sh"
+  local fedora_guard="$WORK/fedora-platform-guard.sh"
+  local ubuntu_guard="$WORK/ubuntu-platform-guard.sh"
+  local old_fedora_guard="$WORK/fedora43-platform-guard.sh"
+  local mac_before="$WORK/mac-packages-before.sh"
+  local mac_after="$WORK/mac-packages-after.sh"
+  local fedora_before="$WORK/fedora-packages-before.sh"
+  local fedora_after="$WORK/fedora-packages-after.sh"
+  local other_before="$WORK/other-packages-before.sh"
+  local other_after="$WORK/other-packages-after.sh"
+  local homebrew_installer="$WORK/homebrew-installer.sh"
+  local fedora_login_shell="$WORK/fedora-login-shell.sh"
+  local tpm_installer="$WORK/tpm-installer.sh"
+  local manifest_backup="$WORK/manifest-backup"
+  local bootstrap_files="$WORK/bootstrap-files"
+  local relative_path rendered_hook runtime_file
+
+  for file in "$guard" "$mac_hook" "$fedora_hook" "$shell_hook" "$tpm_hook"; do
+    [[ -f "$hooks/$file" ]] || fail "missing ordered bootstrap hook: $file"
+  done
+  for removed in \
+    run_once_after_00-config-linux.sh.tmpl \
+    run_once_after_10-install-homebrew-deps.sh.tmpl \
+    run_once_before_02-install-tpm.sh.tmpl; do
+    [[ ! -e "$hooks/$removed" ]] || fail "obsolete bootstrap hook remains: $removed"
+  done
+  [[ ! -e "$PUBLIC_SOURCE/.github/workflows/linuxbrew-cache.yml" ]] || \
+    fail "obsolete Linuxbrew cache workflow remains"
+
+  : >"$bootstrap_files"
+  while IFS= read -r -d '' runtime_file; do
+    relative_path=${runtime_file#"$PUBLIC_SOURCE/"}
+    is_runtime_source "$relative_path" || continue
+    printf '%s\n' "$runtime_file" >>"$bootstrap_files"
+  done < <(find "$PUBLIC_SOURCE" -type f -print0)
+  if [[ -d "$PUBLIC_SOURCE/.github/workflows" ]]; then
+    find "$PUBLIC_SOURCE/.github/workflows" -type f -print >>"$bootstrap_files"
+  fi
+  if xargs grep -E '/home/linuxbrew|linuxbrew-cache|ghcr\.io/attamusc/linuxbrew-cache|CODESPACES' \
+      <"$bootstrap_files" >/dev/null 2>&1; then
+    fail "retired Linuxbrew or Codespaces bootstrap behavior remains"
+  fi
+
+  grep -Fq "supported_targets='macOS and Fedora 44'" "$PUBLIC_SOURCE/install.sh" || \
+    fail "install.sh does not declare the supported platforms"
+  grep -Fq 'Supported targets: $supported_targets' "$PUBLIC_SOURCE/install.sh" || \
+    fail "install.sh rejection does not name the supported platforms"
+  grep -Fq 'sudo dnf install -y chezmoi' "$PUBLIC_SOURCE/install.sh" || \
+    fail "Fedora bootstrap does not install chezmoi through DNF"
+  grep -Fq 'https://get.chezmoi.io' "$PUBLIC_SOURCE/install.sh" || \
+    fail "macOS bootstrap does not use the current chezmoi installer"
+
+  grep -Fq '# Brewfile SHA-256:' "$hooks/$mac_hook" || \
+    fail "macOS package hook is not content-addressed to Brewfile"
+  grep -Fq 'bundle --file=' "$hooks/$mac_hook" || fail "macOS package hook omits brew bundle"
+  grep -Fq '# Fedora manifest SHA-256:' "$hooks/$fedora_hook" || \
+    fail "Fedora package hook is not content-addressed to its manifest"
+  grep -Fq 'sudo dnf install -y' "$hooks/$fedora_hook" || fail "Fedora package hook omits DNF install"
+  if grep -Eq '\|\|[[:space:]]*(:|true)' "$hooks/$mac_hook" "$hooks/$fedora_hook"; then
+    fail "native package hook suppresses package-manager failures"
+  fi
+
+  [[ "${mac_hook#*_before_}" < "${shell_hook#*_before_}" \
+    && "${fedora_hook#*_before_}" < "${shell_hook#*_before_}" \
+    && "${shell_hook#*_before_}" < "${tpm_hook#*_before_}" ]] || \
+    fail "native package, login-shell, and TPM hooks are ordered incorrectly"
+
+  render_source_template darwin arm64 '' '' ".chezmoiscripts/$guard" "$darwin_guard"
+  render_source_template linux amd64 fedora 44 ".chezmoiscripts/$guard" "$fedora_guard"
+  render_source_template linux amd64 ubuntu 24.04 ".chezmoiscripts/$guard" "$ubuntu_guard"
+  render_source_template linux amd64 fedora 43 ".chezmoiscripts/$guard" "$old_fedora_guard"
+  sh "$darwin_guard"
+  sh "$fedora_guard"
+  assert_platform_gate_rejects Ubuntu "$ubuntu_guard"
+  assert_platform_gate_rejects 'Fedora 43' "$old_fedora_guard"
+
+  render_source_template darwin arm64 '' '' ".chezmoiscripts/$mac_hook" "$mac_before"
+  render_source_template linux amd64 fedora 44 ".chezmoiscripts/$fedora_hook" "$fedora_before"
+  render_source_template darwin arm64 '' '' \
+    '.chezmoiscripts/run_once_before_01-install-homebrew.sh.tmpl' "$homebrew_installer"
+  render_source_template linux amd64 fedora 44 ".chezmoiscripts/$shell_hook" "$fedora_login_shell"
+  render_source_template darwin arm64 '' '' ".chezmoiscripts/$tpm_hook" "$tpm_installer"
+  [[ -s "$mac_before" && -s "$fedora_before" ]] || fail "native package hook rendered empty"
+  for rendered_hook in \
+    "$homebrew_installer" \
+    "$mac_before" \
+    "$fedora_before" \
+    "$fedora_login_shell" \
+    "$tpm_installer"; do
+    bash -n "$rendered_hook"
+  done
+  render_source_template linux amd64 fedora 44 ".chezmoiscripts/$mac_hook" "$other_before"
+  [[ ! -s "$other_before" ]] || fail "macOS package hook rendered on Fedora"
+  render_source_template darwin arm64 '' '' ".chezmoiscripts/$fedora_hook" "$other_before"
+  [[ ! -s "$other_before" ]] || fail "Fedora package hook rendered on macOS"
+
+  cp "$PUBLIC_SOURCE/packages/Brewfile" "$manifest_backup"
+  printf '\n# portability digest probe\n' >>"$PUBLIC_SOURCE/packages/Brewfile"
+  render_source_template darwin arm64 '' '' ".chezmoiscripts/$mac_hook" "$mac_after"
+  render_source_template linux amd64 fedora 44 ".chezmoiscripts/$fedora_hook" "$other_after"
+  cp "$manifest_backup" "$PUBLIC_SOURCE/packages/Brewfile"
+  cmp -s "$mac_before" "$mac_after" && fail "Brewfile changes do not change the run_onchange hook"
+  cmp -s "$fedora_before" "$other_after" || fail "Brewfile changes altered the Fedora package hook"
+
+  cp "$PUBLIC_SOURCE/packages/fedora.txt" "$manifest_backup"
+  printf '\n# portability digest probe\n' >>"$PUBLIC_SOURCE/packages/fedora.txt"
+  render_source_template linux amd64 fedora 44 ".chezmoiscripts/$fedora_hook" "$fedora_after"
+  render_source_template darwin arm64 '' '' ".chezmoiscripts/$mac_hook" "$other_after"
+  cp "$manifest_backup" "$PUBLIC_SOURCE/packages/fedora.txt"
+  cmp -s "$fedora_before" "$fedora_after" && fail "Fedora manifest changes do not change the run_onchange hook"
+  cmp -s "$mac_before" "$other_after" || fail "Fedora manifest changes altered the macOS package hook"
+
+  printf 'ok: native macOS and Fedora bootstrap contract\n'
+}
+
 render_platform() {
   local platform=$1
   local architecture=$2
@@ -552,8 +715,9 @@ XDG_DATA_HOME="$WORK/data" \
     --refresh-externals=never \
     execute-template --init --file "$PUBLIC_SOURCE/.chezmoi.toml.tmpl" \
     >"$WORK/config/chezmoi.toml"
-rm -- "$PUBLIC_SOURCE/.chezmoi.toml.tmpl"
 
+check_bootstrap_contract
+rm -- "$PUBLIC_SOURCE/.chezmoi.toml.tmpl"
 check_merge_json_fixtures
 check_package_manifests
 render_platform darwin arm64 ''

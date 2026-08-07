@@ -1,26 +1,23 @@
-{{ if ne .chezmoi.os "windows" -}}
+{{ if eq .chezmoi.os "darwin" -}}
 #!/bin/bash
 
-set -eufo pipefail
-
-if [ -d /opt/homebrew/bin ]; then
-  echo "M1 installation found"
-  eval "$(/opt/homebrew/bin/brew shellenv)"
-fi
-
-if [ -d /home/linuxbrew/.linuxbrew/bin ]; then
-  echo "linuxbrew installation found"
-  eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-fi
+set -euo pipefail
 
 if command -v nvim >/dev/null 2>&1; then
-  echo "neovim already installed, skipping."
+  echo "Neovim already installed, skipping."
   exit 0
 fi
 
-# Install neovim from HEAD with brew
-brew install neovim --HEAD
+if command -v brew >/dev/null 2>&1; then
+  brew=$(command -v brew)
+elif [ -x /opt/homebrew/bin/brew ]; then
+  brew=/opt/homebrew/bin/brew
+elif [ -x /usr/local/bin/brew ]; then
+  brew=/usr/local/bin/brew
+else
+  echo "Homebrew is required for the temporary macOS Neovim installer." >&2
+  exit 1
+fi
 
-# Run neovim and have it install plugins with packer
-# nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync'
+"$brew" install neovim --HEAD
 {{- end }}

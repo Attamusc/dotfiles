@@ -1,0 +1,22 @@
+{{- if eq .chezmoi.os "darwin" -}}
+#!/bin/bash
+
+set -euo pipefail
+
+# Brewfile SHA-256: {{ include "packages/Brewfile" | sha256sum }}
+source /tmp/chezmoi-utils.sh
+printf "${green}[10 - macOS packages] ${reset}Install Homebrew manifest\n"
+
+if command -v brew >/dev/null 2>&1; then
+  brew=$(command -v brew)
+elif [ -x /opt/homebrew/bin/brew ]; then
+  brew=/opt/homebrew/bin/brew
+elif [ -x /usr/local/bin/brew ]; then
+  brew=/usr/local/bin/brew
+else
+  echo "Homebrew is required before installing macOS packages." >&2
+  exit 1
+fi
+
+"$brew" bundle --file="{{ .chezmoi.sourceDir }}/packages/Brewfile"
+{{- end -}}

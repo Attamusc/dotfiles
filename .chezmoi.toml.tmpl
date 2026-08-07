@@ -5,19 +5,14 @@
 {{- $name := "Sean Dunn" -}}
 {{- $email := "sean@attamusc.com" -}}
 {{- $signingkey := "" -}}
-{{- $is_codespace := false }}
-
-{{- if (eq .chezmoi.username "codespace") }}
-{{-   $is_codespace = true }}
-{{- end }}
 
 {{- if (env "ASK") }}
 {{-   $name = promptString "Full Name" $name -}}
 {{-   $email = promptString "Email" $email -}}
 {{- end }}
 
-{{/* detect GitHub codespaces, VSCode remote containers, Docker containers, and Vagrant boxes */}}
-{{- if or (env "CODESPACES") (env "REMOTE_CONTAINERS_IPC") (eq .chezmoi.username "root" "vagrant" "vscode") -}}
+{{/* detect VSCode remote containers, Docker containers, and Vagrant boxes */}}
+{{- if or (env "REMOTE_CONTAINERS_IPC") (eq .chezmoi.username "root" "vagrant" "vscode") -}}
 {{-   $headless = true -}}
 {{-   $ephemeral = true -}}
 {{- end -}}
