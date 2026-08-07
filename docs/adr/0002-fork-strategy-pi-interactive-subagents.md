@@ -1,10 +1,10 @@
 # ADR-0002: Fork strategy for `pi-interactive-subagents` — `Attamusc` strict-superset of `HazAT`
 
-**Status:** Accepted
+**Status:** Accepted (fork-lineage decision); cmux-preservation contract superseded
 **Date:** 2026-07-06
 **Supersedes:** —
-**Superseded by:** —
-**Related:** ADR-0001 (additive framing + rollback lane),
+**Superseded by:** ADR-0006 (cmux preservation and runtime rollback only)
+**Related:** ADR-0001 (historical additive framing), ADR-0006 (current Herdr-only contract),
 `.pi/plans/bbq-2026-07-06/grill/2026-07-06-cmux-herdr-lazyvim-helix.md` (D2, D4)
 
 ## Context
@@ -43,6 +43,12 @@ is preserved; new behaviour under herdr is additive and gated by
 Cherry-picking specific edxeth features (`mode: background`, orchestrator
 mode, `allow-model-override`) is deferred to lived experience — no
 pre-commitments in this ADR.
+
+> **Current contract (ADR-0006):** The Attamusc fork remains the selected
+> package lineage and may remain generally multi-backend. This repository no
+> longer preserves, configures, tests, or guarantees its cmux backend. The
+> strict-superset and cmux rollback requirements below record the migration
+> gate that applied in July 2026; they are not the current runtime contract.
 
 ## Evidence (as of 2026-07-06)
 

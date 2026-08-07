@@ -897,14 +897,14 @@ contains_active_cmux_reference() {
   local pattern=$3
 
   if [[ "$relative_path" == dot_config/herdr/config.toml ]]; then
-    grep -E "$pattern" "$file" 2>/dev/null \
+    grep -Ei "$pattern" "$file" 2>/dev/null \
       | grep -Fvx \
         -e "# Match cmux's spatial navigation: horizontal movement changes tabs;" \
         -e "# Jump directly to a tab by number, matching cmux's surface selection." \
       >/dev/null
     return
   fi
-  grep -Eq "$pattern" "$file" 2>/dev/null
+  grep -Eiq "$pattern" "$file" 2>/dev/null
 }
 
 check_agent_contract() {
@@ -925,6 +925,7 @@ check_agent_contract() {
   local mise_stub_expected="$WORK/mise-stub.expected"
   local active_runtime_files="$WORK/active-runtime-files"
   local cmux_heading_probe="$WORK/cmux-heading-probe.md"
+  local cmux_uppercase_probe="$WORK/cmux-uppercase-probe.md"
   local cmux_pattern='pi-cmux|CMUX_HOME|skills/cmux|(^|[^[:alnum:]_-])cmux([^[:alnum:]_-]|$)'
   local relative_path runtime_file
 
@@ -941,7 +942,7 @@ check_agent_contract() {
     is_runtime_source "$relative_path" || continue
     printf '%s\n' "$runtime_file" >>"$active_runtime_files"
   done < <(find "$PUBLIC_SOURCE" \( -type f -o -type l \) -print0)
-  if grep -E 'pi-cmux|CMUX_HOME|skills/cmux|(^|/)cmux(/|$)' "$active_runtime_files" >/dev/null 2>&1; then
+  if grep -Ei 'pi-cmux|CMUX_HOME|skills/cmux|(^|/)cmux(/|$)' "$active_runtime_files" >/dev/null 2>&1; then
     fail "cmux remains in an active managed runtime path"
   fi
   while IFS= read -r runtime_file; do
@@ -953,6 +954,9 @@ check_agent_contract() {
   printf '%s\n' '### Use cmux' >"$cmux_heading_probe"
   contains_active_cmux_reference "$cmux_heading_probe" dot_pi/agent/AGENTS.md "$cmux_pattern" || \
     fail "cmux scanner ignores active Markdown headings"
+  printf '%s\n' '### Use CMUX' >"$cmux_uppercase_probe"
+  contains_active_cmux_reference "$cmux_uppercase_probe" dot_pi/agent/AGENTS.md "$cmux_pattern" || \
+    fail "cmux scanner is case-sensitive"
 
   python3 - "$settings" "$mcp" "$opencode" <<'PY'
 import json
@@ -1050,6 +1054,51 @@ EOF
   printf 'ok: portable public Pi and agent configuration\n'
 }
 
+check_herdr_contract() {
+  local adr1="$PUBLIC_SOURCE/docs/adr/0001-additive-migration-cmux-herdr.md"
+  local adr2="$PUBLIC_SOURCE/docs/adr/0002-fork-strategy-pi-interactive-subagents.md"
+  local adr6="$PUBLIC_SOURCE/docs/adr/0006-herdr-is-the-sole-supported-multiplexer.md"
+  local agents="$PUBLIC_SOURCE/dot_pi/agent/AGENTS.md"
+  local lifecycle_files="$WORK/herdr-lifecycle-files"
+  local lifecycle_probe="$WORK/herdr-lifecycle-probe.sh"
+  local lifecycle_pattern='systemctl([^#]*)(enable|start)([^#]*)herdr|(^|[;&|[:space:]])herdr[[:space:]]+(serve|server|daemon|start-server)([;&|[:space:]]|$)'
+  local relative_path runtime_file
+
+  [[ -f "$adr1" && -f "$adr2" && -f "$adr6" && -f "$agents" ]] || \
+    fail "Herdr architecture decision set is incomplete"
+  grep -Fq '**Status:** Superseded' "$adr1" || fail "ADR-0001 still claims the active mux contract"
+  grep -Fq '**Superseded by:** ADR-0006' "$adr1" || fail "ADR-0001 lacks its Herdr-only forward reference"
+  grep -Fq '**Superseded by:** ADR-0006 (cmux preservation and runtime rollback only)' "$adr2" || \
+    fail "ADR-0002 does not delimit its superseded runtime contract"
+  grep -Fq '**Status:** Accepted' "$adr6" || fail "Herdr-only ADR is not accepted"
+  grep -Fq 'sole multiplexer for Pi and visible subagent sessions' "$adr6" || \
+    fail "Herdr-only ADR does not state the sole mux contract"
+  grep -Fq 'Rollback is version-control-based' "$adr6" || \
+    fail "Herdr-only ADR lacks the version-control rollback boundary"
+  grep -Fq 'Herdr as its sole Pi/subagent multiplexer' "$agents" || \
+    fail "active agent guidance does not name Herdr as sole mux"
+  grep -Fq 'tmux as a supported fallback' "$agents" || \
+    fail "active agent guidance does not delimit tmux ownership"
+  grep -Fq 'Herdr starts its per-user server automatically; do not add a second lifecycle manager.' "$agents" || \
+    fail "active agent guidance does not preserve Herdr's sole lifecycle manager"
+
+  : >"$lifecycle_files"
+  while IFS= read -r -d '' runtime_file; do
+    relative_path=${runtime_file#"$PUBLIC_SOURCE/"}
+    is_runtime_source "$relative_path" || continue
+    printf '%s\n' "$runtime_file" >>"$lifecycle_files"
+  done < <(find "$PUBLIC_SOURCE" \( -type f -o -type l \) -print0)
+  if grep -Ei 'systemd([^/]*|/).*herdr|herdr.*\.service' "$lifecycle_files" >/dev/null 2>&1 \
+    || xargs grep -Ei "$lifecycle_pattern" <"$lifecycle_files" >/dev/null 2>&1; then
+    fail "a second managed Herdr lifecycle path remains"
+  fi
+  printf '%s\n' 'systemctl --user enable --now herdr.service' >"$lifecycle_probe"
+  grep -Eiq "$lifecycle_pattern" "$lifecycle_probe" || \
+    fail "Herdr lifecycle scanner misses managed systemd startup"
+
+  printf 'ok: Herdr-only multiplexer decision contract\n'
+}
+
 render_platform() {
   local platform=$1
   local architecture=$2
@@ -1114,6 +1163,7 @@ check_mise_contract
 check_bob_contract
 check_shell_contract
 check_agent_contract
+check_herdr_contract
 rm -- "$PUBLIC_SOURCE/.chezmoi.toml.tmpl"
 check_merge_json_fixtures
 check_package_manifests

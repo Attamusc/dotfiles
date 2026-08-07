@@ -1,9 +1,9 @@
 # ADR-0001: Additive migration at the mux/binary layer, strict-superset swap at the subagent-extension slot
 
-**Status:** Accepted
+**Status:** Superseded
 **Date:** 2026-07-06
 **Supersedes:** —
-**Superseded by:** —
+**Superseded by:** ADR-0006 (Herdr is the sole supported multiplexer)
 **Related:** ADR-0002 (fork strategy), ADR-0003 (editors in herdr tabs),
 `.pi/plans/bbq-2026-07-06/grill/2026-07-06-cmux-herdr-lazyvim-helix.md` (D8, C1)
 
