@@ -2,11 +2,11 @@
 
 set -eu
 
-{{- if eq .chezmoi.os "darwin" }}
+{{- if and (eq .chezmoi.os "darwin") (or (eq .chezmoi.arch "arm64") (eq .chezmoi.arch "amd64")) }}
 exit 0
-{{- else if and (eq .chezmoi.os "linux") (eq .chezmoi.osRelease.id "fedora") (eq .chezmoi.osRelease.versionID "44") }}
+{{- else if and (eq .chezmoi.os "linux") (eq .chezmoi.arch "amd64") (eq .chezmoi.osRelease.id "fedora") (eq .chezmoi.osRelease.versionID "44") }}
 exit 0
 {{- else }}
-echo "Unsupported platform: {{ .chezmoi.os }} {{ .chezmoi.osRelease.id }} {{ .chezmoi.osRelease.versionID }}. Supported targets: macOS and Fedora 44" >&2
+echo "Unsupported platform: {{ .chezmoi.os }} {{ .chezmoi.arch }} {{ .chezmoi.osRelease.id }} {{ .chezmoi.osRelease.versionID }}. Supported targets: macOS and Fedora 44" >&2
 exit 1
 {{- end }}

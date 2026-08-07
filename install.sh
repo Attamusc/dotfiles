@@ -4,10 +4,17 @@ set -eu
 
 supported_targets='macOS and Fedora 44'
 kernel=$(uname -s)
+machine=$(uname -m)
 
 case "$kernel" in
   Darwin)
-    platform=darwin
+    case "$machine" in
+      arm64|x86_64) platform=darwin ;;
+      *)
+        echo "Unsupported macOS architecture: $machine. Supported targets: $supported_targets" >&2
+        exit 1
+        ;;
+    esac
     ;;
   Linux)
     if [ ! -r /etc/os-release ]; then
@@ -16,8 +23,8 @@ case "$kernel" in
     fi
     os_id=$(sed -n 's/^ID=//p' /etc/os-release | tr -d '"')
     os_version=$(sed -n 's/^VERSION_ID=//p' /etc/os-release | tr -d '"')
-    if [ "$os_id" != fedora ] || [ "$os_version" != 44 ]; then
-      echo "Unsupported Linux distribution: ${os_id:-unknown} ${os_version:-unknown}. Supported targets: $supported_targets" >&2
+    if [ "$os_id" != fedora ] || [ "$os_version" != 44 ] || [ "$machine" != x86_64 ]; then
+      echo "Unsupported Linux platform: ${os_id:-unknown} ${os_version:-unknown} ${machine:-unknown}. Supported targets: $supported_targets" >&2
       exit 1
     fi
     platform=fedora

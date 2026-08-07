@@ -548,6 +548,7 @@ check_bootstrap_contract() {
   local fedora_guard="$WORK/fedora-platform-guard.sh"
   local ubuntu_guard="$WORK/ubuntu-platform-guard.sh"
   local old_fedora_guard="$WORK/fedora43-platform-guard.sh"
+  local arm_fedora_guard="$WORK/fedora44-arm-platform-guard.sh"
   local mac_before="$WORK/mac-packages-before.sh"
   local mac_after="$WORK/mac-packages-after.sh"
   local fedora_before="$WORK/fedora-packages-before.sh"
@@ -593,6 +594,8 @@ check_bootstrap_contract() {
     fail "install.sh rejection does not name the supported platforms"
   grep -Fq 'sudo dnf install -y chezmoi' "$PUBLIC_SOURCE/install.sh" || \
     fail "Fedora bootstrap does not install chezmoi through DNF"
+  grep -Fq '"$machine" != x86_64' "$PUBLIC_SOURCE/install.sh" || \
+    fail "install.sh does not reject unsupported Fedora architectures"
   grep -Fq 'https://get.chezmoi.io' "$PUBLIC_SOURCE/install.sh" || \
     fail "macOS bootstrap does not use the current chezmoi installer"
 
@@ -615,10 +618,12 @@ check_bootstrap_contract() {
   render_source_template linux amd64 fedora 44 ".chezmoiscripts/$guard" "$fedora_guard"
   render_source_template linux amd64 ubuntu 24.04 ".chezmoiscripts/$guard" "$ubuntu_guard"
   render_source_template linux amd64 fedora 43 ".chezmoiscripts/$guard" "$old_fedora_guard"
+  render_source_template linux arm64 fedora 44 ".chezmoiscripts/$guard" "$arm_fedora_guard"
   sh "$darwin_guard"
   sh "$fedora_guard"
   assert_platform_gate_rejects Ubuntu "$ubuntu_guard"
   assert_platform_gate_rejects 'Fedora 43' "$old_fedora_guard"
+  assert_platform_gate_rejects 'Fedora 44 arm64' "$arm_fedora_guard"
 
   render_source_template darwin arm64 '' '' ".chezmoiscripts/$mac_hook" "$mac_before"
   render_source_template linux amd64 fedora 44 ".chezmoiscripts/$fedora_hook" "$fedora_before"
@@ -1208,6 +1213,46 @@ PY
   printf 'ok: remote pi-hunk-review release contract\n'
 }
 
+check_documentation_contract() {
+  local readme="$PUBLIC_SOURCE/README.md"
+  local overlays="$PUBLIC_SOURCE/docs/private-overlays.md"
+  local instructions="$PUBLIC_SOURCE/.github/copilot-instructions.md"
+
+  [[ -f "$readme" && -f "$overlays" && -f "$instructions" ]] || \
+    fail "supported-platform documentation is incomplete"
+  for required in \
+    '## Supported platforms' \
+    '## Before bootstrap' \
+    '## Bootstrap' \
+    '### Package authority' \
+    '## Machine-local configuration' \
+    '## Preview and apply' \
+    '## Focused smoke checks' \
+    '## Rollback' \
+    'macOS on Apple silicon or Intel' \
+    'Fedora 44 on x86_64' \
+    'Attamusc/pi-hunk-review' \
+    'gh auth status --hostname github.com' \
+    'scripts/check-portability.sh' \
+    'chezmoi diff' \
+    'chezmoi apply' \
+    'docs/adr/0006-herdr-is-the-sole-supported-multiplexer.md' \
+    'docs/private-overlays.md'; do
+    grep -Fq "$required" "$readme" || fail "README is missing required documentation anchor: $required"
+  done
+  grep -Fq 'Private `packages` and `extensions` append to public arrays' "$overlays" || \
+    fail "private overlay array semantics are undocumented"
+  grep -Fq 'MCP maps merge by server key' "$overlays" || \
+    fail "private MCP merge semantics are undocumented"
+  grep -Fq 'Authenticate Git and `gh`' "$instructions" || \
+    fail "agent bootstrap guidance omits private release authentication"
+  if grep -Eiq '(Ubuntu|Codespaces|Linuxbrew).*(is|are)[[:space:]]+supported([[:space:].,]|$)' "$readme"; then
+    fail "README advertises a retired platform or mux fallback"
+  fi
+
+  printf 'ok: supported-platform and local-ownership documentation\n'
+}
+
 render_platform() {
   local platform=$1
   local architecture=$2
@@ -1274,6 +1319,7 @@ check_shell_contract
 check_agent_contract
 check_herdr_contract
 check_hunk_review_contract
+check_documentation_contract
 rm -- "$PUBLIC_SOURCE/.chezmoi.toml.tmpl"
 check_merge_json_fixtures
 check_package_manifests

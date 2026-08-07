@@ -2,14 +2,14 @@
 
 ## Bootstrap and validation commands
 
-- Bootstrap or re-apply the dotfiles from the repo root with `./install.sh`. Supported targets are macOS and Fedora 44; unsupported platforms stop before chezmoi applies files.
+- Bootstrap or re-apply the dotfiles from the repo root with `./install.sh`. Supported targets are macOS and Fedora 44; unsupported platforms stop before chezmoi applies files. Authenticate Git and `gh` for the private `Attamusc/pi-hunk-review` repository before bootstrap.
 - Run `scripts/check-portability.sh` for the fast, non-mutating repository contract check. Use `chezmoi status`, `chezmoi diff`, and `chezmoi managed` to preview host changes.
 - Validation combines the portability check with targeted checks for the files changed. The portability check renders isolated macOS and Fedora configurations; it never applies home-directory state.
 
 ## High-level architecture
 
 - This repository is the source tree for a `chezmoi`-managed home directory. `install.sh` bootstraps `chezmoi` if needed, then hands off to `chezmoi init --apply --source=<repo>`.
-- `.chezmoi.toml.tmpl` computes shared template data such as `headless`, `ephemeral`, and user identity. `.chezmoiscripts/` gates supported platforms, installs Homebrew on macOS, installs native manifests before destination updates, and then configures the Fedora login shell and TPM.
+- `.chezmoi.toml.tmpl` computes shared template data such as `headless`, `ephemeral`, and user identity. `.chezmoiscripts/` gates supported platforms, installs Homebrew on macOS, installs native manifests before destination updates, and then configures the Fedora login shell and TPM. `README.md` is the canonical supported-platform, bootstrap, local-overlay, preview, and rollback guide.
 - Root-level `dot_*` files map to dotfiles in `$HOME`. `dot_config/**` contains application configs, and `dot_local/bin/executable_*` contains custom commands that are installed into `~/.local/bin`.
 - Assistant configuration is split by tool: `dot_copilot/` is the source of truth for Copilot CLI instructions, MCP config, agents, and skills; `dot_config/opencode/` is the parallel source of truth for OpenCode instructions and MCP config.
 - Neovim is a LazyVim setup under `dot_config/nvim`. Its `lua/config/lazy.lua` intentionally points `lazyvim.json` and `lazy-lock.json` at the `chezmoi` source tree so edits stay in the repo instead of drifting into the applied `~/.config/nvim`.
