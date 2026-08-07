@@ -261,6 +261,141 @@ check_merge_json_fixtures() {
   check_merge_json_fixture additive-arrays active
 }
 
+check_package_contract() {
+  local platform=$1
+  local manifest_entries=$2
+  local contract=$3
+  local required_commands=$4
+  local contract_packages="$WORK/$platform-contract-packages"
+  local contract_commands="$WORK/$platform-contract-commands"
+  local sorted="$WORK/$platform-sorted"
+
+  [[ -f "$contract" ]] || fail "missing $platform package contract: ${contract#"$PUBLIC_SOURCE/"}"
+  awk -F '\t' 'NF != 2 || $1 == "" || $2 == "" { exit 1 }' "$contract" || \
+    fail "invalid $platform package contract row"
+
+  cut -f1 "$contract" >"$contract_packages"
+  cut -f2 "$contract" >"$contract_commands"
+  LC_ALL=C sort -u "$contract_packages" >"$sorted"
+  diff -u "$sorted" "$contract_packages" >/dev/null || \
+    fail "$platform package contract entries must be sorted and unique"
+  LC_ALL=C sort -u "$contract_commands" >"$sorted"
+  [[ $(wc -l <"$contract_commands") -eq $(wc -l <"$sorted") ]] || \
+    fail "$platform baseline commands must each have exactly one package owner"
+
+  diff -u "$contract_packages" "$manifest_entries" >/dev/null || \
+    fail "$platform manifest does not match its package-to-command contract"
+  diff -u "$required_commands" "$sorted" >/dev/null || \
+    fail "$platform package contract does not match the required command baseline"
+}
+
+check_package_manifests() {
+  local fedora_manifest="$PUBLIC_SOURCE/packages/fedora.txt"
+  local brew_manifest="$PUBLIC_SOURCE/packages/Brewfile"
+  local package_fixtures="$PUBLIC_SOURCE/tests/portability/fixtures/packages"
+  local fedora_entries="$WORK/fedora-manifest-entries"
+  local brew_entries="$WORK/brew-manifest-entries"
+  local brew_formulae="$WORK/brew-formulae"
+  local brew_casks="$WORK/brew-casks"
+  local sorted="$WORK/package-sorted"
+  local fedora_commands="$WORK/fedora-required-commands"
+  local brew_commands="$WORK/brew-required-commands"
+
+  [[ -f "$fedora_manifest" ]] || fail "missing Fedora package manifest"
+  [[ -f "$brew_manifest" ]] || fail "missing macOS Brew manifest"
+
+  awk 'NF && $1 !~ /^#/ {
+    if (NF != 1 || $1 !~ /^[A-Za-z0-9@+._\/-]+$/) exit 1
+    print $1
+  }' "$fedora_manifest" >"$fedora_entries" || fail "invalid Fedora package manifest entry"
+  LC_ALL=C sort -u "$fedora_entries" >"$sorted"
+  diff -u "$sorted" "$fedora_entries" >/dev/null || \
+    fail "Fedora package manifest entries must be sorted and unique"
+
+  awk '
+    NF == 0 { next }
+    $0 ~ /^(tap|brew|cask) "[A-Za-z0-9@+._\/-]+"$/ { next }
+    { exit 1 }
+  ' "$brew_manifest" || fail "invalid Brew manifest entry"
+  awk '$1 == "brew" { value=$0; sub(/^[^"]*"/, "", value); sub(/"$/, "", value); print value }' \
+    "$brew_manifest" >"$brew_formulae"
+  awk '$1 == "cask" { value=$0; sub(/^[^"]*"/, "", value); sub(/"$/, "", value); print value }' \
+    "$brew_manifest" >"$brew_casks"
+  LC_ALL=C sort -u "$brew_formulae" >"$sorted"
+  diff -u "$sorted" "$brew_formulae" >/dev/null || \
+    fail "Brew formula entries must be sorted and unique"
+  [[ $(cat "$brew_casks") == copilot-cli ]] || fail "copilot-cli must be the only shared cask"
+  [[ $(awk '$1 == "tap" { print }' "$brew_manifest") == 'tap "anomalyco/tap"' ]] || \
+    fail "anomalyco/tap must be the only shared tap"
+  { cat "$brew_formulae"; cat "$brew_casks"; } | LC_ALL=C sort >"$brew_entries"
+
+  cat >"$fedora_commands" <<'EOF'
+bat
+chezmoi
+chsh
+curl
+delta
+eza
+fd
+file
+fzf
+gh
+git
+git-filter-repo
+hx
+jq
+mosh
+ps
+rg
+tig
+tmux
+tree
+wget
+zoxide
+zsh
+EOF
+  cat >"$brew_commands" <<'EOF'
+bat
+bob
+chezmoi
+copilot
+curl
+delta
+eza
+fd
+fzf
+gh
+ghq
+git
+git-filter-repo
+herdr
+hx
+jj
+jjui
+jq
+lazygit
+mise
+mosh
+opencode
+pi
+rg
+sheldon
+starship
+tig
+tmux
+tree
+tv
+wget
+zoxide
+zsh
+EOF
+
+  check_package_contract fedora "$fedora_entries" "$package_fixtures/fedora.tsv" "$fedora_commands"
+  check_package_contract brew "$brew_entries" "$package_fixtures/brew.tsv" "$brew_commands"
+
+  printf 'ok: Fedora and macOS package authority manifests\n'
+}
+
 synthetic_git_config() {
   local home=$1
   shift
@@ -420,10 +555,8 @@ XDG_DATA_HOME="$WORK/data" \
 rm -- "$PUBLIC_SOURCE/.chezmoi.toml.tmpl"
 
 check_merge_json_fixtures
+check_package_manifests
 render_platform darwin arm64 ''
 render_platform linux amd64 fedora
-
-# Extension points for later landing steps:
-# - check_package_manifests: validate one owner per baseline capability.
 
 printf 'ok: portability checks passed\n'
