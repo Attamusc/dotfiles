@@ -657,6 +657,90 @@ check_bootstrap_contract() {
   printf 'ok: native macOS and Fedora bootstrap contract\n'
 }
 
+check_mise_contract() {
+  local config_template=dot_config/mise/config.toml.tmpl
+  local hook_template=.chezmoiscripts/run_onchange_after_10-install-mise-tools.sh.tmpl
+  local fixtures="$PUBLIC_SOURCE/tests/portability/fixtures/mise"
+  local darwin_config="$WORK/mise-darwin.toml"
+  local fedora_config="$WORK/mise-fedora.toml"
+  local darwin_hook="$WORK/mise-darwin-hook.sh"
+  local fedora_hook="$WORK/mise-fedora-hook.sh"
+  local darwin_changed="$WORK/mise-darwin-hook-changed.sh"
+  local fedora_changed="$WORK/mise-fedora-hook-changed.sh"
+  local template_backup="$WORK/mise-config-template-backup"
+  local hook_name=${hook_template##*/}
+
+  [[ -f "$PUBLIC_SOURCE/$config_template" ]] || fail "missing rendered mise configuration"
+  [[ -f "$PUBLIC_SOURCE/$hook_template" ]] || fail "missing mise installation hook"
+  [[ "${hook_name#*_after_}" < 20-setup-neovim.sh.tmpl ]] || \
+    fail "mise tools must install before Neovim setup"
+
+  render_source_template darwin arm64 '' '' "$config_template" "$darwin_config"
+  render_source_template linux amd64 fedora 44 "$config_template" "$fedora_config"
+  diff -u "$fixtures/darwin.toml" "$darwin_config" >/dev/null || \
+    fail "Darwin mise configuration does not match its authority contract"
+  diff -u "$fixtures/fedora.toml" "$fedora_config" >/dev/null || \
+    fail "Fedora mise configuration does not match its authority contract"
+
+  python3 - "$darwin_config" "$fedora_config" <<'PY'
+import pathlib
+import sys
+import tomllib
+
+darwin = tomllib.loads(pathlib.Path(sys.argv[1]).read_text())["tools"]
+fedora = tomllib.loads(pathlib.Path(sys.argv[2]).read_text())["tools"]
+assert darwin == {"node": "24"}
+assert fedora == {
+    "node": "24",
+    "bob": "4",
+    "ghq": "1",
+    "herdr": "0.8.0",
+    "jj": "0.44.0",
+    "jjui": "0.10.9",
+    "lazygit": "0.64.0",
+    "npm:@earendil-works/pi-coding-agent": "0.83.0",
+    "npm:@github/copilot": "1",
+    "opencode": "1",
+    "sheldon": "0.8.5",
+    "starship": "1",
+    "television": "0.15.9",
+}
+PY
+
+  render_source_template darwin arm64 '' '' "$hook_template" "$darwin_hook"
+  render_source_template linux amd64 fedora 44 "$hook_template" "$fedora_hook"
+  bash -n "$darwin_hook"
+  bash -n "$fedora_hook"
+  grep -Fq '# Rendered mise config SHA-256:' "$PUBLIC_SOURCE/$hook_template" || \
+    fail "mise hook is not content-addressed to its rendered configuration"
+  grep -Fq 'MISE_YES=1' "$PUBLIC_SOURCE/$hook_template" || fail "mise hook is not noninteractive"
+  grep -Fq '"$mise_bin" install --verbose' "$PUBLIC_SOURCE/$hook_template" || \
+    fail "mise hook does not expose install failures"
+  grep -Fq '"$mise_bin" which "$command_name"' "$PUBLIC_SOURCE/$hook_template" || \
+    fail "mise hook does not verify command ownership"
+  if grep -Eq '\|\|[[:space:]]*(:|true)|--yes' "$PUBLIC_SOURCE/$hook_template"; then
+    fail "mise hook suppresses failure or uses an unsupported --yes flag"
+  fi
+  grep -Fq 'https://mise.run' "$fedora_hook" || fail "Fedora hook does not bootstrap mise"
+  ! grep -Fq 'https://mise.run' "$darwin_hook" || fail "macOS hook bypasses Homebrew mise ownership"
+  grep -Fq 'mise_prefix=$("$brew" --prefix mise)' "$darwin_hook" || \
+    fail "macOS hook does not resolve mise through Homebrew ownership"
+  grep -Fq 'commands=(node npm npx)' "$darwin_hook" || fail "macOS mise command baseline is incomplete"
+  ! grep -Fq 'commands+=' "$darwin_hook" || fail "macOS mise config claims Fedora tool ownership"
+  grep -Fq 'commands+=(sheldon starship herdr jj ghq tv lazygit jjui bob opencode pi copilot)' "$fedora_hook" || \
+    fail "Fedora mise command baseline is incomplete"
+
+  cp "$PUBLIC_SOURCE/$config_template" "$template_backup"
+  printf '\n# portability digest probe\n' >>"$PUBLIC_SOURCE/$config_template"
+  render_source_template darwin arm64 '' '' "$hook_template" "$darwin_changed"
+  render_source_template linux amd64 fedora 44 "$hook_template" "$fedora_changed"
+  cp "$template_backup" "$PUBLIC_SOURCE/$config_template"
+  cmp -s "$darwin_hook" "$darwin_changed" && fail "Darwin mise config changes do not rerun the hook"
+  cmp -s "$fedora_hook" "$fedora_changed" && fail "Fedora mise config changes do not rerun the hook"
+
+  printf 'ok: shared mise toolchain contract\n'
+}
+
 render_platform() {
   local platform=$1
   local architecture=$2
@@ -717,6 +801,7 @@ XDG_DATA_HOME="$WORK/data" \
     >"$WORK/config/chezmoi.toml"
 
 check_bootstrap_contract
+check_mise_contract
 rm -- "$PUBLIC_SOURCE/.chezmoi.toml.tmpl"
 check_merge_json_fixtures
 check_package_manifests
