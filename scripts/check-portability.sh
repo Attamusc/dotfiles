@@ -1325,7 +1325,7 @@ render_platform() {
   local archive="$WORK/$platform.tar"
   local config="$WORK/config/chezmoi.toml"
   local state="$WORK/state-$platform.boltdb"
-  local override
+  local override source_only
 
   override=$(jq -cn \
     --arg os "$platform" \
@@ -1352,6 +1352,9 @@ render_platform() {
 
   mkdir -p "$rendered"
   tar -xf "$archive" -C "$rendered"
+  for source_only in README.md docs packages research scripts tests; do
+    [[ ! -e "$rendered/$source_only" ]] || fail "source-only path leaked into $platform home: $source_only"
+  done
   printf 'ok: %s public configuration renders without a private overlay\n' "$platform"
   check_json_files "$rendered" "$platform rendered"
   check_shell_files "$rendered" "$platform"
