@@ -842,6 +842,9 @@ check_shell_contract() {
   grep -Fq 'if (( $+commands[mise] ));' \
     "$PUBLIC_SOURCE/dot_config/private_zsh/config/mise-en-place.zsh" || \
     fail "mise shell activation is not guarded"
+  grep -Fq 'path=("$HOME/.local/bin" ${path:#"$HOME/.local/bin"})' \
+    "$PUBLIC_SOURCE/dot_config/private_zsh/config/rust.zsh" || \
+    fail "Cargo activation can shadow release-installed user binaries"
   [[ mise-en-place.zsh < zz-bob.zsh ]] || fail "Bob path must load after mise activation"
 
   printf 'ok: platform-correct shared shell contract\n'
@@ -852,7 +855,11 @@ check_fedora_shell_startup() {
   local zsh_bin
 
   zsh_bin=$(command -v zsh)
-  mkdir -p "$home/.local/bin" "$home/.local/share/mise/shims" "$home/.local/share/bob/nvim-bin"
+  mkdir -p \
+    "$home/.cargo/bin" \
+    "$home/.local/bin" \
+    "$home/.local/share/mise/shims" \
+    "$home/.local/share/bob/nvim-bin"
   cat >"$home/.local/bin/mise" <<'EOF'
 #!/bin/sh
 if [ "${1:-}" = activate ]; then
@@ -867,8 +874,21 @@ EOF
 #!/bin/sh
 exit 0
 EOF
+  cat >"$home/.cargo/env" <<'EOF'
+export PATH="$HOME/.cargo/bin:$PATH"
+EOF
+  cat >"$home/.cargo/bin/pi-hunk-review-core" <<'EOF'
+#!/bin/sh
+printf '%s\n' 'pi-hunk-review-core v0.1.0'
+EOF
+  cat >"$home/.local/bin/pi-hunk-review-core" <<'EOF'
+#!/bin/sh
+printf '%s\n' 'pi-hunk-review-core v0.1.1'
+EOF
   chmod +x \
+    "$home/.cargo/bin/pi-hunk-review-core" \
     "$home/.local/bin/mise" \
+    "$home/.local/bin/pi-hunk-review-core" \
     "$home/.local/share/mise/shims/nvim" \
     "$home/.local/share/bob/nvim-bin/nvim"
   printf '%s\n' 'export PORTABILITY_LOCALRC=loaded' >"$home/.localrc"
@@ -884,6 +904,8 @@ EOF
       [[ ${aliases[v]} == nvim ]]
       [[ $path[1] == "$HOME/.local/share/bob/nvim-bin" ]]
       [[ $(command -v nvim) == "$HOME/.local/share/bob/nvim-bin/nvim" ]]
+      [[ $(command -v pi-hunk-review-core) == "$HOME/.local/bin/pi-hunk-review-core" ]]
+      [[ $(pi-hunk-review-core --version) == "pi-hunk-review-core v0.1.1" ]]
       [[ -z ${CMUX_HOME+x} ]]
       [[ $PATH != *::* ]]
     '
@@ -1133,6 +1155,8 @@ expected={
     "tag": "v0.1.1",
     "commit": "7330ad702860bbe4e0032f1550d7ce4f123e0be1",
     "package": "git:github.com/Attamusc/pi-hunk-review@v0.1.1",
+    "visibility": "private",
+    "access": "github-authenticated",
     "checksumsSha256": "4d13bf5e2c132bb9078510b828ee8fedc0bb751b73333639ec6f86459038bd3d",
     "assets": {
         "pi-hunk-review-core-v0.1.1-aarch64-apple-darwin.tar.gz": "98ce47fc5d1eba10f9adec421b8b979f52dcd8aacb08e4e60c8a3ac71524cf8e",
@@ -1163,6 +1187,12 @@ PY
     grep -Fq 'version=v0.1.1' "$rendered_hook" || fail "hunk-review core version is not pinned"
     grep -Fq 'checksums_sha256=4d13bf5e2c132bb9078510b828ee8fedc0bb751b73333639ec6f86459038bd3d' \
       "$rendered_hook" || fail "hunk-review checksum manifest is not pinned"
+    grep -Fq 'gh auth status --hostname github.com' "$rendered_hook" || \
+      fail "private hunk-review release lacks an authenticated GitHub precondition"
+    grep -Fq 'gh release download "$version"' "$rendered_hook" || \
+      fail "private hunk-review release is not downloaded through GitHub CLI"
+    grep -Fq -- '--pattern SHA256SUMS' "$rendered_hook" || \
+      fail "hunk-review checksum manifest is not requested"
     grep -Fq 'grep -Fx "$archive_sha256  $archive"' "$rendered_hook" || \
       fail "hunk-review archive is not verified against SHA256SUMS"
     grep -Fq 'install -m 755' "$rendered_hook" || fail "hunk-review core is not installed executable"

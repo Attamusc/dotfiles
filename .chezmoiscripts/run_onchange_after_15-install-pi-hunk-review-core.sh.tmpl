@@ -3,7 +3,7 @@
 set -euo pipefail
 
 version=v0.1.1
-release=https://github.com/Attamusc/pi-hunk-review/releases/download/$version
+repository=Attamusc/pi-hunk-review
 checksums_sha256=4d13bf5e2c132bb9078510b828ee8fedc0bb751b73333639ec6f86459038bd3d
 
 {{ if and (eq .chezmoi.os "darwin") (eq .chezmoi.arch "arm64") -}}
@@ -36,8 +36,16 @@ trap 'exit 129' HUP
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-curl -fsSL "$release/SHA256SUMS" -o "$work/SHA256SUMS"
-curl -fsSL "$release/$archive" -o "$work/$archive"
+command -v gh >/dev/null 2>&1 || {
+  echo "GitHub CLI is required to download the private pi-hunk-review release." >&2
+  exit 1
+}
+gh auth status --hostname github.com >/dev/null
+gh release download "$version" \
+  --repo "$repository" \
+  --pattern SHA256SUMS \
+  --pattern "$archive" \
+  --dir "$work"
 
 [[ $("${checksum_command[@]}" "$work/SHA256SUMS" | awk '{print $1}') == "$checksums_sha256" ]] || {
   echo "pi-hunk-review SHA256SUMS verification failed." >&2

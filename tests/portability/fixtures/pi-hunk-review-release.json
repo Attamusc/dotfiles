@@ -2,6 +2,8 @@
   "tag": "v0.1.1",
   "commit": "7330ad702860bbe4e0032f1550d7ce4f123e0be1",
   "package": "git:github.com/Attamusc/pi-hunk-review@v0.1.1",
+  "visibility": "private",
+  "access": "github-authenticated",
   "checksumsSha256": "4d13bf5e2c132bb9078510b828ee8fedc0bb751b73333639ec6f86459038bd3d",
   "assets": {
     "pi-hunk-review-core-v0.1.1-aarch64-apple-darwin.tar.gz": "98ce47fc5d1eba10f9adec421b8b979f52dcd8aacb08e4e60c8a3ac71524cf8e",
