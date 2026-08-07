@@ -121,7 +121,13 @@ python3 "$GUARD" assert-temp-target \
 python3 "$GUARD" snapshot --repo "$ROOT" --output "$live_after" >/dev/null
 python3 "$GUARD" compare --before "$live_before" --after "$live_after" >/dev/null
 
-manifest_mode=$(stat -f '%Lp' "$live_before" 2>/dev/null || stat -c '%a' "$live_before")
+manifest_mode=$(python3 - "$live_before" <<'PY'
+import os
+import stat
+import sys
+print(f"{stat.S_IMODE(os.stat(sys.argv[1]).st_mode):o}")
+PY
+)
 [[ "$manifest_mode" == 600 ]] || {
   printf 'error: protected-state manifest mode is %s, expected 600\n' "$manifest_mode" >&2
   exit 1
