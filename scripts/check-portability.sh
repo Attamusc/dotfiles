@@ -571,7 +571,7 @@ check_bootstrap_contract() {
   local tpm_installer="$WORK/tpm-installer.sh"
   local manifest_backup="$WORK/manifest-backup"
   local bootstrap_files="$WORK/bootstrap-files"
-  local relative_path rendered_hook runtime_file
+  local relative_path rendered_hook runtime_file trust_line bundle_line
 
   for file in "$guard" "$mac_hook" "$fedora_hook" "$shell_hook" "$tpm_hook"; do
     [[ -f "$hooks/$file" ]] || fail "missing ordered bootstrap hook: $file"
@@ -612,7 +612,13 @@ check_bootstrap_contract() {
 
   grep -Fq '# Brewfile SHA-256:' "$hooks/$mac_hook" || \
     fail "macOS package hook is not content-addressed to Brewfile"
+  grep -Fq 'trust --tap anomalyco/tap' "$hooks/$mac_hook" || \
+    fail "macOS package hook does not trust the declared OpenCode tap"
   grep -Fq 'bundle --file=' "$hooks/$mac_hook" || fail "macOS package hook omits brew bundle"
+  trust_line=$(grep -n 'trust --tap anomalyco/tap' "$hooks/$mac_hook" | cut -d: -f1)
+  bundle_line=$(grep -n 'bundle --file=' "$hooks/$mac_hook" | cut -d: -f1)
+  (( trust_line < bundle_line )) || \
+    fail "macOS package hook must trust the OpenCode tap before brew bundle"
   grep -Fq '# Fedora manifest SHA-256:' "$hooks/$fedora_hook" || \
     fail "Fedora package hook is not content-addressed to its manifest"
   grep -Fq 'sudo dnf install -y' "$hooks/$fedora_hook" || fail "Fedora package hook omits DNF install"
