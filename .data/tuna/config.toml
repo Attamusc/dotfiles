@@ -1,440 +1,683 @@
-schemaVersion = 1
-
-[catalogs]
-sortOrders = []
-
-    [[catalogs.globalScopes]]
-    catalogIdentifier = 'Tuna.EffectsCatalog'
-    mode = 'none'
-    selectedItemKeys = []
-
-    [[catalogs.globalScopes]]
-    catalogIdentifier = 'TunaEmoji.EmojiCatalog'
-    mode = 'some'
-    selectedItemKeys = [
-        'almost equal to',
-        'angle',
-        'approximately equal to',
-        'arrow pointing rightwards then curving downwards',
-        'arrow pointing rightwards then curving upwards',
-        'ballot box',
-        'ballot box with check',
-        'ballot box with x',
-        'ballot x',
-        'beamed eighth notes',
-        'beamed sixteenth notes',
-        'because',
-        'bitcoin sign',
-        'black centre white star',
-        'black diamond',
-        'black down pointing triangle',
-        'black four pointed star',
-        'black left pointing triangle',
-        'black right pointing triangle',
-        'black star',
-        'black telephone',
-        'black up pointing triangle',
-        'bullet',
-        'bullseye',
-        'cent sign',
-        'circled plus',
-        'circled times',
-        'circled white star',
-        'clockwise open circle arrow',
-        'contour integral',
-        'copyright sign',
-        'counterclockwise open circle arrow',
-        'cube root',
-        'currency sign',
-        'degree celsius',
-        'degree fahrenheit',
-        'degree sign',
-        'double dagger',
-        'double integral',
-        'double low 9 quotation mark',
-        'double prime',
-        'downwards arrow',
-        'downwards double arrow',
-        'downwards harpoon with barb rightwards',
-        'eighth note',
-        'element of',
-        'empty set',
-        'euro sign',
-        'fisheye',
-        'five eighths',
-        'fourth root',
-        'greater than or equal to',
-        'heavy eight teardrop spoked propeller asterisk',
-        'heavy outlined black star',
-        'hryvnia sign',
-        'identical to',
-        'increment',
-        'indian rupee sign',
-        'integral',
-        'interrobang',
-        'intersection',
-        'left double angle quote',
-        'left double quotation mark',
-        'left half black circle',
-        'left hook arrow',
-        'left right double arrow',
-        'left single angle quote',
-        'left single quotation mark',
-        'leftwards arrow',
-        'leftwards double arrow',
-        'leftwards harpoon with barb downwards',
-        'leftwards harpoon with barb upwards',
-        'leftwards two headed arrow',
-        'less than or equal to',
-        'logical and',
-        'logical or',
-        'lower right pencil',
-        'micro sign',
-        'music flat sign',
-        'music natural sign',
-        'music sharp sign',
-        'n ary product',
-        'n ary summation',
-        'nabla',
-        'north east arrow',
-        'north west arrow',
-        'not an element of',
-        'not equal to',
-        'not sign',
-        'numero sign',
-        'ohm sign',
-        'one eighth',
-        'one half',
-        'one quarter',
-        'one third',
-        'open centre black star',
-        'outlined black star',
-        'parallel to',
-        'partial differential',
-        'per mille sign',
-        'per ten thousand sign',
-        'pilcrow sign',
-        'pinwheel star',
-        'plus minus sign',
-        'pound sign',
-        'prime',
-        'proportional to',
-        'quarter note',
-        'reference mark',
-        'registered sign',
-        'right double angle quote',
-        'right double quotation mark',
-        'right half black circle',
-        'right hook arrow',
-        'right single angle quote',
-        'right single quotation mark',
-        'rightwards arrow',
-        'rightwards double arrow',
-        'rightwards harpoon with barb downwards',
-        'rightwards harpoon with barb upwards',
-        'rightwards two headed arrow',
-        'ruble sign',
-        'section sign',
-        'service mark',
-        'seven eighths',
-        'shadowed white star',
-        'single high reversed 9 quotation mark',
-        'sound recording copyright',
-        'south east arrow',
-        'south west arrow',
-        'square root',
-        'stress outlined white star',
-        'subscript equals',
-        'subscript minus',
-        'subscript plus',
-        'subset of',
-        'subset of or equal to',
-        'superscript eight',
-        'superscript five',
-        'superscript four',
-        'superscript nine',
-        'superscript one',
-        'superscript seven',
-        'superscript six',
-        'superscript three',
-        'superscript two',
-        'superscript zero',
-        'superset of',
-        'superset of or equal to',
-        'telephone location sign',
-        'therefore',
-        'three eighths',
-        'three quarters',
-        'trade mark sign',
-        'triangular bullet',
-        'triple prime',
-        'turkish lira sign',
-        'two thirds',
-        'union',
-        'up down double arrow',
-        'up tack',
-        'upwards arrow',
-        'upwards double arrow',
-        'upwards harpoon with barb rightwards',
-        'white bullet',
-        'white down pointing triangle',
-        'white four pointed star',
-        'white left pointing triangle',
-        'white right pointing triangle',
-        'white star',
-        'white up pointing triangle',
-        'won sign',
-        'yen sign'
-    ]
-
 [[comboMode.bindings]]
 iconPath = 'cat'
 key = 'a'
 label = 'Apps'
 
-    [[comboMode.bindings.children]]
-    key = 'b'
-    url = 'tuna://run/path.%252FApplications%252FZen.app/Open'
+    [comboMode.bindings.destination]
+    type = 'group'
 
-    [[comboMode.bindings.children]]
-    key = 'c'
-    url = 'tuna://run/path.%252FSystem%252FApplications%252FCalendar.app/Open'
+        [[comboMode.bindings.destination.bindings]]
+        key = 'b'
 
-    [[comboMode.bindings.children]]
-    key = 'm'
-    url = 'tuna://run/path.%252FApplications%252FSpotify.app/Open'
+            [comboMode.bindings.destination.bindings.destination]
+            type = 'command'
 
-    [[comboMode.bindings.children]]
-    key = 'n'
-    url = 'tuna://run/path.%252FApplications%252FObsidian.app/Open'
+                [comboMode.bindings.destination.bindings.destination.command]
+                actionIdentifier = 'tuna.common-actions/open'
+                behavior = 'run'
+                presentation = 'automatic'
+                subjectIdentifiers = [ 'path:/Applications/Zen.app' ]
+                type = 'savedCommand'
 
-    [[comboMode.bindings.children]]
-    key = 't'
-    url = 'tuna://run/path.%252FApplications%252FGhostty.app/Open'
+        [[comboMode.bindings.destination.bindings]]
+        key = 'c'
+
+            [comboMode.bindings.destination.bindings.destination]
+            type = 'command'
+
+                [comboMode.bindings.destination.bindings.destination.command]
+                actionIdentifier = 'tuna.common-actions/open'
+                behavior = 'run'
+                presentation = 'automatic'
+                subjectIdentifiers = [ 'path:/System/Applications/Calendar.app' ]
+                type = 'savedCommand'
+
+        [[comboMode.bindings.destination.bindings]]
+        key = 'm'
+
+            [comboMode.bindings.destination.bindings.destination]
+            type = 'command'
+
+                [comboMode.bindings.destination.bindings.destination.command]
+                actionIdentifier = 'tuna.common-actions/open'
+                behavior = 'run'
+                presentation = 'automatic'
+                subjectIdentifiers = [ 'path:/Applications/Spotify.app' ]
+                type = 'savedCommand'
+
+        [[comboMode.bindings.destination.bindings]]
+        key = 'n'
+
+            [comboMode.bindings.destination.bindings.destination]
+            type = 'command'
+
+                [comboMode.bindings.destination.bindings.destination.command]
+                actionIdentifier = 'tuna.common-actions/open'
+                behavior = 'run'
+                presentation = 'automatic'
+                subjectIdentifiers = [ 'path:/Applications/Obsidian.app' ]
+                type = 'savedCommand'
+
+        [[comboMode.bindings.destination.bindings]]
+        key = 't'
+
+            [comboMode.bindings.destination.bindings.destination]
+            type = 'command'
+
+                [comboMode.bindings.destination.bindings.destination.command]
+                actionIdentifier = 'tuna.common-actions/open'
+                behavior = 'run'
+                presentation = 'automatic'
+                subjectIdentifiers = [ 'path:/Applications/Ghostty.app' ]
+                type = 'savedCommand'
 
 [[comboMode.bindings]]
 iconPath = 'safari'
 key = 'b'
 label = 'Browsers'
 
-    [[comboMode.bindings.children]]
-    key = 'c'
-    url = 'tuna://run/path.%252FApplications%252FGoogle%2520Chrome.app/Open'
+    [comboMode.bindings.destination]
+    type = 'group'
 
-    [[comboMode.bindings.children]]
-    key = 'h'
-    url = 'tuna://run/path.%252FApplications%252FHelium.app/Open'
+        [[comboMode.bindings.destination.bindings]]
+        key = 'c'
 
-    [[comboMode.bindings.children]]
-    key = 'o'
-    url = 'tuna://run/path.%252FApplications%252FOrion.app/Open'
+            [comboMode.bindings.destination.bindings.destination]
+            type = 'command'
 
-    [[comboMode.bindings.children]]
-    key = 'z'
-    url = 'tuna://run/path.%252FApplications%252FZen.app/Open'
+                [comboMode.bindings.destination.bindings.destination.command]
+                actionIdentifier = 'tuna.common-actions/open'
+                behavior = 'run'
+                presentation = 'automatic'
+                subjectIdentifiers = [ 'path:/Applications/Google Chrome.app' ]
+                type = 'savedCommand'
+
+        [[comboMode.bindings.destination.bindings]]
+        key = 'h'
+
+            [comboMode.bindings.destination.bindings.destination]
+            type = 'command'
+
+                [comboMode.bindings.destination.bindings.destination.command]
+                actionIdentifier = 'tuna.common-actions/open'
+                behavior = 'run'
+                presentation = 'automatic'
+                subjectIdentifiers = [ 'path:/Applications/Helium.app' ]
+                type = 'savedCommand'
+
+        [[comboMode.bindings.destination.bindings]]
+        key = 'o'
+
+            [comboMode.bindings.destination.bindings.destination]
+            type = 'command'
+
+                [comboMode.bindings.destination.bindings.destination.command]
+                actionIdentifier = 'tuna.common-actions/open'
+                behavior = 'run'
+                presentation = 'automatic'
+                subjectIdentifiers = [ 'path:/Applications/Orion.app' ]
+                type = 'savedCommand'
+
+        [[comboMode.bindings.destination.bindings]]
+        key = 'z'
+
+            [comboMode.bindings.destination.bindings.destination]
+            type = 'command'
+
+                [comboMode.bindings.destination.bindings.destination.command]
+                actionIdentifier = 'tuna.common-actions/open'
+                behavior = 'run'
+                presentation = 'automatic'
+                subjectIdentifiers = [ 'path:/Applications/Zen.app' ]
+                type = 'savedCommand'
 
 [[comboMode.bindings]]
 iconPath = 'camera.metering.center.weighted.average'
 key = 'c'
 label = 'Capture'
 
-    [[comboMode.bindings.children]]
-    key = 'a'
-    url = 'tuna://run/url.raycast:%252F%252Fextensions%252FAayush9029%252Fcleanshotx%252Fcapture-area/Open%20URL'
+    [comboMode.bindings.destination]
+    type = 'group'
 
-    [[comboMode.bindings.children]]
-    key = 'f'
-    url = 'tuna://run/url.raycast:%252F%252Fextensions%252FAayush9029%252Fcleanshotx%252Fcapture-fullscreen/Open%20URL'
+        [[comboMode.bindings.destination.bindings]]
+        key = 'a'
 
-    [[comboMode.bindings.children]]
-    key = 'v'
-    url = 'tuna://run/url.raycast:%252F%252Fextensions%252FAayush9029%252Fcleanshotx%252Frecord-screen/Open%20URL'
+            [comboMode.bindings.destination.bindings.destination]
+            type = 'command'
 
-    [[comboMode.bindings.children]]
-    key = 'w'
-    url = 'tuna://run/url.raycast:%252F%252Fextensions%252FAayush9029%252Fcleanshotx%252Fcapture-window/Open%20URL'
+                [comboMode.bindings.destination.bindings.destination.command]
+                actionIdentifier = 'tuna.common-actions/open-url'
+                behavior = 'run'
+                presentation = 'automatic'
+                subjectIdentifiers = [ 'url:raycast://extensions/Aayush9029/cleanshotx/capture-area' ]
+                type = 'savedCommand'
+
+        [[comboMode.bindings.destination.bindings]]
+        key = 'f'
+
+            [comboMode.bindings.destination.bindings.destination]
+            type = 'command'
+
+                [comboMode.bindings.destination.bindings.destination.command]
+                actionIdentifier = 'tuna.common-actions/open-url'
+                behavior = 'run'
+                presentation = 'automatic'
+                subjectIdentifiers = [ 'url:raycast://extensions/Aayush9029/cleanshotx/capture-fullscreen' ]
+                type = 'savedCommand'
+
+        [[comboMode.bindings.destination.bindings]]
+        key = 'v'
+
+            [comboMode.bindings.destination.bindings.destination]
+            type = 'command'
+
+                [comboMode.bindings.destination.bindings.destination.command]
+                actionIdentifier = 'tuna.common-actions/open-url'
+                behavior = 'run'
+                presentation = 'automatic'
+                subjectIdentifiers = [ 'url:raycast://extensions/Aayush9029/cleanshotx/record-screen' ]
+                type = 'savedCommand'
+
+        [[comboMode.bindings.destination.bindings]]
+        key = 'w'
+
+            [comboMode.bindings.destination.bindings.destination]
+            type = 'command'
+
+                [comboMode.bindings.destination.bindings.destination.command]
+                actionIdentifier = 'tuna.common-actions/open-url'
+                behavior = 'run'
+                presentation = 'automatic'
+                subjectIdentifiers = [ 'url:raycast://extensions/Aayush9029/cleanshotx/capture-window' ]
+                type = 'savedCommand'
 
 [[comboMode.bindings]]
 key = 'enter'
 label = 'Terminal'
-url = 'tuna://run/path.%252FApplications%252Fcmux.app/Open'
+
+    [comboMode.bindings.destination]
+    type = 'command'
+
+        [comboMode.bindings.destination.command]
+        actionIdentifier = 'tuna.common-actions/open'
+        behavior = 'run'
+        presentation = 'automatic'
+        subjectIdentifiers = [ 'path:/Applications/Ghostty.app' ]
+        type = 'savedCommand'
 
 [[comboMode.bindings]]
 iconPath = 'uiwindow.split.2x1'
 key = 'f'
 label = 'Window'
 
-    [[comboMode.bindings.children]]
-    key = '3'
-    label = 'Thirds'
+    [comboMode.bindings.destination]
+    type = 'group'
 
-        [[comboMode.bindings.children.children]]
-        key = '2'
-        label = 'Two thirds'
+        [[comboMode.bindings.destination.bindings]]
+        key = '3'
+        label = 'Thirds'
 
-            [[comboMode.bindings.children.children.children]]
-            key = 'h'
-            label = 'First two thirds'
-            url = 'tuna://run/url.rectangle-pro:%252F%252Fexecute-action%253Fname=first-two-thirds/Open%20URL'
+            [comboMode.bindings.destination.bindings.destination]
+            type = 'group'
 
-            [[comboMode.bindings.children.children.children]]
-            key = 'l'
-            label = 'Last two thirds'
-            url = 'tuna://run/url.rectangle-pro:%252F%252Fexecute-action%253Fname=last-two-thirds/Open%20URL'
+                [[comboMode.bindings.destination.bindings.destination.bindings]]
+                key = '2'
+                label = 'Two thirds'
 
-        [[comboMode.bindings.children.children]]
+                    [comboMode.bindings.destination.bindings.destination.bindings.destination]
+                    type = 'group'
+
+                        [[comboMode.bindings.destination.bindings.destination.bindings.destination.bindings]]
+                        key = 'h'
+                        label = 'First two thirds'
+
+                            [comboMode.bindings.destination.bindings.destination.bindings.destination.bindings.destination]
+                            type = 'command'
+
+                                [comboMode.bindings.destination.bindings.destination.bindings.destination.bindings.destination.command]
+                                actionIdentifier = 'tuna.common-actions/open-url'
+                                behavior = 'run'
+                                presentation = 'automatic'
+                                subjectIdentifiers = [ 'url:rectangle-pro://execute-action?name=first-two-thirds' ]
+                                type = 'savedCommand'
+
+                        [[comboMode.bindings.destination.bindings.destination.bindings.destination.bindings]]
+                        key = 'l'
+                        label = 'Last two thirds'
+
+                            [comboMode.bindings.destination.bindings.destination.bindings.destination.bindings.destination]
+                            type = 'command'
+
+                                [comboMode.bindings.destination.bindings.destination.bindings.destination.bindings.destination.command]
+                                actionIdentifier = 'tuna.common-actions/open-url'
+                                behavior = 'run'
+                                presentation = 'automatic'
+                                subjectIdentifiers = [ 'url:rectangle-pro://execute-action?name=last-two-thirds' ]
+                                type = 'savedCommand'
+
+                [[comboMode.bindings.destination.bindings.destination.bindings]]
+                key = 'c'
+                label = 'Center third'
+
+                    [comboMode.bindings.destination.bindings.destination.bindings.destination]
+                    type = 'command'
+
+                        [comboMode.bindings.destination.bindings.destination.bindings.destination.command]
+                        actionIdentifier = 'tuna.common-actions/open-url'
+                        behavior = 'run'
+                        presentation = 'automatic'
+                        subjectIdentifiers = [ 'url:rectangle-pro://execute-action?name=center-third' ]
+                        type = 'savedCommand'
+
+                [[comboMode.bindings.destination.bindings.destination.bindings]]
+                key = 'h'
+                label = 'First third'
+
+                    [comboMode.bindings.destination.bindings.destination.bindings.destination]
+                    type = 'command'
+
+                        [comboMode.bindings.destination.bindings.destination.bindings.destination.command]
+                        actionIdentifier = 'tuna.common-actions/open-url'
+                        behavior = 'run'
+                        presentation = 'automatic'
+                        subjectIdentifiers = [ 'url:rectangle-pro://execute-action?name=first-third' ]
+                        type = 'savedCommand'
+
+                [[comboMode.bindings.destination.bindings.destination.bindings]]
+                key = 'l'
+                label = 'Last third'
+
+                    [comboMode.bindings.destination.bindings.destination.bindings.destination]
+                    type = 'command'
+
+                        [comboMode.bindings.destination.bindings.destination.bindings.destination.command]
+                        actionIdentifier = 'tuna.common-actions/open-url'
+                        behavior = 'run'
+                        presentation = 'automatic'
+                        subjectIdentifiers = [ 'url:rectangle-pro://execute-action?name=last-third' ]
+                        type = 'savedCommand'
+
+        [[comboMode.bindings.destination.bindings]]
         key = 'c'
-        label = 'Center third'
-        url = 'tuna://run/url.rectangle-pro:%252F%252Fexecute-action%253Fname=center-third/Open%20URL'
+        label = 'Center'
 
-        [[comboMode.bindings.children.children]]
+            [comboMode.bindings.destination.bindings.destination]
+            type = 'command'
+
+                [comboMode.bindings.destination.bindings.destination.command]
+                actionIdentifier = 'tuna.common-actions/open-url'
+                behavior = 'run'
+                presentation = 'automatic'
+                subjectIdentifiers = [ 'url:rectangle-pro://execute-action?name=center' ]
+                type = 'savedCommand'
+
+        [[comboMode.bindings.destination.bindings]]
+        key = 'f'
+        label = 'Full screen'
+
+            [comboMode.bindings.destination.bindings.destination]
+            type = 'command'
+
+                [comboMode.bindings.destination.bindings.destination.command]
+                actionIdentifier = 'tuna.common-actions/open-url'
+                behavior = 'run'
+                presentation = 'automatic'
+                subjectIdentifiers = [ 'url:rectangle-pro://execute-action?name=maximize' ]
+                type = 'savedCommand'
+
+        [[comboMode.bindings.destination.bindings]]
         key = 'h'
-        label = 'First third'
-        url = 'tuna://run/url.rectangle-pro:%252F%252Fexecute-action%253Fname=first-third/Open%20URL'
+        label = 'Left'
 
-        [[comboMode.bindings.children.children]]
+            [comboMode.bindings.destination.bindings.destination]
+            type = 'command'
+
+                [comboMode.bindings.destination.bindings.destination.command]
+                actionIdentifier = 'tuna.common-actions/open-url'
+                behavior = 'run'
+                presentation = 'automatic'
+                subjectIdentifiers = [ 'url:rectangle-pro://execute-action?name=left-half' ]
+                type = 'savedCommand'
+
+        [[comboMode.bindings.destination.bindings]]
+        key = 'H'
+        label = 'Max height'
+
+            [comboMode.bindings.destination.bindings.destination]
+            type = 'command'
+
+                [comboMode.bindings.destination.bindings.destination.command]
+                actionIdentifier = 'tuna.common-actions/open-url'
+                behavior = 'run'
+                presentation = 'automatic'
+                subjectIdentifiers = [ 'url:rectangle-pro://execute-action?name=maximize-height' ]
+                type = 'savedCommand'
+
+        [[comboMode.bindings.destination.bindings]]
         key = 'l'
-        label = 'Last third'
-        url = 'tuna://run/url.rectangle-pro:%252F%252Fexecute-action%253Fname=last-third/Open%20URL'
+        label = 'Right'
 
-    [[comboMode.bindings.children]]
-    key = 'c'
-    label = 'Center'
-    url = 'tuna://run/url.rectangle-pro:%252F%252Fexecute-action%253Fname=center/Open%20URL'
+            [comboMode.bindings.destination.bindings.destination]
+            type = 'command'
 
-    [[comboMode.bindings.children]]
-    key = 'f'
-    label = 'Full screen'
-    url = 'tuna://run/url.rectangle-pro:%252F%252Fexecute-action%253Fname=maximize/Open%20URL'
+                [comboMode.bindings.destination.bindings.destination.command]
+                actionIdentifier = 'tuna.common-actions/open-url'
+                behavior = 'run'
+                presentation = 'automatic'
+                subjectIdentifiers = [ 'url:rectangle-pro://execute-action?name=right-half' ]
+                type = 'savedCommand'
 
-    [[comboMode.bindings.children]]
-    key = 'h'
-    label = 'Left'
-    url = 'tuna://run/url.rectangle-pro:%252F%252Fexecute-action%253Fname=left-half/Open%20URL'
+        [[comboMode.bindings.destination.bindings]]
+        key = 'n'
 
-    [[comboMode.bindings.children]]
-    key = 'H'
-    label = 'Max height'
-    url = 'tuna://run/url.rectangle-pro:%252F%252Fexecute-action%253Fname=maximize-height/Open%20URL'
+            [comboMode.bindings.destination.bindings.destination]
+            type = 'command'
 
-    [[comboMode.bindings.children]]
-    key = 'l'
-    label = 'Right'
-    url = 'tuna://run/url.rectangle-pro:%252F%252Fexecute-action%253Fname=right-half/Open%20URL'
+                [comboMode.bindings.destination.bindings.destination.command]
+                actionIdentifier = 'tuna.common-actions/open-url'
+                behavior = 'run'
+                presentation = 'automatic'
+                subjectIdentifiers = [ 'url:rectangle-pro://execute-action?name=first-third' ]
+                type = 'savedCommand'
 
-    [[comboMode.bindings.children]]
-    key = 'n'
-    url = 'tuna://run/url.rectangle-pro:%252F%252Fexecute-action%253Fname=first-third/Open%20URL'
+        [[comboMode.bindings.destination.bindings]]
+        key = 'o'
 
-    [[comboMode.bindings.children]]
-    key = 'o'
-    url = 'tuna://run/url.rectangle-pro:%252F%252Fexecute-action%253Fname=last-two-thirds/Open%20URL'
+            [comboMode.bindings.destination.bindings.destination]
+            type = 'command'
+
+                [comboMode.bindings.destination.bindings.destination.command]
+                actionIdentifier = 'tuna.common-actions/open-url'
+                behavior = 'run'
+                presentation = 'automatic'
+                subjectIdentifiers = [ 'url:rectangle-pro://execute-action?name=last-two-thirds' ]
+                type = 'savedCommand'
 
 [[comboMode.bindings]]
 iconPath = 'bookmark'
 key = 'g'
 label = 'Folders'
 
-    [[comboMode.bindings.children]]
-    key = 'a'
-    url = 'tuna://run/path.%252FApplications/Open'
+    [comboMode.bindings.destination]
+    type = 'group'
 
-    [[comboMode.bindings.children]]
-    key = 'd'
-    url = 'tuna://run/path.%252FUsers%252Fattamusc%252FDownloads/Open'
+        [[comboMode.bindings.destination.bindings]]
+        key = 'a'
 
-    [[comboMode.bindings.children]]
-    key = 'h'
-    url = 'tuna://run/path.%252FUsers%252Fattamusc/Open'
+            [comboMode.bindings.destination.bindings.destination]
+            type = 'command'
 
-    [[comboMode.bindings.children]]
-    key = 'p'
-    url = 'tuna://run/path.%252FUsers%252Fattamusc%252Fprojects%252Fgithub.com%252FAttamusc/Open'
+                [comboMode.bindings.destination.bindings.destination.command]
+                actionIdentifier = 'tuna.common-actions/open'
+                behavior = 'run'
+                presentation = 'automatic'
+                subjectIdentifiers = [ 'path:/Applications' ]
+                type = 'savedCommand'
+
+        [[comboMode.bindings.destination.bindings]]
+        key = 'd'
+
+            [comboMode.bindings.destination.bindings.destination]
+            type = 'command'
+
+                [comboMode.bindings.destination.bindings.destination.command]
+                actionIdentifier = 'tuna.common-actions/open'
+                behavior = 'run'
+                presentation = 'automatic'
+                subjectIdentifiers = [ 'path:~/Downloads' ]
+                type = 'savedCommand'
+
+        [[comboMode.bindings.destination.bindings]]
+        key = 'h'
+
+            [comboMode.bindings.destination.bindings.destination]
+            type = 'command'
+
+                [comboMode.bindings.destination.bindings.destination.command]
+                actionIdentifier = 'tuna.common-actions/open'
+                behavior = 'run'
+                presentation = 'automatic'
+                subjectIdentifiers = [ 'path:~' ]
+                type = 'savedCommand'
+
+        [[comboMode.bindings.destination.bindings]]
+        key = 'p'
+
+            [comboMode.bindings.destination.bindings.destination]
+            type = 'command'
+
+                [comboMode.bindings.destination.bindings.destination.command]
+                actionIdentifier = 'tuna.common-actions/open'
+                behavior = 'run'
+                presentation = 'automatic'
+                subjectIdentifiers = [ 'path:~/projects/github.com/Attamusc' ]
+                type = 'savedCommand'
 
 [[comboMode.bindings]]
 iconPath = 'sparkles'
 key = 'l'
 label = 'LLMs'
 
-    [[comboMode.bindings.children]]
-    key = 'a'
-    label = 'Claude'
-    url = 'tuna://run/path.%252FApplications%252FClaude.app/Open'
+    [comboMode.bindings.destination]
+    type = 'group'
 
-    [[comboMode.bindings.children]]
-    key = 'c'
-    url = 'tuna://run/path.%252FApplications%252FChatGPT.app/Open'
+        [[comboMode.bindings.destination.bindings]]
+        key = 'a'
+        label = 'Claude'
+
+            [comboMode.bindings.destination.bindings.destination]
+            type = 'command'
+
+                [comboMode.bindings.destination.bindings.destination.command]
+                actionIdentifier = 'tuna.common-actions/open'
+                behavior = 'run'
+                presentation = 'automatic'
+                subjectIdentifiers = [ 'path:/Applications/Claude.app' ]
+                type = 'savedCommand'
+
+        [[comboMode.bindings.destination.bindings]]
+        key = 'c'
+
+            [comboMode.bindings.destination.bindings.destination]
+            type = 'command'
+
+                [comboMode.bindings.destination.bindings.destination.command]
+                actionIdentifier = 'tuna.common-actions/open'
+                behavior = 'run'
+                presentation = 'automatic'
+                subjectIdentifiers = [ 'path:/Applications/ChatGPT.app' ]
+                type = 'savedCommand'
 
 [[comboMode.bindings]]
 iconPath = 'message'
 key = 'm'
 label = 'Messaging'
 
-    [[comboMode.bindings.children]]
-    key = 'd'
-    url = 'tuna://run/path.%252FApplications%252FDiscord.app/Open'
+    [comboMode.bindings.destination]
+    type = 'group'
 
-    [[comboMode.bindings.children]]
-    key = 'm'
-    url = 'tuna://run/path.%252FSystem%252FApplications%252FMessages.app/Open'
+        [[comboMode.bindings.destination.bindings]]
+        key = 'd'
 
-    [[comboMode.bindings.children]]
-    key = 's'
-    url = 'tuna://run/path.%252FApplications%252FSlack.app/Open'
+            [comboMode.bindings.destination.bindings.destination]
+            type = 'command'
+
+                [comboMode.bindings.destination.bindings.destination.command]
+                actionIdentifier = 'tuna.common-actions/open'
+                behavior = 'run'
+                presentation = 'automatic'
+                subjectIdentifiers = [ 'path:/Applications/Discord.app' ]
+                type = 'savedCommand'
+
+        [[comboMode.bindings.destination.bindings]]
+        key = 'm'
+
+            [comboMode.bindings.destination.bindings.destination]
+            type = 'command'
+
+                [comboMode.bindings.destination.bindings.destination.command]
+                actionIdentifier = 'tuna.common-actions/open'
+                behavior = 'run'
+                presentation = 'automatic'
+                subjectIdentifiers = [ 'path:/System/Applications/Messages.app' ]
+                type = 'savedCommand'
+
+        [[comboMode.bindings.destination.bindings]]
+        key = 's'
+
+            [comboMode.bindings.destination.bindings.destination]
+            type = 'command'
+
+                [comboMode.bindings.destination.bindings.destination.command]
+                actionIdentifier = 'tuna.common-actions/open'
+                behavior = 'run'
+                presentation = 'automatic'
+                subjectIdentifiers = [ 'path:/Applications/Slack.app' ]
+                type = 'savedCommand'
 
 [[comboMode.bindings]]
 iconPath = 'diamond'
 key = 'o'
 label = 'Obsidian'
 
-    [[comboMode.bindings.children]]
-    key = 'd'
-    label = 'Daily'
-    url = 'tuna://run/url.obsidian:%252F%252Fdaily/Open%20URL'
+    [comboMode.bindings.destination]
+    type = 'group'
 
-    [[comboMode.bindings.children]]
-    key = 'o'
-    label = 'Open'
-    url = 'tuna://run/path.%252FApplications%252FObsidian.app/Open'
+        [[comboMode.bindings.destination.bindings]]
+        key = 'd'
+        label = 'Daily'
+
+            [comboMode.bindings.destination.bindings.destination]
+            type = 'command'
+
+                [comboMode.bindings.destination.bindings.destination.command]
+                actionIdentifier = 'tuna.common-actions/open-url'
+                behavior = 'run'
+                presentation = 'automatic'
+                subjectIdentifiers = [ 'url:obsidian://daily' ]
+                type = 'savedCommand'
+
+        [[comboMode.bindings.destination.bindings]]
+        key = 'o'
+        label = 'Open'
+
+            [comboMode.bindings.destination.bindings.destination]
+            type = 'command'
+
+                [comboMode.bindings.destination.bindings.destination.command]
+                actionIdentifier = 'tuna.common-actions/open'
+                behavior = 'run'
+                presentation = 'automatic'
+                subjectIdentifiers = [ 'path:/Applications/Obsidian.app' ]
+                type = 'savedCommand'
 
 [[comboMode.bindings]]
 iconPath = 'character.textbox'
 key = 'r'
 label = 'Raycast'
 
-    [[comboMode.bindings.children]]
-    key = 'c'
-    url = 'tuna://run/url.raycast:%252F%252Fextensions%252Fraycast%252Fsystem%252Fopen-camera/Open%20URL'
+    [comboMode.bindings.destination]
+    type = 'group'
 
-    [[comboMode.bindings.children]]
-    key = 'e'
-    url = 'tuna://run/url.raycast:%252F%252Fextensions%252Fraycast%252Femoji-symbols%252Fsearch-emoji-symbols/Open%20URL'
+        [[comboMode.bindings.destination.bindings]]
+        key = 'c'
 
-    [[comboMode.bindings.children]]
-    key = 'p'
-    url = 'tuna://run/url.raycast:%252F%252Fconfetti/Open%20URL'
+            [comboMode.bindings.destination.bindings.destination]
+            type = 'command'
+
+                [comboMode.bindings.destination.bindings.destination.command]
+                actionIdentifier = 'tuna.common-actions/open-url'
+                behavior = 'run'
+                presentation = 'automatic'
+                subjectIdentifiers = [ 'url:raycast://extensions/raycast/system/open-camera' ]
+                type = 'savedCommand'
+
+        [[comboMode.bindings.destination.bindings]]
+        key = 'e'
+
+            [comboMode.bindings.destination.bindings.destination]
+            type = 'command'
+
+                [comboMode.bindings.destination.bindings.destination.command]
+                actionIdentifier = 'tuna.common-actions/open-url'
+                behavior = 'run'
+                presentation = 'automatic'
+                subjectIdentifiers = [ 'url:raycast://extensions/raycast/emoji-symbols/search-emoji-symbols' ]
+                type = 'savedCommand'
+
+        [[comboMode.bindings.destination.bindings]]
+        key = 'p'
+
+            [comboMode.bindings.destination.bindings.destination]
+            type = 'command'
+
+                [comboMode.bindings.destination.bindings.destination.command]
+                actionIdentifier = 'tuna.common-actions/open-url'
+                behavior = 'run'
+                presentation = 'automatic'
+                subjectIdentifiers = [ 'url:raycast://confetti' ]
+                type = 'savedCommand'
 
 [[comboMode.bindings]]
 iconPath = 'laptopcomputer'
 key = 's'
 label = 'System'
 
-    [[comboMode.bindings.children]]
-    key = 'l'
-    url = 'tuna://run/url.raycast:%252F%252Fextensions%252Fraycast%252Fsystem%252Flock-screen/Open%20URL'
+    [comboMode.bindings.destination]
+    type = 'group'
 
-    [[comboMode.bindings.children]]
-    key = 's'
-    url = 'tuna://run/url.raycast:%252F%252Fextensions%252Fraycast%252Fsystem%252Fsleep/Open%20URL'
+        [[comboMode.bindings.destination.bindings]]
+        key = 'l'
 
-    [[comboMode.bindings.children]]
-    key = 'd'
-    url = 'tuna://run/url.raycast:%252F%252Fextensions%252Fraycast%252Fsystem%252Fsleep-displays/Open%20URL'
+            [comboMode.bindings.destination.bindings.destination]
+            type = 'command'
+
+                [comboMode.bindings.destination.bindings.destination.command]
+                actionIdentifier = 'tuna.common-actions/open-url'
+                behavior = 'run'
+                presentation = 'automatic'
+                subjectIdentifiers = [ 'url:raycast://extensions/raycast/system/lock-screen' ]
+                type = 'savedCommand'
+
+        [[comboMode.bindings.destination.bindings]]
+        key = 's'
+
+            [comboMode.bindings.destination.bindings.destination]
+            type = 'command'
+
+                [comboMode.bindings.destination.bindings.destination.command]
+                actionIdentifier = 'tuna.common-actions/open-url'
+                behavior = 'run'
+                presentation = 'automatic'
+                subjectIdentifiers = [ 'url:raycast://extensions/raycast/system/sleep' ]
+                type = 'savedCommand'
+
+        [[comboMode.bindings.destination.bindings]]
+        key = 'd'
+
+            [comboMode.bindings.destination.bindings.destination]
+            type = 'command'
+
+                [comboMode.bindings.destination.bindings.destination.command]
+                actionIdentifier = 'tuna.common-actions/open-url'
+                behavior = 'run'
+                presentation = 'automatic'
+                subjectIdentifiers = [ 'url:raycast://extensions/raycast/system/sleep-displays' ]
+                type = 'savedCommand'
 
 [[comboMode.bindings]]
 key = 'space'
 label = 'Slack'
-url = 'tuna://run/TunaCore.AllApplicationsCatalog.Slack/Open'
+
+    [comboMode.bindings.destination]
+    type = 'command'
+
+        [comboMode.bindings.destination.command]
+        actionIdentifier = 'tuna.common-actions/open'
+        behavior = 'run'
+        presentation = 'automatic'
+        subjectIdentifiers = [ 'path:/Applications/Slack.app' ]
+        type = 'savedCommand'
 
 [hotkeys]
 custom = []
@@ -454,7 +697,6 @@ comboModeThemeStyle = 'breadcrumb'
 screenPreference = 'primary'
 showResultsImmediatelyOnActivation = true
 switchToTextModeWhenNoResults = true
-themeIdentifier = 'com.brnbw.tuna.themes.default'
 typingTimeoutDuration = 3.0
 
 [[smartLinks.entries]]
