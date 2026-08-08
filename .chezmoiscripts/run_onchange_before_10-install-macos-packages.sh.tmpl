@@ -18,5 +18,6 @@ else
   exit 1
 fi
 
+"$brew" trust --tap anomalyco/tap
 "$brew" bundle --file="{{ .chezmoi.sourceDir }}/packages/Brewfile"
 {{- end -}}
