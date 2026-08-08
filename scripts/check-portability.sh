@@ -344,7 +344,7 @@ file
 fzf
 gh
 git
-git-filter-repo
+git filter-repo
 hx
 jq
 mosh
@@ -372,7 +372,7 @@ fzf
 gh
 ghq
 git
-git-filter-repo
+git filter-repo
 herdr
 hx
 jj
