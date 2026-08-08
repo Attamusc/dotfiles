@@ -915,6 +915,21 @@ EOF
     "$home/.local/bin/pi-hunk-review-core" \
     "$home/.local/share/mise/shims/nvim" \
     "$home/.local/share/bob/nvim-bin/nvim"
+
+  local optional_probe_output
+  optional_probe_output=$(env -i \
+    HOME="$home" \
+    PATH=/usr/bin:/bin \
+    "$zsh_bin" -dfc '
+      which() {
+        print -u2 -- "/usr/bin/which: no op in ($PATH)"
+        return 1
+      }
+      source "$HOME/.config/zsh/config/op.zsh"
+    ' 2>&1)
+  [[ -z "$optional_probe_output" ]] || \
+    fail "missing optional shell tools write startup errors: $optional_probe_output"
+
   printf '%s\n' 'export PORTABILITY_LOCALRC=loaded' >"$home/.localrc"
   env -i \
     HOME="$home" \
