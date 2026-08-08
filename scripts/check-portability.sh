@@ -164,6 +164,14 @@ check_shell_files() {
     shell=$(shell_for_file "$file" "$relative_path")
     [[ -n "$shell" ]] || continue
 
+    if [[ "$shell" == sh ]] && grep -Eq \
+        '(^|[;[:space:]])\[\[|^[[:space:]]*function[[:space:]]|^[[:space:]]*local[[:space:]]|(^|[;[:space:]])read[[:space:]]+-p|<[[:space:]]*\(' \
+        "$file"; then
+      printf 'error: Bash-only syntax under sh shebang in %s (%s render)\n' \
+        "$relative_path" "$label" >&2
+      return 1
+    fi
+
     if ! syntax_error=$("$shell" -n "$file" 2>&1); then
       printf 'error: invalid %s syntax in %s (%s render):\n%s\n' \
         "$shell" "$relative_path" "$label" "$syntax_error" >&2
