@@ -1,0 +1,9 @@
+{
+  "extensions": [
+    "+extensions/public.ts"
+  ],
+  "packages": [
+    "git:github.com/example/public-package"
+  ],
+  "theme": "public"
+}

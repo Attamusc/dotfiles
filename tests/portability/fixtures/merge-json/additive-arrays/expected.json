@@ -1,0 +1,13 @@
+{
+  "extensions": [
+    "+extensions/public-base.ts",
+    "+extensions/shared.ts",
+    "+extensions/private.ts"
+  ],
+  "packages": [
+    "git:github.com/example/public-base",
+    "git:github.com/example/shared-package",
+    "git:github.com/example/private-package"
+  ],
+  "theme": "private"
+}

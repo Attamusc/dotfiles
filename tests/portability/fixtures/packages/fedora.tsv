@@ -1,0 +1,27 @@
+bat	bat
+chezmoi	chezmoi
+curl	curl
+eza	eza
+fd-find	fd
+file	file
+fzf	fzf
+gcc	cc
+gh	gh
+git	git
+git-delta	delta
+git-filter-repo	git filter-repo
+helix	hx
+jq	jq
+mosh	mosh
+procps-ng	ps
+ripgrep	rg
+tig	tig
+tmux	tmux
+tree	tree
+tree-sitter-cli	tree-sitter
+util-linux	chsh
+wget2-wget	wget
+wl-clipboard	wl-copy
+xdg-utils	xdg-open
+zoxide	zoxide
+zsh	zsh

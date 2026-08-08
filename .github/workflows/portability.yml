@@ -1,0 +1,38 @@
+{
+  "name": "Portability contracts",
+  "on": {
+    "pull_request": {},
+    "push": {
+      "branches": ["main"]
+    },
+    "workflow_dispatch": {}
+  },
+  "permissions": {
+    "contents": "read"
+  },
+  "concurrency": {
+    "group": "portability-${{ github.ref }}",
+    "cancel-in-progress": true
+  },
+  "jobs": {
+    "check": {
+      "name": "Check repository contracts",
+      "runs-on": "ubuntu-latest",
+      "timeout-minutes": 10,
+      "steps": [
+        {
+          "name": "Check out repository",
+          "uses": "actions/checkout@11d5960a326750d5838078e36cf38b85af677262"
+        },
+        {
+          "name": "Install checker dependencies",
+          "run": "sudo apt-get update\nsudo apt-get install --yes zsh\nsh -c \"$(curl -fsLS https://get.chezmoi.io)\" -- -b \"$HOME/.local/bin\"\necho \"$HOME/.local/bin\" >>\"$GITHUB_PATH\""
+        },
+        {
+          "name": "Check portability contracts",
+          "run": "scripts/check-portability.sh"
+        }
+      ]
+    }
+  }
+}

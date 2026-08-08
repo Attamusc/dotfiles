@@ -1,0 +1,20 @@
+{{ if or (eq .chezmoi.os "darwin") (and (eq .chezmoi.os "linux") (eq .chezmoi.osRelease.id "fedora") (eq .chezmoi.osRelease.versionID "44")) -}}
+#!/bin/bash
+
+set -euo pipefail
+
+source /tmp/chezmoi-utils.sh
+printf "${green}[30 - tpm] ${reset}"
+
+if [ -d "$HOME/.tmux/plugins/tpm" ]; then
+  echo "TPM already installed."
+  exit 0
+fi
+
+command -v git >/dev/null 2>&1 || {
+  echo "Git is missing after native package installation." >&2
+  exit 1
+}
+
+git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"
+{{- end }}

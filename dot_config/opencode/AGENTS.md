@@ -66,7 +66,7 @@ symlinked into `~/.agents/skills/` by `run_after_40-link-local-skills.sh`.
 is configured alongside OpenCode at `~/.pi/agent/`. Both tools share skills
 via `~/.agents/skills/` and connect to the same MCP servers (Datadog, Kusto,
 WorkIQ). pi has its own subagents (planner, scout, worker, reviewer,
-researcher) and extensions (cmux, todos, cost, watchdog, etc.).
+researcher) and extensions (todos, cost, watchdog, etc.).
 
 ### Workflow Hint
 

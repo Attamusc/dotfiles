@@ -5,19 +5,18 @@
   "packages": [
     "git:github.com/nicobailon/pi-mcp-adapter",
     "git:github.com/HazAT/glimpse",
-    "/Users/attamusc/projects/github.com/Attamusc/pi-interactive-subagents",
+    "git:github.com/Attamusc/pi-interactive-subagents@f609e7f0a5ab935dc36d3c805928536978563579",
     "git:github.com/HazAT/pi-autoresearch",
     "git:github.com/carderne/pi-nvim",
-    "/Users/attamusc/projects/github.com/Attamusc/pi-cmux",
-    "/Users/attamusc/projects/github.com/Attamusc/pi-herdr"
+    "git:github.com/Attamusc/pi-herdr@d975127b94df95a615282ece14b02865b9a2c3d9",
+    "git:github.com/Attamusc/pi-television@c3826bc268e05a1045e1d2339fc5a0cd3fd17a7e",
+    "git:github.com/Attamusc/pi-hunk-review@v0.1.1"
   ],
   "extensions": [
-    "+extensions/smart-sessions/index.ts",
-    "/Users/attamusc/projects/github.com/Attamusc/pi-television",
-    "/Users/attamusc/projects/github.com/Attamusc/pi-hunk-review/pi-extension/hunk-review"
+    "+extensions/smart-sessions/index.ts"
   ],
   "theme": "rose-pine-moon",
   "hideThinkingBlock": false,
   "editorPaddingX": 2,
-  "lastChangelogVersion": "0.80.3"
+  "lastChangelogVersion": "0.82.1"
 }

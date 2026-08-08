@@ -1,0 +1,11 @@
+{
+  "extensions": [
+    "+extensions/public-base.ts",
+    "+extensions/shared.ts"
+  ],
+  "packages": [
+    "git:github.com/example/public-base",
+    "git:github.com/example/shared-package"
+  ],
+  "theme": "public"
+}

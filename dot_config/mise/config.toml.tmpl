@@ -1,0 +1,16 @@
+[tools]
+node = "24"
+{{ if and (eq .chezmoi.os "linux") (eq .chezmoi.osRelease.id "fedora") (eq .chezmoi.osRelease.versionID "44") -}}
+bob = "4"
+ghq = "1"
+herdr = "0.8.0"
+jj = "0.44.0"
+jjui = "0.10.9"
+lazygit = "0.64.0"
+"npm:@earendil-works/pi-coding-agent" = "0.83.0"
+"npm:@github/copilot" = "1"
+opencode = "1"
+sheldon = "0.8.5"
+starship = "1"
+television = "0.15.9"
+{{ end -}}

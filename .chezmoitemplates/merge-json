@@ -16,7 +16,10 @@
 
        Semantics:
          - Public is required; private is optional (template no-ops the override if absent).
-         - Private values override public via sprig `merge` (destination wins; private is dst).
+         - Private values override public values.
+         - At wrapKey level, a private entry replaces the matching public value as a whole.
+         - For Pi settings, the known `packages` and `extensions` arrays are appended in
+           public-first order and de-duplicated.
          - "Shallow" merge means only top-level (or wrapKey-level) keys are compared;
            nested objects are replaced wholesale, not deep-merged.
 
@@ -37,21 +40,30 @@
 {{- $wrapKey := index . "wrapKey" | default "" -}}
 {{- if $wrapKey -}}
 {{-   $publicInner := index $public $wrapKey | default dict -}}
-{{-   $mergedInner := $publicInner -}}
-{{-   $mergedTop := $public -}}
+{{-   $mergedInner := deepCopy $publicInner -}}
+{{-   $mergedTop := deepCopy $public -}}
 {{-   if $hasPrivate -}}
 {{-     $private := include .private | mustFromJson -}}
 {{-     $privateInner := index $private $wrapKey | default dict -}}
-{{-     $mergedInner = merge $privateInner $publicInner -}}
-{{-     $mergedTop = merge $private $public -}}
+{{-     range $key, $value := $privateInner -}}
+{{-       $_ := set $mergedInner $key (deepCopy $value) -}}
+{{-     end -}}
+{{-     $mergedTop = merge (deepCopy $private) $public -}}
 {{-   end -}}
 {{-   $_ := set $mergedTop $wrapKey $mergedInner -}}
 {{ $mergedTop | toPrettyJson }}
 {{- else -}}
-{{-   $merged := $public -}}
+{{-   $merged := deepCopy $public -}}
 {{-   if $hasPrivate -}}
 {{-     $private := include .private | mustFromJson -}}
-{{-     $merged = merge $private $public -}}
+{{-     $merged = merge (deepCopy $private) $public -}}
+{{-     range $key := list "packages" "extensions" -}}
+{{-       if or (hasKey $public $key) (hasKey $private $key) -}}
+{{-         $publicValues := index $public $key | default list -}}
+{{-         $privateValues := index $private $key | default list -}}
+{{-         $_ := set $merged $key (concat $publicValues $privateValues | uniq) -}}
+{{-       end -}}
+{{-     end -}}
 {{-   end -}}
 {{ $merged | toPrettyJson }}
 {{- end -}}

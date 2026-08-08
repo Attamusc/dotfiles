@@ -1,0 +1,26 @@
+{{ if and (eq .chezmoi.os "linux") (eq .chezmoi.osRelease.id "fedora") (eq .chezmoi.osRelease.versionID "44") -}}
+#!/bin/bash
+
+set -euo pipefail
+
+source /tmp/chezmoi-utils.sh
+printf "${green}[20 - Fedora login shell] ${reset}Configure zsh\n"
+
+zsh_path=$(command -v zsh) || {
+  echo "zsh is missing after Fedora package installation." >&2
+  exit 1
+}
+command -v chsh >/dev/null 2>&1 || {
+  echo "chsh is missing after Fedora package installation." >&2
+  exit 1
+}
+
+user=$(id -un)
+current_shell=$(getent passwd "$user" | cut -d: -f7)
+if [[ "$current_shell" == "$zsh_path" ]]; then
+  echo "Login shell already uses $zsh_path."
+  exit 0
+fi
+
+sudo chsh -s "$zsh_path" "$user"
+{{- end }}

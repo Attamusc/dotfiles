@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "public-only": {
+      "command": "public-command"
+    },
+    "shared": {
+      "command": "public-command",
+      "args": ["--public-only"],
+      "env": {
+        "PUBLIC_ONLY": "must-not-survive"
+      }
+    }
+  }
+}

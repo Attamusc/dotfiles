@@ -1,0 +1,50 @@
+#!/bin/bash
+
+set -euo pipefail
+
+channel=stable
+export BOB_CONFIG="$HOME/.config/bob/config.toml"
+[[ -f "$BOB_CONFIG" ]] || {
+  echo "Bob configuration is missing: $BOB_CONFIG" >&2
+  exit 1
+}
+
+{{ if eq .chezmoi.os "darwin" -}}
+if [ -x /opt/homebrew/bin/brew ]; then
+  brew=/opt/homebrew/bin/brew
+elif [ -x /usr/local/bin/brew ]; then
+  brew=/usr/local/bin/brew
+else
+  echo "Homebrew is required to resolve Bob." >&2
+  exit 1
+fi
+bob_prefix=$("$brew" --prefix bob)
+bob_bin="$bob_prefix/bin/bob"
+{{ else if and (eq .chezmoi.os "linux") (eq .chezmoi.osRelease.id "fedora") (eq .chezmoi.osRelease.versionID "44") -}}
+mise_bin="$HOME/.local/bin/mise"
+config="$HOME/.config/mise/config.toml"
+[[ -x "$mise_bin" && -f "$config" ]] || {
+  echo "mise must install Bob before Neovim setup." >&2
+  exit 1
+}
+bob_bin=$(MISE_GLOBAL_CONFIG_FILE="$config" "$mise_bin" which bob)
+{{ else -}}
+echo "Unsupported platform reached Neovim setup." >&2
+exit 1
+{{ end -}}
+
+[[ -x "$bob_bin" ]] || {
+  echo "Bob executable is missing." >&2
+  exit 1
+}
+
+"$bob_bin" use "$channel"
+
+nvim_bin="$HOME/.local/share/bob/nvim-bin/nvim"
+[[ -x "$nvim_bin" ]] || {
+  echo "Bob did not activate Neovim at $nvim_bin" >&2
+  exit 1
+}
+
+"$nvim_bin" --clean --headless '+qa'
+printf 'Bob activated Neovim channel: %s\n' "$channel"

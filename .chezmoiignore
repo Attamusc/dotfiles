@@ -1,5 +1,11 @@
 install.sh
 .github
+README.md
+docs/
+packages/
+research/
+scripts/
+tests/
 
 # Pi agent runtime artifacts — session-local, do not version
 .pi/agent/grill/

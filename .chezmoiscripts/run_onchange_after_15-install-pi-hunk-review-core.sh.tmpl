@@ -1,0 +1,79 @@
+#!/bin/bash
+
+set -euo pipefail
+
+version=v0.1.1
+repository=Attamusc/pi-hunk-review
+checksums_sha256=4d13bf5e2c132bb9078510b828ee8fedc0bb751b73333639ec6f86459038bd3d
+
+{{ if and (eq .chezmoi.os "darwin") (eq .chezmoi.arch "arm64") -}}
+archive=pi-hunk-review-core-v0.1.1-aarch64-apple-darwin.tar.gz
+archive_sha256=98ce47fc5d1eba10f9adec421b8b979f52dcd8aacb08e4e60c8a3ac71524cf8e
+checksum_command=(shasum -a 256)
+{{ else if and (eq .chezmoi.os "darwin") (eq .chezmoi.arch "amd64") -}}
+archive=pi-hunk-review-core-v0.1.1-x86_64-apple-darwin.tar.gz
+archive_sha256=f14f994bf0c69600a070960ff098346df36a08e9ee32ef00e6b5f63b7794dc2e
+checksum_command=(shasum -a 256)
+{{ else if and (eq .chezmoi.os "linux") (eq .chezmoi.osRelease.id "fedora") (eq .chezmoi.osRelease.versionID "44") (eq .chezmoi.arch "amd64") -}}
+archive=pi-hunk-review-core-v0.1.1-x86_64-unknown-linux-gnu.tar.gz
+archive_sha256=89bf012a46c9ba96088af626ac9dfd7b4f821f591595ed7525d9d991d2b9185e
+checksum_command=(sha256sum)
+{{ else -}}
+echo "pi-hunk-review-core v0.1.1 has no release asset for this platform." >&2
+exit 1
+{{ end -}}
+
+target="$HOME/.local/bin/pi-hunk-review-core"
+if [[ -x "$target" ]] && [[ $("$target" --version) == "pi-hunk-review-core v0.1.1" ]]; then
+  echo "pi-hunk-review-core v0.1.1 already installed."
+  exit 0
+fi
+
+work=$(mktemp -d "${TMPDIR:-/tmp}/pi-hunk-review-core.XXXXXX")
+cleanup() { rm -rf "$work"; }
+trap cleanup EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+command -v gh >/dev/null 2>&1 || {
+  echo "GitHub CLI is required to download the private pi-hunk-review release." >&2
+  exit 1
+}
+gh auth status --hostname github.com >/dev/null
+gh release download "$version" \
+  --repo "$repository" \
+  --pattern SHA256SUMS \
+  --pattern "$archive" \
+  --dir "$work"
+
+[[ $("${checksum_command[@]}" "$work/SHA256SUMS" | awk '{print $1}') == "$checksums_sha256" ]] || {
+  echo "pi-hunk-review SHA256SUMS verification failed." >&2
+  exit 1
+}
+[[ $("${checksum_command[@]}" "$work/$archive" | awk '{print $1}') == "$archive_sha256" ]] || {
+  echo "pi-hunk-review archive verification failed." >&2
+  exit 1
+}
+grep -Fx "$archive_sha256  $archive" "$work/SHA256SUMS" >"$work/SHA256SUMS.selected"
+(
+  cd "$work"
+  if [[ ${checksum_command[0]} == shasum ]]; then
+    shasum -a 256 -c SHA256SUMS.selected
+  else
+    sha256sum -c SHA256SUMS.selected
+  fi
+)
+[[ $(tar -tzf "$work/$archive") == pi-hunk-review-core ]] || {
+  echo "pi-hunk-review archive contains unexpected files." >&2
+  exit 1
+}
+tar -xzf "$work/$archive" -C "$work"
+
+mkdir -p "$HOME/.local/bin"
+install -m 755 "$work/pi-hunk-review-core" "$target"
+[[ $("$target" --version) == "pi-hunk-review-core v0.1.1" ]] || {
+  echo "installed pi-hunk-review-core version mismatch." >&2
+  exit 1
+}
+printf 'Installed pi-hunk-review-core v0.1.1\n'

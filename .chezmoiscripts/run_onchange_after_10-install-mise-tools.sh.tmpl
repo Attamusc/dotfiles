@@ -1,0 +1,64 @@
+#!/bin/bash
+
+set -euo pipefail
+
+# Rendered mise config SHA-256: {{ includeTemplate "dot_config/mise/config.toml.tmpl" . | sha256sum }}
+source /tmp/chezmoi-utils.sh
+printf "${green}[10 - mise tools] ${reset}Install configured toolchain\n"
+
+config="$HOME/.config/mise/config.toml"
+[[ -f "$config" ]] || {
+  echo "Rendered mise configuration is missing: $config" >&2
+  exit 1
+}
+
+{{ if eq .chezmoi.os "darwin" -}}
+if [ -x /opt/homebrew/bin/brew ]; then
+  brew=/opt/homebrew/bin/brew
+elif [ -x /usr/local/bin/brew ]; then
+  brew=/usr/local/bin/brew
+else
+  echo "Homebrew is required to resolve its mise installation." >&2
+  exit 1
+fi
+mise_prefix=$("$brew" --prefix mise)
+mise_bin="$mise_prefix/bin/mise"
+[[ -x "$mise_bin" ]] || {
+  echo "Homebrew did not install mise at the expected prefix." >&2
+  exit 1
+}
+{{ else if and (eq .chezmoi.os "linux") (eq .chezmoi.osRelease.id "fedora") (eq .chezmoi.osRelease.versionID "44") -}}
+mise_bin="$HOME/.local/bin/mise"
+if [[ ! -x "$mise_bin" ]]; then
+  installer=$(mktemp "${TMPDIR:-/tmp}/mise-installer.XXXXXX")
+  cleanup() { rm -f "$installer"; }
+  trap cleanup EXIT
+  trap 'exit 129' HUP
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
+  curl -fsSL https://mise.run -o "$installer"
+  MISE_INSTALL_PATH="$mise_bin" sh "$installer"
+fi
+{{ else -}}
+echo "Unsupported platform reached mise setup." >&2
+exit 1
+{{ end -}}
+
+"$mise_bin" --version
+MISE_YES=1 MISE_GLOBAL_CONFIG_FILE="$config" "$mise_bin" install --verbose
+
+commands=(node npm npx)
+{{ if and (eq .chezmoi.os "linux") (eq .chezmoi.osRelease.id "fedora") (eq .chezmoi.osRelease.versionID "44") -}}
+commands+=(sheldon starship herdr jj ghq tv lazygit jjui bob opencode pi copilot)
+{{ end -}}
+
+for command_name in "${commands[@]}"; do
+  command_path=$(MISE_GLOBAL_CONFIG_FILE="$config" "$mise_bin" which "$command_name")
+  [[ -x "$command_path" ]] || {
+    echo "mise command is missing or not executable: $command_name" >&2
+    exit 1
+  }
+done
+
+MISE_GLOBAL_CONFIG_FILE="$config" "$mise_bin" exec -- node --version
+printf "${green}[10 - mise tools] ${reset}Configured toolchain installed\n"

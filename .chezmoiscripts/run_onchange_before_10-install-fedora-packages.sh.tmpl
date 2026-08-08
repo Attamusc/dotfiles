@@ -1,0 +1,22 @@
+{{- if and (eq .chezmoi.os "linux") (eq .chezmoi.osRelease.id "fedora") (eq .chezmoi.osRelease.versionID "44") -}}
+#!/bin/bash
+
+set -euo pipefail
+
+# Fedora manifest SHA-256: {{ include "packages/fedora.txt" | sha256sum }}
+source /tmp/chezmoi-utils.sh
+printf "${green}[10 - Fedora packages] ${reset}Install DNF manifest\n"
+
+packages=()
+while IFS= read -r package; do
+  [[ -n "$package" && "$package" != \#* ]] || continue
+  packages+=("$package")
+done <"{{ .chezmoi.sourceDir }}/packages/fedora.txt"
+
+(( ${#packages[@]} > 0 )) || {
+  echo "Fedora package manifest is empty." >&2
+  exit 1
+}
+
+sudo dnf install -y "${packages[@]}"
+{{- end -}}
