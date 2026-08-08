@@ -38,9 +38,13 @@ exit 1
   exit 1
 }
 
+nvim_bin="$HOME/.local/share/bob/nvim-bin/nvim"
+if [[ -e "$nvim_bin" && ! -w "$nvim_bin" ]]; then
+  chmod u+w "$nvim_bin"
+fi
+
 "$bob_bin" use "$channel"
 
-nvim_bin="$HOME/.local/share/bob/nvim-bin/nvim"
 [[ -x "$nvim_bin" ]] || {
   echo "Bob did not activate Neovim at $nvim_bin" >&2
   exit 1

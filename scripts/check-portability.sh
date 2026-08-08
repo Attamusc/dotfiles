@@ -780,6 +780,7 @@ check_bob_contract() {
   local fedora_hook="$WORK/bob-fedora-hook.sh"
   local installation_surfaces="$WORK/neovim-installation-surfaces"
   local competing_probe="$WORK/competing-neovim-probe.sh"
+  local repair_line use_line
   local competing_pattern='^[[:space:]]*([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]+[[:space:]]+)*(([^[:space:]]*/)?brew|"\$brew")[[:space:]]+install[[:space:]].*neovim|^[[:space:]]*([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]+[[:space:]]+)*(sudo[[:space:]]+)?dnf[[:space:]]+install[[:space:]].*neovim|^[[:space:]]*([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]+[[:space:]]+)*(mise|"\$mise"|"\$mise_bin")[[:space:]]+(install|use)[[:space:]].*neovim'
 
   [[ -f "$PUBLIC_SOURCE/$hook" ]] || fail "missing Bob-managed Neovim hook"
@@ -805,8 +806,13 @@ PY
   grep -Fq 'channel=stable' "$PUBLIC_SOURCE/$hook" || fail "Bob channel is not declared stable"
   grep -Fq 'export BOB_CONFIG="$HOME/.config/bob/config.toml"' "$PUBLIC_SOURCE/$hook" || \
     fail "Bob hook does not use the noninteractive managed config"
+  grep -Fq 'chmod u+w "$nvim_bin"' "$PUBLIC_SOURCE/$hook" || \
+    fail "Bob hook does not repair a legacy read-only Neovim proxy"
   grep -Fq '"$bob_bin" use "$channel"' "$PUBLIC_SOURCE/$hook" || \
     fail "Bob hook does not idempotently install/use its channel"
+  repair_line=$(grep -n 'chmod u+w "$nvim_bin"' "$PUBLIC_SOURCE/$hook" | cut -d: -f1)
+  use_line=$(grep -n '"$bob_bin" use "$channel"' "$PUBLIC_SOURCE/$hook" | cut -d: -f1)
+  (( repair_line < use_line )) || fail "Bob proxy repair must precede channel activation"
   grep -Fq '$HOME/.local/share/bob/nvim-bin/nvim' "$PUBLIC_SOURCE/$hook" || \
     fail "Bob hook does not verify the managed Neovim path"
   grep -Fq '"$nvim_bin" --clean --headless '\''+qa'\''' "$PUBLIC_SOURCE/$hook" || \
