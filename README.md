@@ -136,10 +136,11 @@ after mutation-capable phases.
 
 ## Focused smoke checks
 
-After apply:
+After apply, open a fresh terminal or reconnect over SSH, then run these in that
+new login shell:
 
 ```sh
-zsh -lic 'command -v herdr nvim hx pi opencode copilot gh jj tv mosh'
+command -v herdr nvim hx pi opencode copilot gh jj tv mosh
 command -v nvim
 nvim --headless '+qa'
 pi list

@@ -611,9 +611,9 @@ git filter-repo --version &gt;/dev/null 2&gt;&amp;1 || echo "MISSING: git filter
             <div class="command-bar"><span>Fedora terminal</span><button class="copy-button" type="button">Copy</button></div>
             <pre><code>test -x ~/.tmux/plugins/tpm/tpm &amp;&amp; echo "PASS: TPM installed" || echo "FAIL: TPM missing"
 getent passwd "$USER" | cut -d: -f7
-zsh -lic 'alias v copy o oo l ll la cdot'</code></pre>
+alias v copy o oo l ll la cdot</code></pre>
           </div>
-          <div class="expectation"><strong>Pass</strong><p>TPM passes; the account shell ends in <code>/zsh</code>; aliases resolve to <code>nvim</code>, <code>wl-copy</code>, <code>xdg-open</code>, <code>eza</code>, and <code>chezmoi</code>; no startup error appears.</p></div>
+          <div class="expectation"><strong>Pass</strong><p>TPM passes; the account shell ends in <code>/zsh</code>; aliases in the fresh SSH shell resolve to <code>nvim</code>, <code>wl-copy</code>, <code>xdg-open</code>, <code>eza</code>, and <code>chezmoi</code>.</p></div>
           <div class="verdict">
             <button class="state-button pass" data-state="pass" type="button">Pass</button>
             <button class="state-button fail" data-state="fail" type="button">Fail</button>

@@ -1285,9 +1285,10 @@ PY
 check_documentation_contract() {
   local readme="$PUBLIC_SOURCE/README.md"
   local overlays="$PUBLIC_SOURCE/docs/private-overlays.md"
+  local smoke="$PUBLIC_SOURCE/docs/fedora-smoke-checks.html"
   local instructions="$PUBLIC_SOURCE/.github/copilot-instructions.md"
 
-  [[ -f "$readme" && -f "$overlays" && -f "$instructions" ]] || \
+  [[ -f "$readme" && -f "$overlays" && -f "$smoke" && -f "$instructions" ]] || \
     fail "supported-platform documentation is incomplete"
   for required in \
     '## Supported platforms' \
@@ -1317,6 +1318,9 @@ check_documentation_contract() {
     fail "agent bootstrap guidance omits private release authentication"
   if grep -Eiq '(Ubuntu|Codespaces|Linuxbrew).*(is|are)[[:space:]]+supported([[:space:].,]|$)' "$readme"; then
     fail "README advertises a retired platform or mux fallback"
+  fi
+  if grep -Fq 'zsh -lic' "$readme" "$smoke"; then
+    fail "smoke guidance starts a nested login shell that Fedora clears on exit"
   fi
 
   printf 'ok: supported-platform and local-ownership documentation\n'
