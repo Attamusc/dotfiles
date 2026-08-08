@@ -3,6 +3,11 @@
 set -euo pipefail
 
 channel=stable
+export BOB_CONFIG="$HOME/.config/bob/config.toml"
+[[ -f "$BOB_CONFIG" ]] || {
+  echo "Bob configuration is missing: $BOB_CONFIG" >&2
+  exit 1
+}
 
 {{ if eq .chezmoi.os "darwin" -}}
 if [ -x /opt/homebrew/bin/brew ]; then

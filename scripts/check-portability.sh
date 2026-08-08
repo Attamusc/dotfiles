@@ -763,6 +763,7 @@ check_bob_contract() {
   local pi_hook=run_onchange_after_30-setup-pi.sh.tmpl
   local old_hook="$PUBLIC_SOURCE/.chezmoiscripts/run_once_after_20-setup-neovim.sh.tmpl"
   local shell_config="$PUBLIC_SOURCE/dot_config/private_zsh/config/zz-bob.zsh"
+  local bob_config="$PUBLIC_SOURCE/dot_config/bob/config.toml"
   local darwin_hook="$WORK/bob-darwin-hook.sh"
   local fedora_hook="$WORK/bob-fedora-hook.sh"
   local installation_surfaces="$WORK/neovim-installation-surfaces"
@@ -773,7 +774,13 @@ check_bob_contract() {
   [[ -f "$PUBLIC_SOURCE/.chezmoiscripts/$mise_hook" ]] || fail "missing mise toolchain hook"
   [[ -f "$PUBLIC_SOURCE/.chezmoiscripts/$pi_hook" ]] || fail "missing Pi setup hook"
   [[ ! -e "$old_hook" ]] || fail "legacy Neovim installation hook remains"
-  [[ -f "$shell_config" ]] || fail "missing Bob shell path configuration"
+  [[ -f "$shell_config" && -f "$bob_config" ]] || fail "missing Bob configuration"
+  python3 - "$bob_config" <<'PY'
+import pathlib
+import sys
+import tomllib
+assert tomllib.loads(pathlib.Path(sys.argv[1]).read_text()) == {"add_neovim_binary_to_path": False}
+PY
   [[ "${mise_hook#*_after_}" < "${bob_hook#*_after_}" \
     && "${bob_hook#*_after_}" < "${pi_hook#*_after_}" ]] || \
     fail "mise, Bob, and Pi after-hooks are ordered incorrectly"
@@ -784,6 +791,8 @@ check_bob_contract() {
   bash -n "$fedora_hook"
 
   grep -Fq 'channel=stable' "$PUBLIC_SOURCE/$hook" || fail "Bob channel is not declared stable"
+  grep -Fq 'export BOB_CONFIG="$HOME/.config/bob/config.toml"' "$PUBLIC_SOURCE/$hook" || \
+    fail "Bob hook does not use the noninteractive managed config"
   grep -Fq '"$bob_bin" use "$channel"' "$PUBLIC_SOURCE/$hook" || \
     fail "Bob hook does not idempotently install/use its channel"
   grep -Fq '$HOME/.local/share/bob/nvim-bin/nvim' "$PUBLIC_SOURCE/$hook" || \
@@ -807,7 +816,9 @@ check_bob_contract() {
   grep -Eq "$competing_pattern" "$competing_probe" || \
     fail "competing Neovim scanner misses environment-prefixed mise commands"
 
-  [[ $(head -n 1 "$shell_config") == 'export PATH="$HOME/.local/share/bob/nvim-bin:$PATH"' ]] || \
+  grep -Fq 'export BOB_CONFIG="$HOME/.config/bob/config.toml"' "$shell_config" || \
+    fail "interactive Bob commands do not use the managed config"
+  grep -Fq 'export PATH="$HOME/.local/share/bob/nvim-bin:$PATH"' "$shell_config" || \
     fail "Bob Neovim path does not precede native package paths"
   if grep -Fq 'neovim' "$PUBLIC_SOURCE/packages/Brewfile" \
     || grep -Fq 'neovim' "$PUBLIC_SOURCE/packages/fedora.txt"; then
@@ -955,9 +966,12 @@ check_agent_contract() {
   local settings_changed="$WORK/pi-settings-changed.json"
   local mise_home="$WORK/pi-fedora-home"
   local mise_stub="$mise_home/.local/bin/mise"
+  local gh_stub="$mise_home/.local/bin/gh"
   local fake_pi="$mise_home/.local/share/mise/pi"
   local mise_stub_log="$WORK/mise-stub.log"
   local mise_stub_expected="$WORK/mise-stub.expected"
+  local gh_stub_log="$WORK/gh-stub.log"
+  local gh_stub_expected="$WORK/gh-stub.expected"
   local active_runtime_files="$WORK/active-runtime-files"
   local cmux_heading_probe="$WORK/cmux-heading-probe.md"
   local cmux_uppercase_probe="$WORK/cmux-uppercase-probe.md"
@@ -1046,6 +1060,14 @@ PY
     fail "Fedora Pi version check does not run inside mise"
   grep -Fq '"$mise_bin" exec -- pi update --extensions' "$fedora_hook" || \
     fail "Fedora Pi reconciliation does not run inside mise"
+  grep -Fq 'gh auth status --hostname github.com' "$fedora_hook" || \
+    fail "Pi hook does not require authenticated private-package access"
+  grep -Fq 'GIT_CONFIG_GLOBAL="$local_git_config" gh auth setup-git' "$fedora_hook" || \
+    fail "Pi hook does not configure GitHub credentials in the local Git seam"
+  grep -Fq 'GIT_TERMINAL_PROMPT=0 MISE_GLOBAL_CONFIG_FILE=' "$fedora_hook" || \
+    fail "Fedora Pi reconciliation can prompt for a GitHub password"
+  grep -Fq 'GIT_TERMINAL_PROMPT=0 "$pi_bin" update --extensions' "$darwin_hook" || \
+    fail "macOS Pi reconciliation can prompt for a GitHub password"
   ! grep -Eq '"\$pi_bin" install([[:space:]]|$)' "$PUBLIC_SOURCE/$hook" || \
     fail "Pi hook uses install without a package source"
   if grep -Eq '\|\|[[:space:]]*(:|true|echo)|not found.*skipping|Warning:' "$PUBLIC_SOURCE/$hook"; then
@@ -1068,12 +1090,27 @@ if [ "${1:-}" = exec ]; then
 fi
 exit 92
 EOF
+  cat >"$gh_stub" <<'EOF'
+#!/bin/sh
+printf '%s\n' "$*" >>"$GH_STUB_LOG"
+if [ "$*" = "auth status --hostname github.com" ]; then
+  exit 0
+fi
+if [ "$*" = "auth setup-git" ] && [ "${GIT_CONFIG_GLOBAL:-}" = "$HOME/.gitconfig.local" ]; then
+  exit 0
+fi
+exit 94
+EOF
   cat >"$fake_pi" <<'EOF'
 #!/bin/sh
 exit 93
 EOF
-  chmod +x "$mise_stub" "$fake_pi"
-  HOME="$mise_home" MISE_STUB_LOG="$mise_stub_log" PATH=/usr/bin:/bin bash "$fedora_hook" >/dev/null
+  chmod +x "$mise_stub" "$gh_stub" "$fake_pi"
+  HOME="$mise_home" \
+    MISE_STUB_LOG="$mise_stub_log" \
+    GH_STUB_LOG="$gh_stub_log" \
+    PATH="$mise_home/.local/bin:/usr/bin:/bin" \
+    bash "$fedora_hook" >/dev/null
   cat >"$mise_stub_expected" <<'EOF'
 which pi
 exec -- pi --version
@@ -1081,6 +1118,15 @@ exec -- pi update --extensions
 EOF
   diff -u "$mise_stub_expected" "$mise_stub_log" >/dev/null || \
     fail "Fedora Pi mise execution arguments are incorrect"
+  cat >"$gh_stub_expected" <<'EOF'
+auth status --hostname github.com
+auth setup-git
+EOF
+  diff -u "$gh_stub_expected" "$gh_stub_log" >/dev/null || \
+    fail "Pi hook GitHub credential setup arguments are incorrect"
+  [[ -f "$mise_home/.gitconfig.local" ]] || fail "Pi hook did not create the machine-local Git seam"
+  [[ $(python3 -c 'import os,stat,sys; print(f"{stat.S_IMODE(os.stat(sys.argv[1]).st_mode):o}")' \
+      "$mise_home/.gitconfig.local") == 600 ]] || fail "Pi hook local Git seam is not mode 0600"
 
   cp "$settings" "$settings_backup"
   jq '.portabilityDigestProbe = true' "$settings" >"$settings_changed"
