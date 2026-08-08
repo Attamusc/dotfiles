@@ -54,7 +54,7 @@ lifecycle:
 2. Install native packages from `packages/Brewfile` or `packages/fedora.txt`.
 3. Configure Fedora's login shell and install TPM.
 4. Apply managed files.
-5. Install the mise toolchain.
+5. Install the mise-managed language toolchain and Spin.
 6. Install the checksum-verified pi-hunk-review core release.
 7. Activate Bob's stable Neovim.
 8. Reconcile pinned Pi packages.
@@ -67,11 +67,11 @@ responsible stage. Re-running `./install.sh` resumes the idempotent stages.
 The shared workflow includes:
 
 - Shell: `zsh`, Sheldon, Starship, zoxide
-- Core CLI: bat, eza, fd, fzf, ripgrep, jq, tree, curl, wget
+- Core CLI: bat, eza, fd, fzf, ripgrep, jq, tree, curl, wget, Spin
 - Terminal/editor: Herdr, tmux, TPM, Bob-managed Neovim, Helix
 - Version control: Git, gh, jj, delta, tig, ghq, git-filter-repo, lazygit, jjui
 - Agents: Pi, OpenCode, Copilot CLI
-- Runtime: mise-managed Node, npm, and npx
+- Runtime: mise-managed Go, Node, npm, npx, Rust, Cargo, and rustc
 - Remote shell: mosh
 
 ### Package authority
@@ -79,7 +79,8 @@ The shared workflow includes:
 | Capability | macOS | Fedora 44 |
 |---|---|---|
 | Native terminal tools | Homebrew | DNF |
-| Node | mise | mise |
+| Go, Node, and Rust | mise | mise |
+| Spin | mise Go backend | mise Go backend |
 | Fedora package gaps | — | mise/Aqua |
 | Pi | Homebrew | mise npm backend |
 | Copilot CLI | Homebrew cask | mise npm backend |
@@ -106,8 +107,8 @@ separately if they are needed to rebuild a machine. See
 examples.
 
 Specialist packages are also machine-owned: cloud/Kubernetes CLIs, container
-engines, language toolchains and servers, QMK, Ollama, and OCR/media tooling are
-outside the shared manifests.
+engines, additional language toolchains and language servers, QMK, Ollama, and
+OCR/media tooling are outside the shared manifests.
 
 ## Preview and apply
 
@@ -141,7 +142,7 @@ After apply, open a fresh terminal or reconnect over SSH, then run these in that
 new login shell:
 
 ```sh
-command -v herdr nvim hx pi opencode copilot gh jj tv mosh
+command -v herdr nvim hx pi opencode copilot gh jj tv mosh spin go cargo rustc node npm npx
 command -v nvim
 nvim --headless '+qa'
 pi list

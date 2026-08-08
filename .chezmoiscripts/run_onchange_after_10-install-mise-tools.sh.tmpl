@@ -47,7 +47,7 @@ exit 1
 "$mise_bin" --version
 MISE_YES=1 MISE_GLOBAL_CONFIG_FILE="$config" "$mise_bin" install --verbose
 
-commands=(node npm npx)
+commands=(node npm npx go rustc cargo spin)
 {{ if and (eq .chezmoi.os "linux") (eq .chezmoi.osRelease.id "fedora") (eq .chezmoi.osRelease.versionID "44") -}}
 commands+=(sheldon starship herdr jj ghq tv lazygit jjui bob opencode pi copilot)
 {{ end -}}
@@ -61,4 +61,7 @@ for command_name in "${commands[@]}"; do
 done
 
 MISE_GLOBAL_CONFIG_FILE="$config" "$mise_bin" exec -- node --version
+MISE_GLOBAL_CONFIG_FILE="$config" "$mise_bin" exec -- go version
+MISE_GLOBAL_CONFIG_FILE="$config" "$mise_bin" exec -- rustc --version
+MISE_GLOBAL_CONFIG_FILE="$config" "$mise_bin" exec -- spin --help >/dev/null
 printf "${green}[10 - mise tools] ${reset}Configured toolchain installed\n"

@@ -716,9 +716,18 @@ import tomllib
 
 darwin = tomllib.loads(pathlib.Path(sys.argv[1]).read_text())["tools"]
 fedora = tomllib.loads(pathlib.Path(sys.argv[2]).read_text())["tools"]
-assert darwin == {"node": "24"}
-assert fedora == {
+shared = {
+    "go": "1.26",
+    "go:github.com/attamusc/spin": {
+        "version": "0.0.0-20260315212148-2c0a74c0db03",
+        "depends": "go",
+    },
     "node": "24",
+    "rust": "1.97",
+}
+assert darwin == shared
+assert fedora == {
+    **shared,
     "bob": "4",
     "ghq": "1",
     "herdr": "0.8.0",
@@ -752,7 +761,8 @@ PY
   ! grep -Fq 'https://mise.run' "$darwin_hook" || fail "macOS hook bypasses Homebrew mise ownership"
   grep -Fq 'mise_prefix=$("$brew" --prefix mise)' "$darwin_hook" || \
     fail "macOS hook does not resolve mise through Homebrew ownership"
-  grep -Fq 'commands=(node npm npx)' "$darwin_hook" || fail "macOS mise command baseline is incomplete"
+  grep -Fq 'commands=(node npm npx go rustc cargo spin)' "$darwin_hook" || \
+    fail "macOS mise command baseline is incomplete"
   ! grep -Fq 'commands+=' "$darwin_hook" || fail "macOS mise config claims Fedora tool ownership"
   grep -Fq 'commands+=(sheldon starship herdr jj ghq tv lazygit jjui bob opencode pi copilot)' "$fedora_hook" || \
     fail "Fedora mise command baseline is incomplete"
@@ -908,6 +918,15 @@ check_shell_contract() {
   grep -Fq 'if (( $+commands[mise] ));' \
     "$PUBLIC_SOURCE/dot_config/private_zsh/config/mise-en-place.zsh" || \
     fail "mise shell activation is not guarded"
+  grep -Fq 'if (( $+commands[spin] ));' \
+    "$PUBLIC_SOURCE/dot_config/private_zsh/config/spin.zsh" || \
+    fail "Spin shell activation is not guarded"
+  grep -Fq 'sg() {' \
+    "$PUBLIC_SOURCE/dot_config/private_zsh/config/spin-aliases.zsh" || \
+    fail "sg project-navigation function is missing"
+  grep -Fq 'command -v tv' \
+    "$PUBLIC_SOURCE/dot_config/private_zsh/config/spin-aliases.zsh" || \
+    fail "sg project picker is not backed by television"
   grep -Fq 'path=("$HOME/.local/bin" ${path:#"$HOME/.local/bin"})' \
     "$PUBLIC_SOURCE/dot_config/private_zsh/config/rust.zsh" || \
     fail "Cargo activation can shadow release-installed user binaries"
@@ -983,6 +1002,7 @@ EOF
       [[ ${aliases[copy]} == wl-copy ]]
       [[ ${aliases[o]} == xdg-open ]]
       [[ ${aliases[v]} == nvim ]]
+      (( $+functions[sg] ))
       [[ $path[1] == "$HOME/.local/share/bob/nvim-bin" ]]
       [[ $(command -v nvim) == "$HOME/.local/share/bob/nvim-bin/nvim" ]]
       [[ $(command -v pi-hunk-review-core) == "$HOME/.local/bin/pi-hunk-review-core" ]]
