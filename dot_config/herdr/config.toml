@@ -8,6 +8,7 @@ delivery = "terminal"
 
 [ui]
 show_agent_labels_on_pane_borders = false
+prompt_new_tab_name = false
 
 [theme]
 name = "rose-pine"
