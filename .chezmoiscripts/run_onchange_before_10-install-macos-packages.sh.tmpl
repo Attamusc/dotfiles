@@ -18,6 +18,11 @@ else
   exit 1
 fi
 
+trust_dir="$HOME/.homebrew"
+if [[ -n ${XDG_CONFIG_HOME:-} ]]; then
+  trust_dir="$XDG_CONFIG_HOME/homebrew"
+fi
+install -d -m 700 "$trust_dir"
 "$brew" trust --tap anomalyco/tap
 "$brew" bundle --file="{{ .chezmoi.sourceDir }}/packages/Brewfile"
 {{- end -}}
