@@ -334,6 +334,7 @@ check_package_manifests() {
 
   cat >"$fedora_commands" <<'EOF'
 bat
+cc
 chezmoi
 chsh
 curl
@@ -353,6 +354,7 @@ rg
 tig
 tmux
 tree
+tree-sitter
 wget
 wl-copy
 xdg-open
@@ -389,6 +391,7 @@ starship
 tig
 tmux
 tree
+tree-sitter
 tv
 wget
 zoxide
@@ -826,6 +829,30 @@ PY
   fi
 
   printf 'ok: Bob-managed Neovim authority contract\n'
+}
+
+check_neovim_contract() {
+  local tooling="$PUBLIC_SOURCE/dot_config/nvim/lua/plugins/tooling.lua"
+
+  [[ -f "$tooling" ]] || fail "missing headless Neovim tooling policy"
+  grep -Fq 'local headless = #vim.api.nvim_list_uis() == 0' "$tooling" || \
+    fail "Neovim tooling policy does not detect headless startup"
+  grep -Fq '"mason-org/mason.nvim"' "$tooling" || \
+    fail "headless Neovim policy does not cover Mason installs"
+  grep -Fq '"nvim-treesitter/nvim-treesitter"' "$tooling" || \
+    fail "headless Neovim policy does not cover Treesitter installs"
+  [[ $(grep -Fc 'if headless then' "$tooling") -eq 2 ]] || \
+    fail "headless Neovim policy does not guard both asynchronous installers"
+  [[ $(grep -Fc 'opts.ensure_installed = {}' "$tooling") -eq 2 ]] || \
+    fail "headless Neovim startup still schedules asynchronous installs"
+  grep -Fxq gcc "$PUBLIC_SOURCE/packages/fedora.txt" || \
+    fail "Fedora lacks the nvim-treesitter C compiler prerequisite"
+  grep -Fxq tree-sitter-cli "$PUBLIC_SOURCE/packages/fedora.txt" || \
+    fail "Fedora lacks the nvim-treesitter CLI prerequisite"
+  grep -Fq 'brew "tree-sitter-cli"' "$PUBLIC_SOURCE/packages/Brewfile" || \
+    fail "macOS lacks the nvim-treesitter CLI prerequisite"
+
+  printf 'ok: headless Neovim tooling contract\n'
 }
 
 check_shell_contract() {
@@ -1455,6 +1482,7 @@ XDG_DATA_HOME="$WORK/data" \
 check_bootstrap_contract
 check_mise_contract
 check_bob_contract
+check_neovim_contract
 check_shell_contract
 check_agent_contract
 check_herdr_contract

@@ -28,6 +28,7 @@ television	tv
 tig	tig
 tmux	tmux
 tree	tree
+tree-sitter-cli	tree-sitter
 wget	wget
 zoxide	zoxide
 zsh	zsh

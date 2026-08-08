@@ -588,7 +588,7 @@ git pull --ff-only
           <p>This prints only missing commands. Silence is success.</p>
           <div class="command">
             <div class="command-bar"><span>Fedora terminal</span><button class="copy-button" type="button">Copy</button></div>
-            <pre><code>for c in chezmoi zsh sheldon starship zoxide bat eza fd fzf rg jq tree curl wget herdr tmux bob nvim hx git gh jj delta tig ghq tv lazygit jjui mise node npm npx pi opencode copilot mosh; do command -v "$c" &gt;/dev/null || echo "MISSING: $c"; done
+            <pre><code>for c in chezmoi zsh sheldon starship zoxide bat eza fd fzf rg jq tree curl wget herdr tmux bob nvim hx git gh jj delta tig ghq tv lazygit jjui mise node npm npx pi opencode copilot mosh cc tree-sitter; do command -v "$c" &gt;/dev/null || echo "MISSING: $c"; done
 git filter-repo --version &gt;/dev/null 2&gt;&amp;1 || echo "MISSING: git filter-repo"</code></pre>
           </div>
           <div class="expectation"><strong>Pass</strong><p>No output. Any <code>MISSING:</code> line is a failure. Fedora exposes git-filter-repo through its canonical <code>git filter-repo</code> subcommand rather than a standalone executable on <code>PATH</code>.</p></div>
@@ -655,7 +655,7 @@ echo "$BOB_CONFIG"
             <div class="command-bar"><span>Fedora terminal</span><button class="copy-button" type="button">Copy</button></div>
             <pre><code>nvim --headless '+qa'</code></pre>
           </div>
-          <div class="expectation"><strong>Pass</strong><p>The process exits successfully without missing local-plugin, Lua, or hunk-review errors.</p></div>
+          <div class="expectation"><strong>Pass</strong><p>The process exits successfully without missing local-plugin, Lua, hunk-review, Mason-installation, or Treesitter-toolchain errors. Headless startup must not schedule asynchronous editor-tool installations.</p></div>
           <div class="verdict">
             <button class="state-button pass" data-state="pass" type="button">Pass</button>
             <button class="state-button fail" data-state="fail" type="button">Fail</button>

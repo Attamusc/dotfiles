@@ -5,6 +5,7 @@ eza
 fd-find
 file
 fzf
+gcc
 gh
 git
 git-delta
@@ -17,6 +18,7 @@ ripgrep
 tig
 tmux
 tree
+tree-sitter-cli
 util-linux
 wget2-wget
 wl-clipboard

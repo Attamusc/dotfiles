@@ -84,6 +84,7 @@ The shared workflow includes:
 | Pi | Homebrew | mise npm backend |
 | Copilot CLI | Homebrew cask | mise npm backend |
 | Neovim | Bob stable | Bob stable |
+| Neovim parser toolchain | Xcode compiler + Homebrew tree-sitter CLI | DNF GCC + tree-sitter CLI |
 | pi-hunk-review core | Authenticated release archive | Authenticated release archive |
 
 Bob keeps previously installed Neovim versions as the rollback lane. Removing a
