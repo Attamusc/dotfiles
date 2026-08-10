@@ -5,7 +5,7 @@
   "packages": [
     "git:github.com/nicobailon/pi-mcp-adapter",
     "git:github.com/HazAT/glimpse",
-    "git:github.com/Attamusc/pi-interactive-subagents@166b6cf92098d984a2717b9d315138e1ab5612b4",
+    "git:github.com/Attamusc/pi-interactive-subagents@8edb301cff4478228ed7d78f9eda16939a80e169",
     "git:github.com/HazAT/pi-autoresearch",
     "git:github.com/carderne/pi-nvim",
     "git:github.com/Attamusc/pi-herdr@d975127b94df95a615282ece14b02865b9a2c3d9",
