@@ -1,0 +1,69 @@
+{{- $public := include ".data/pi/agent/mcp.json" | mustFromJson -}}
+{{- $servers := deepCopy (index $public "mcpServers" | default dict) -}}
+{{- $privatePath := joinPath .chezmoi.sourceDir ".data-private/pi/agent/mcp.json" -}}
+{{- if stat $privatePath -}}
+{{-   $private := include ".data-private/pi/agent/mcp.json" | mustFromJson -}}
+{{-   range $name, $server := (index $private "mcpServers" | default dict) -}}
+{{-     $_ := set $servers $name (deepCopy $server) -}}
+{{-   end -}}
+{{- end -}}
+{{- $mcp := dict -}}
+{{- range $name, $server := $servers -}}
+{{-   $enabled := true -}}
+{{-   if and (hasKey $server "disabled") (eq (index $server "disabled") true) -}}
+{{-     $enabled = false -}}
+{{-   end -}}
+{{-   if hasKey $server "url" -}}
+{{-     $entry := dict "type" "remote" "url" (index $server "url") "enabled" $enabled -}}
+{{-     if hasKey $server "headers" -}}
+{{-       $_ := set $entry "headers" (deepCopy (index $server "headers")) -}}
+{{-     end -}}
+{{-     if hasKey $server "oauth" -}}
+{{-       $oauth := index $server "oauth" -}}
+{{-       if kindIs "bool" $oauth -}}
+{{-         $_ := set $entry "oauth" $oauth -}}
+{{-       else -}}
+{{-         $openCodeOAuth := dict -}}
+{{-         range $key := list "clientId" "clientSecret" "scope" "redirectUri" -}}
+{{-           if hasKey $oauth $key -}}
+{{-             $_ := set $openCodeOAuth $key (index $oauth $key) -}}
+{{-           end -}}
+{{-         end -}}
+{{-         $_ := set $entry "oauth" $openCodeOAuth -}}
+{{-       end -}}
+{{-     else if hasKey $server "auth" -}}
+{{-       $auth := index $server "auth" -}}
+{{-       if kindIs "bool" $auth -}}
+{{-         $_ := set $entry "oauth" $auth -}}
+{{-       end -}}
+{{-     end -}}
+{{-     if hasKey $server "requestTimeoutMs" -}}
+{{-       $_ := set $entry "timeout" (index $server "requestTimeoutMs") -}}
+{{-     end -}}
+{{-     $_ := set $mcp $name $entry -}}
+{{-   else if hasKey $server "command" -}}
+{{-     $command := list (index $server "command") -}}
+{{-     if hasKey $server "args" -}}
+{{-       $command = concat $command (index $server "args") -}}
+{{-     end -}}
+{{-     $entry := dict "type" "local" "command" $command "enabled" $enabled -}}
+{{-     if hasKey $server "cwd" -}}
+{{-       $_ := set $entry "cwd" (index $server "cwd") -}}
+{{-     end -}}
+{{-     if hasKey $server "env" -}}
+{{-       $_ := set $entry "environment" (deepCopy (index $server "env")) -}}
+{{-     end -}}
+{{-     if hasKey $server "requestTimeoutMs" -}}
+{{-       $_ := set $entry "timeout" (index $server "requestTimeoutMs") -}}
+{{-     end -}}
+{{-     $_ := set $mcp $name $entry -}}
+{{-   else -}}
+{{-     fail (printf "MCP server %q has no OpenCode-compatible command or URL" $name) -}}
+{{-   end -}}
+{{- end -}}
+{{ dict
+  "$schema" "https://opencode.ai/config.json"
+  "model" "github-copilot/gpt-5.6-sol"
+  "mcp" $mcp
+  | toPrettyJson
+}}

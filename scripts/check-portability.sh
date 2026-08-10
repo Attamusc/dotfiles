@@ -1033,7 +1033,11 @@ contains_active_cmux_reference() {
 check_agent_contract() {
   local settings="$PUBLIC_SOURCE/.data/pi/agent/settings.json"
   local mcp="$PUBLIC_SOURCE/.data/pi/agent/mcp.json"
-  local opencode="$PUBLIC_SOURCE/dot_config/opencode/opencode.jsonc"
+  local opencode_template=dot_config/opencode/private_opencode.jsonc.tmpl
+  local opencode_public="$WORK/opencode-public.json"
+  local opencode_private="$WORK/opencode-private.json"
+  local private_mcp="$PUBLIC_SOURCE/.data-private/pi/agent/mcp.json"
+  local public_mcp_backup="$WORK/public-mcp-backup.json"
   local hook=.chezmoiscripts/run_onchange_after_30-setup-pi.sh.tmpl
   local old_hook="$PUBLIC_SOURCE/.chezmoiscripts/run_once_after_30-setup-pi.sh.tmpl"
   local darwin_hook="$WORK/pi-darwin-hook.sh"
@@ -1055,7 +1059,8 @@ check_agent_contract() {
   local cmux_pattern='pi-cmux|CMUX_HOME|skills/cmux|(^|[^[:alnum:]_-])cmux([^[:alnum:]_-]|$)'
   local relative_path runtime_file
 
-  [[ -f "$settings" && -f "$mcp" && -f "$opencode" ]] || fail "missing public agent configuration"
+  [[ -f "$settings" && -f "$mcp" && -f "$PUBLIC_SOURCE/$opencode_template" ]] || \
+    fail "missing public agent configuration"
   [[ -f "$PUBLIC_SOURCE/$hook" ]] || fail "missing Pi package reconciliation hook"
   [[ ! -e "$old_hook" ]] || fail "warning-only Pi setup hook remains"
 
@@ -1084,7 +1089,10 @@ check_agent_contract() {
   contains_active_cmux_reference "$cmux_uppercase_probe" dot_pi/agent/AGENTS.md "$cmux_pattern" || \
     fail "cmux scanner is case-sensitive"
 
-  python3 - "$settings" "$mcp" "$opencode" <<'PY'
+  render_source_template darwin arm64 '' '' "$opencode_template" "$opencode_public"
+  jq empty "$opencode_public" || fail "public OpenCode configuration rendered invalid JSON"
+
+  python3 - "$settings" "$mcp" "$opencode_public" <<'PY'
 import json
 import pathlib
 import re
@@ -1114,10 +1122,105 @@ for package in settings["packages"]:
     if package.startswith("git:github.com/Attamusc/"):
         assert re.search(r"@[0-9a-f]{40}$", package)
 assert mcp == {"settings": {"samplingAutoApprove": True}, "mcpServers": {}}
-assert opencode == {"$schema": "https://opencode.ai/config.json", "model": "github-copilot/gpt-5.6-sol"}
+assert opencode == {
+    "$schema": "https://opencode.ai/config.json",
+    "model": "github-copilot/gpt-5.6-sol",
+    "mcp": {},
+}
 for document in (settings, mcp, opencode):
     encoded=json.dumps(document)
     assert "/Users/" not in encoded and "/home/" not in encoded
+PY
+
+  cp "$mcp" "$public_mcp_backup"
+  jq '.mcpServers = {
+    "synthetic-public": {"command": "public-command"},
+    "synthetic-local": {"command": "must-be-replaced"}
+  }' "$public_mcp_backup" >"$mcp"
+  mkdir -p "$(dirname "$private_mcp")"
+  cat >"$private_mcp" <<'EOF'
+{
+  "mcpServers": {
+    "synthetic-local": {
+      "command": "synthetic-command",
+      "args": ["--flag"],
+      "env": {"SYNTHETIC_TOKEN": "placeholder"},
+      "cwd": "/synthetic/work",
+      "requestTimeoutMs": 9000
+    },
+    "synthetic-disabled": {
+      "command": "disabled-command",
+      "disabled": true,
+      "directTools": true
+    },
+    "synthetic-remote": {
+      "url": "https://example.invalid/mcp",
+      "headers": {"Authorization": "Bearer placeholder"},
+      "oauth": {
+        "clientId": "synthetic-client",
+        "clientSecret": "synthetic-secret",
+        "scope": "synthetic-scope",
+        "redirectUri": "http://127.0.0.1:19876/mcp/oauth/callback",
+        "clientName": "Pi-only field"
+      },
+      "requestTimeoutMs": 12000
+    },
+    "synthetic-remote-no-auth": {
+      "url": "https://no-auth.example.invalid/mcp",
+      "auth": false
+    }
+  }
+}
+EOF
+  render_source_template darwin arm64 '' '' "$opencode_template" "$opencode_private"
+  cp "$public_mcp_backup" "$mcp"
+  rm -rf -- "$PUBLIC_SOURCE/.data-private"
+  jq empty "$opencode_private" || fail "private OpenCode configuration rendered invalid JSON"
+  python3 - "$opencode_private" <<'PY'
+import json
+import pathlib
+import sys
+
+mcp=json.loads(pathlib.Path(sys.argv[1]).read_text())["mcp"]
+assert mcp == {
+    "synthetic-public": {
+        "type": "local",
+        "command": ["public-command"],
+        "enabled": True,
+    },
+    "synthetic-local": {
+        "type": "local",
+        "command": ["synthetic-command", "--flag"],
+        "environment": {"SYNTHETIC_TOKEN": "placeholder"},
+        "cwd": "/synthetic/work",
+        "enabled": True,
+        "timeout": 9000,
+    },
+    "synthetic-disabled": {
+        "type": "local",
+        "command": ["disabled-command"],
+        "enabled": False,
+    },
+    "synthetic-remote": {
+        "type": "remote",
+        "url": "https://example.invalid/mcp",
+        "headers": {"Authorization": "Bearer placeholder"},
+        "oauth": {
+            "clientId": "synthetic-client",
+            "clientSecret": "synthetic-secret",
+            "scope": "synthetic-scope",
+            "redirectUri": "http://127.0.0.1:19876/mcp/oauth/callback",
+        },
+        "enabled": True,
+        "timeout": 12000,
+    },
+    "synthetic-remote-no-auth": {
+        "type": "remote",
+        "url": "https://no-auth.example.invalid/mcp",
+        "oauth": False,
+        "enabled": True,
+    },
+}
 PY
 
   render_source_template darwin arm64 '' '' "$hook" "$darwin_hook"
@@ -1490,6 +1593,9 @@ render_platform() {
   for source_only in README.md docs packages research scripts tests; do
     [[ ! -e "$rendered/$source_only" ]] || fail "source-only path leaked into $platform home: $source_only"
   done
+  [[ $(python3 -c 'import os,stat,sys; print(f"{stat.S_IMODE(os.stat(sys.argv[1]).st_mode):o}")' \
+      "$rendered/.config/opencode/opencode.jsonc") == 600 ]] || \
+    fail "$platform rendered OpenCode configuration is not mode 0600"
   printf 'ok: %s public configuration renders without a private overlay\n' "$platform"
   check_json_files "$rendered" "$platform rendered"
   check_shell_files "$rendered" "$platform"

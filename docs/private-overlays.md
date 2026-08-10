@@ -29,7 +29,10 @@ identities and loads both.
 ## MCP settings
 
 MCP maps merge by server key. A private key adds a server or replaces the
-complete public server value with the same key.
+complete public server value with the same key. Put machine-local servers in
+`.data-private/pi/agent/mcp.json`; chezmoi renders that shared registry into
+Pi's native format and OpenCode's `mcp` format. OpenCode's rendered config is
+mode `0600` because server entries may contain credentials.
 
 ```json
 {
