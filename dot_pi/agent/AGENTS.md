@@ -296,7 +296,6 @@ The `todo`-backed skills (`to-spec`, `to-tickets`, `triage`, `implement`, `code-
 
 The following MCP servers are configured via `mcp.json` and bridged through `pi-mcp-adapter`:
 
-- **Datadog** — Remote MCP server for observability (logs, metrics, traces, incidents, monitors)
 - **Kusto** — Azure Data Explorer queries via `@azure/mcp`
 - **WorkIQ** — Microsoft 365 Copilot integration via `@microsoft/workiq`
 
@@ -309,4 +308,10 @@ Pi discovers skills on its own and injects the name, description, and path of ev
 - `~/.agents/skills/` — shared with OpenCode. Directories containing a `SKILL.md`; root-level `.md` files are ignored in this location.
 - `~/.pi/agent/skills/` — pi-only. Same directory rule, plus root-level `.md` files count as skills on their own. `todo-tracker.md` lives there as the tracker→`todo` adapter for the todo-backed skills and sets `disable-model-invocation: true`, so it stays a reference those skills read rather than a skill the model can pick.
 - Private skills stay out of the public dotfiles repo: sources in `.local-skills/{agents,pi,copilot}/` (gitignored), symlinked into the matching runtime directory by `run_after_40-link-local-skills.sh`.
-- Vendored third-party skills keep `SKILL.md` byte-identical to upstream and put the source URL, pinned commit, and every local deviation in a sibling `UPSTREAM.md`. Example: `~/.agents/skills/avoid-ai-writing/`.
+- Vendored third-party skills keep `SKILL.md` byte-identical to upstream and put the source URL, pinned commit, and every local deviation in a sibling `UPSTREAM.md`. When a host's discovery model requires an adapted runtime entry point, preserve the original as `UPSTREAM-SKILL.md` and document the mapping in `UPSTREAM.md`; `dd-apm` is the exemplar for that shape. Example of the verbatim shape: `~/.agents/skills/avoid-ai-writing/`.
+
+### Datadog on macOS
+
+Use the shared `dd-docs`, `dd-pup`, `dd-audit`, and `dd-apm` skills for Datadog work. Load the relevant skill before running any `pup` command; do not improvise Pup commands from memory. Pup is configured read-only, and that boundary must remain in place for investigation and review work.
+
+The upstream `dd-apm` bundle also contains infrastructure-changing Helm, Kubernetes, SSH, and service-management procedures that Pup's read-only mode cannot constrain. Do not install dependencies, change infrastructure, restart workloads, alter remapping rules, or request secrets in chat unless the user explicitly asks for that exact operation and authorizes it after seeing the command. Datadog skills and Pup are intentionally absent on Fedora.

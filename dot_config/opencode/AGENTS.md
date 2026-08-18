@@ -64,9 +64,17 @@ symlinked into `~/.agents/skills/` by `run_after_40-link-local-skills.sh`.
 
 [pi](https://github.com/badlogic/pi-mono/blob/main/packages/coding-agent/)
 is configured alongside OpenCode at `~/.pi/agent/`. Both tools share skills
-via `~/.agents/skills/` and connect to the same MCP servers (Datadog, Kusto,
+via `~/.agents/skills/` and connect to the same MCP servers (Kusto and
 WorkIQ). pi has its own subagents (planner, scout, worker, reviewer,
 researcher) and extensions (todos, cost, watchdog, etc.).
+
+On macOS, Datadog access comes from the shared `dd-docs`, `dd-pup`, `dd-audit`,
+and `dd-apm` skills rather than MCP. Load the relevant skill before running a
+`pup` command; do not improvise Pup commands. Pup is read-only by default.
+The `dd-apm` bundle also documents infrastructure-changing commands outside
+Pup, so do not install dependencies, change infrastructure, restart workloads,
+change remapping rules, or request secrets in chat without an explicit request
+and per-command authorization. Datadog skills and Pup are absent on Fedora.
 
 ### Workflow Hint
 

@@ -7,6 +7,14 @@ research/
 scripts/
 tests/
 
+{{ if ne .chezmoi.os "darwin" }}
+.agents/skills/dd-apm
+.agents/skills/dd-audit
+.agents/skills/dd-docs
+.agents/skills/dd-pup
+.config/pup
+{{ end }}
+
 # Pi agent runtime artifacts — session-local, do not version
 .pi/agent/grill/
 .pi/agent/plans/

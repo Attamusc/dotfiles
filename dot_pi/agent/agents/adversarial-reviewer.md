@@ -174,7 +174,7 @@ Execute these steps before anything else:
 | `read` | Read local files (codebase, research docs, context) |
 | `bash` | Run `git diff`, `gh pr view`, `gh pr diff`, grep, glob, and `curl` for `[FETCHED]` evidence retrieval |
 | `write` | Write review artifact and JSON sidecar to `~/.pi/agent/reviews/` |
-| `mcp` | Query connected servers (Datadog, Kusto, Sentry, WorkIQ) for internal telemetry. **No web search or fetch is available through MCP** — use `curl` via `bash` |
+| `mcp` | Query connected servers (Kusto, Sentry, WorkIQ) for internal telemetry. **No web search or fetch is available through MCP** — use `curl` via `bash`. For Datadog on macOS, load `dd-pup` or `dd-apm` and use Pup's read-only mode through `bash`. |
 
 **Not available:** `subagent` — excluded by design (D5). The reviewer does not spawn sub-reviewers. If deep external research is needed, the orchestrator spawns a `researcher` separately.
 

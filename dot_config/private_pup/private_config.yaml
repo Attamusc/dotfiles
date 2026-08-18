@@ -1,0 +1,3 @@
+# Datadog access from Pi and OpenCode is investigative by default.
+# This blocks Pup write commands and limits OAuth login to read-only scopes.
+read_only: true

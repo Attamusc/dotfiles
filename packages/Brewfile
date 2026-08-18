@@ -1,10 +1,12 @@
 tap "anomalyco/tap"
+tap "datadog-labs/pack"
 
 brew "anomalyco/tap/opencode"
 brew "bat"
 brew "bob"
 brew "chezmoi"
 brew "curl"
+brew "datadog-labs/pack/pup"
 brew "eza"
 brew "fd"
 brew "fzf"

@@ -328,8 +328,8 @@ check_package_manifests() {
   diff -u "$sorted" "$brew_formulae" >/dev/null || \
     fail "Brew formula entries must be sorted and unique"
   [[ $(cat "$brew_casks") == copilot-cli ]] || fail "copilot-cli must be the only shared cask"
-  [[ $(awk '$1 == "tap" { print }' "$brew_manifest") == 'tap "anomalyco/tap"' ]] || \
-    fail "anomalyco/tap must be the only shared tap"
+  [[ $(awk '$1 == "tap" { print }' "$brew_manifest") == $'tap "anomalyco/tap"\ntap "datadog-labs/pack"' ]] || \
+    fail "macOS taps must match the package contract"
   { cat "$brew_formulae"; cat "$brew_casks"; } | LC_ALL=C sort >"$brew_entries"
 
   cat >"$fedora_commands" <<'EOF'
@@ -385,6 +385,7 @@ mise
 mosh
 opencode
 pi
+pup
 rg
 sheldon
 starship
@@ -571,7 +572,7 @@ check_bootstrap_contract() {
   local tpm_installer="$WORK/tpm-installer.sh"
   local manifest_backup="$WORK/manifest-backup"
   local bootstrap_files="$WORK/bootstrap-files"
-  local relative_path rendered_hook runtime_file secure_line trust_line bundle_line
+  local relative_path rendered_hook runtime_file secure_line trust_line datadog_trust_line bundle_line
 
   for file in "$guard" "$mac_hook" "$fedora_hook" "$shell_hook" "$tpm_hook"; do
     [[ -f "$hooks/$file" ]] || fail "missing ordered bootstrap hook: $file"
@@ -616,12 +617,15 @@ check_bootstrap_contract() {
     fail "macOS package hook does not secure the Homebrew trust directory"
   grep -Fq 'trust --tap anomalyco/tap' "$hooks/$mac_hook" || \
     fail "macOS package hook does not trust the declared OpenCode tap"
+  grep -Fq 'trust --tap datadog-labs/pack' "$hooks/$mac_hook" || \
+    fail "macOS package hook does not trust the declared Datadog tap"
   grep -Fq 'bundle --file=' "$hooks/$mac_hook" || fail "macOS package hook omits brew bundle"
   secure_line=$(grep -n 'install -d -m 700 "$trust_dir"' "$hooks/$mac_hook" | cut -d: -f1)
   trust_line=$(grep -n 'trust --tap anomalyco/tap' "$hooks/$mac_hook" | cut -d: -f1)
+  datadog_trust_line=$(grep -n 'trust --tap datadog-labs/pack' "$hooks/$mac_hook" | cut -d: -f1)
   bundle_line=$(grep -n 'bundle --file=' "$hooks/$mac_hook" | cut -d: -f1)
-  (( secure_line < trust_line && trust_line < bundle_line )) || \
-    fail "macOS package hook must secure, trust, then run brew bundle"
+  (( secure_line < trust_line && trust_line < datadog_trust_line && datadog_trust_line < bundle_line )) || \
+    fail "macOS package hook must secure, trust both taps, then run brew bundle"
   grep -Fq '# Fedora manifest SHA-256:' "$hooks/$fedora_hook" || \
     fail "Fedora package hook is not content-addressed to its manifest"
   grep -Fq 'sudo dnf install -y' "$hooks/$fedora_hook" || fail "Fedora package hook omits DNF install"
@@ -1593,6 +1597,44 @@ render_platform() {
   for source_only in README.md docs packages research scripts tests; do
     [[ ! -e "$rendered/$source_only" ]] || fail "source-only path leaked into $platform home: $source_only"
   done
+  if [[ "$platform" == darwin ]]; then
+    for skill in dd-apm dd-audit dd-docs dd-pup; do
+      [[ -f "$rendered/.agents/skills/$skill/SKILL.md" ]] || \
+        fail "macOS render is missing Datadog skill: $skill"
+    done
+    if find "$rendered/.agents/skills/dd-apm" "$rendered/.agents/skills/dd-audit" \
+        -mindepth 2 -name SKILL.md -print -quit | grep -q .; then
+      fail "nested Datadog workflows are exposed as independently discoverable skills"
+    fi
+    [[ $(find "$rendered/.agents/skills/dd-apm" "$rendered/.agents/skills/dd-audit" \
+        -name WORKFLOW.md | wc -l | tr -d '[:space:]') == 16 ]] || \
+      fail "macOS render is missing pinned Datadog reference workflows"
+    for skill in dd-apm dd-audit dd-docs dd-pup; do
+      grep -Fq '69cca0e752d3a703d0b16ce7eaeaa787f2f90fd4' \
+        "$rendered/.agents/skills/$skill/UPSTREAM.md" || \
+        fail "Datadog skill lost its pinned provenance: $skill"
+    done
+    [[ -f "$rendered/.config/pup/config.yaml" ]] || \
+      fail "macOS render is missing Pup configuration"
+    grep -Fq 'read_only: true' "$rendered/.config/pup/config.yaml" || \
+      fail "macOS Pup configuration is not read-only"
+    [[ $(python3 -c 'import os,stat,sys; print(f"{stat.S_IMODE(os.stat(sys.argv[1]).st_mode):o}")' \
+        "$rendered/.config/pup") == 700 ]] || \
+      fail "macOS Pup configuration directory is not mode 0700"
+    [[ $(python3 -c 'import os,stat,sys; print(f"{stat.S_IMODE(os.stat(sys.argv[1]).st_mode):o}")' \
+        "$rendered/.config/pup/config.yaml") == 600 ]] || \
+      fail "macOS Pup configuration is not mode 0600"
+  else
+    for datadog_path in \
+      "$rendered/.agents/skills/dd-apm" \
+      "$rendered/.agents/skills/dd-audit" \
+      "$rendered/.agents/skills/dd-docs" \
+      "$rendered/.agents/skills/dd-pup" \
+      "$rendered/.config/pup"; do
+      [[ ! -e "$datadog_path" && ! -L "$datadog_path" ]] || \
+        fail "Datadog configuration leaked into $platform render: $datadog_path"
+    done
+  fi
   [[ $(python3 -c 'import os,stat,sys; print(f"{stat.S_IMODE(os.stat(sys.argv[1]).st_mode):o}")' \
       "$rendered/.config/opencode/opencode.jsonc") == 600 ]] || \
     fail "$platform rendered OpenCode configuration is not mode 0600"

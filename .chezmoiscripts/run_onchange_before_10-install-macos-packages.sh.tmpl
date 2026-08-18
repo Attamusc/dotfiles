@@ -24,5 +24,6 @@ if [[ -n ${XDG_CONFIG_HOME:-} ]]; then
 fi
 install -d -m 700 "$trust_dir"
 "$brew" trust --tap anomalyco/tap
+"$brew" trust --tap datadog-labs/pack
 "$brew" bundle --file="{{ .chezmoi.sourceDir }}/packages/Brewfile"
 {{- end -}}

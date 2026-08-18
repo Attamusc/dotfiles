@@ -1,0 +1,2 @@
+# Datadog skill content is byte-preserved from pinned upstream revisions.
+dot_agents/skills/dd-*/**/*.md whitespace=-blank-at-eol

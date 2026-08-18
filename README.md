@@ -84,6 +84,7 @@ The shared workflow includes:
 | Fedora package gaps | — | mise/Aqua |
 | Pi | Homebrew | mise npm backend |
 | Copilot CLI | Homebrew cask | mise npm backend |
+| Datadog Pup CLI and product skills | Homebrew + `~/.agents/skills/` | — |
 | Neovim | Bob stable | Bob stable |
 | Neovim parser toolchain | Xcode compiler + Homebrew tree-sitter CLI | DNF GCC + tree-sitter CLI |
 | pi-hunk-review core | Authenticated release archive | Authenticated release archive |
@@ -109,6 +110,11 @@ examples.
 Specialist packages are also machine-owned: cloud/Kubernetes CLIs, container
 engines, additional language toolchains and language servers, QMK, Ollama, and
 OCR/media tooling are outside the shared manifests.
+
+Datadog is the macOS exception: the official Pup CLI and pinned `dd-docs`,
+`dd-pup`, `dd-audit`, and `dd-apm` skills are installed for Pi and OpenCode.
+Pup defaults to enforced read-only mode, and OAuth credentials remain in Pup's
+secure machine-local storage. Fedora renders none of this Datadog configuration.
 
 ## Preview and apply
 
@@ -147,6 +153,7 @@ command -v nvim
 nvim --headless '+qa'
 pi list
 gh auth status --hostname github.com
+if [[ $(uname -s) == Darwin ]]; then command -v pup; fi
 ```
 
 Start Pi inside Herdr, open one child agent in a visible pane, then detach and
