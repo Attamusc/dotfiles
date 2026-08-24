@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { existsSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import { dirname, join } from "node:path";
 import { homedir, tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
@@ -16,9 +17,39 @@ const testDir = dirname(fileURLToPath(import.meta.url));
 const sourceTreeRoot = join(testDir, "..", "..", "..");
 const runningFromSource = existsSync(join(sourceTreeRoot, ".data", "pi", "agent", "settings.json"));
 const agentDir = join(testDir, "..", "agents");
+const agentFiles = readdirSync(agentDir)
+  .filter((name) => name.endsWith(".md") || name.endsWith(".md.tmpl"))
+  .map((name) => name.replace(/\.tmpl$/, ""))
+  .sort();
+
+function readManagedPiFile(relativePath) {
+  if (runningFromSource) {
+    return execFileSync("chezmoi", ["cat", join(homedir(), ".pi", "agent", relativePath)], {
+      cwd: sourceTreeRoot,
+      encoding: "utf8",
+    });
+  }
+  return readFileSync(join(testDir, "..", relativePath), "utf8");
+}
+
+function modelProviders() {
+  if (!runningFromSource) {
+    return {
+      gpt: parseAgent("planner.md").model.split("/", 1)[0],
+      claude: parseAgent("reviewer.md").model.split("/", 1)[0],
+    };
+  }
+
+  const publicProviders = JSON.parse(
+    readFileSync(join(sourceTreeRoot, ".data", "pi", "agent", "model-providers.json"), "utf8"),
+  );
+  const privatePath = join(sourceTreeRoot, ".data-private", "pi", "agent", "model-providers.json");
+  if (!existsSync(privatePath)) return publicProviders;
+  return { ...publicProviders, ...JSON.parse(readFileSync(privatePath, "utf8")) };
+}
 
 function parseAgent(file) {
-  const source = readFileSync(join(agentDir, file), "utf8");
+  const source = readManagedPiFile(join("agents", file));
   const frontmatterEnd = source.indexOf("---", 3);
   const frontmatter = source.slice(3, frontmatterEnd);
   const body = source.slice(frontmatterEnd + 3);
@@ -102,7 +133,7 @@ test("dynamic Copilot models omit xhigh when the provider does not advertise it"
 test("restricted agents receive every tool required by their instructions", () => {
   const failures = [];
 
-  for (const file of readdirSync(agentDir).filter((name) => name.endsWith(".md"))) {
+  for (const file of agentFiles) {
     const agent = parseAgent(file);
     if (!agent.tools) continue;
 
@@ -131,33 +162,29 @@ test("every agent declares its effort explicitly instead of inheriting the defau
   // Effort inherited from defaultThinkingLevel moves whenever the orchestrator is
   // retuned. That is how scout ended up doing retrieval at `high` without anyone
   // choosing it. Per-seat effort is a measured decision; record it at the seat.
-  const inherited = readdirSync(agentDir)
-    .filter((name) => name.endsWith(".md"))
-    .filter((name) => parseAgent(name).thinking === undefined);
+  const inherited = agentFiles.filter((name) => parseAgent(name).thinking === undefined);
 
   assert.deepEqual(inherited, []);
 });
 
 test("fleet routes GPT producers to independent Claude reviewers", () => {
+  const providers = modelProviders();
   const expectedModels = {
-    "adversarial-reviewer.md": "github-copilot/claude-opus-5.5",
-    "planner.md": "github-copilot/gpt-6-sol",
-    "researcher.md": "github-copilot/gpt-5.6-terra",
-    "reviewer.md": "github-copilot/claude-sonnet-5",
-    "scout.md": "github-copilot/gpt-6-luna",
-    "validator.md": "github-copilot/claude-opus-5.5",
-    "worker.md": "github-copilot/gpt-6-sol",
+    "adversarial-reviewer.md": `${providers.claude}/claude-opus-5.5`,
+    "planner.md": `${providers.gpt}/gpt-6-sol`,
+    "researcher.md": `${providers.gpt}/gpt-5.6-terra`,
+    "reviewer.md": `${providers.claude}/claude-sonnet-5`,
+    "scout.md": `${providers.gpt}/gpt-6-luna`,
+    "validator.md": `${providers.claude}/claude-opus-5.5`,
+    "worker.md": `${providers.gpt}/gpt-6-sol`,
   };
 
   for (const [file, model] of Object.entries(expectedModels)) {
     assert.equal(parseAgent(file).model, model, file);
   }
 
-  const settingsPath = runningFromSource
-    ? join(sourceTreeRoot, ".data", "pi", "agent", "settings.json")
-    : join(testDir, "..", "settings.json");
-  const settings = JSON.parse(readFileSync(settingsPath, "utf8"));
-  assert.equal(settings.defaultProvider, "github-copilot");
+  const settings = JSON.parse(readManagedPiFile("settings.json"));
+  assert.equal(settings.defaultProvider, providers.gpt);
   assert.equal(settings.defaultModel, "gpt-6-sol");
 });
 
@@ -165,7 +192,13 @@ test("OpenCode and Copilot prefer GPT with a Claude advisor boundary", () => {
   const openCodeRoot = runningFromSource
     ? join(sourceTreeRoot, "dot_config", "opencode")
     : join(homedir(), ".config", "opencode");
-  const openCodeSettings = JSON.parse(readFileSync(join(openCodeRoot, "opencode.jsonc"), "utf8"));
+  const openCodeSettingsSource = runningFromSource
+    ? execFileSync("chezmoi", ["cat", join(homedir(), ".config", "opencode", "opencode.jsonc")], {
+        cwd: sourceTreeRoot,
+        encoding: "utf8",
+      })
+    : readFileSync(join(openCodeRoot, "opencode.jsonc"), "utf8");
+  const openCodeSettings = JSON.parse(openCodeSettingsSource);
   assert.equal(openCodeSettings.model, "github-copilot/gpt-6-sol");
 
   const openCodeModels = {
@@ -189,16 +222,18 @@ test("OpenCode and Copilot prefer GPT with a Claude advisor boundary", () => {
 });
 
 test("nested utilities and code review preserve their routing boundaries", () => {
-  const extensionRoot = join(testDir, "..", "extensions");
-  const answerSource = readFileSync(join(extensionRoot, "answer", "index.ts"), "utf8");
+  const providers = modelProviders();
+  const answerSource = readManagedPiFile(join("extensions", "answer", "index.ts"));
+  assert.match(answerSource, new RegExp(`const PROVIDER_ID = "${providers.gpt}";`));
   assert.match(answerSource, /const EXTRACTION_MODEL_ID = "gpt-6-luna";/);
 
-  const smartSessionsSource = readFileSync(join(extensionRoot, "smart-sessions", "index.ts"), "utf8");
+  const smartSessionsSource = readManagedPiFile(join("extensions", "smart-sessions", "index.ts"));
+  assert.match(smartSessionsSource, new RegExp(`const GPT_PROVIDER_ID = "${providers.gpt}";`));
   assert.match(smartSessionsSource, /const LUNA_MODEL_ID = "gpt-6-luna";/);
   assert.ok(
-    smartSessionsSource.indexOf('find("github-copilot", LUNA_MODEL_ID)') <
+    smartSessionsSource.indexOf("find(GPT_PROVIDER_ID, LUNA_MODEL_ID)") <
       smartSessionsSource.indexOf('find("anthropic", HAIKU_MODEL_ID)'),
-    "smart sessions must prefer Copilot Luna before the Anthropic fallback",
+    "smart sessions must prefer configured Luna before the Anthropic fallback",
   );
 
   const codeReviewSource = readFileSync(join(testDir, "..", "skills", "code-review", "SKILL.md"), "utf8");

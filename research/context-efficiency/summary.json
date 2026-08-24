@@ -1,0 +1,398 @@
+{
+  "aggregates": {
+    "efficiencyWinCount": 0,
+    "validPairCount": 4
+  },
+  "pairs": [
+    {
+      "pairOrder": [
+        "direct",
+        "scout-first"
+      ],
+      "runs": [
+        {
+          "concurrency": {
+            "details": "Task pairs ran sequentially; orchestrator waited during the batch. Other account activity was not independently observable.",
+            "status": "unknown"
+          },
+          "correct": true,
+          "efficiencyWin": false,
+          "followUp": {
+            "parentBashCallsAfterScout": 0,
+            "parentReadCallsAfterScout": 0
+          },
+          "invalidReasons": [],
+          "latencyMs": 52871,
+          "pairPosition": 1,
+          "peakParentInputFootprint": 10801,
+          "quotaReferences": {
+            "afterObservation": null,
+            "attribution": "unavailable",
+            "beforeObservation": null
+          },
+          "strategy": "direct",
+          "usage": {
+            "combined": {
+              "cacheRead": 28672,
+              "cacheWrite": 0,
+              "input": 12801,
+              "output": 1125,
+              "totalTokens": 42598
+            },
+            "parent": {
+              "cacheRead": 28672,
+              "cacheWrite": 0,
+              "input": 12801,
+              "output": 1125,
+              "totalTokens": 42598
+            },
+            "scouts": []
+          },
+          "valid": true
+        },
+        {
+          "concurrency": {
+            "details": "Task pairs ran sequentially; orchestrator waited during the batch. Other account activity was not independently observable.",
+            "status": "unknown"
+          },
+          "correct": true,
+          "efficiencyWin": false,
+          "followUp": {
+            "parentBashCallsAfterScout": 1,
+            "parentReadCallsAfterScout": 7
+          },
+          "invalidReasons": [],
+          "latencyMs": 106803,
+          "pairPosition": 2,
+          "peakParentInputFootprint": 7951,
+          "quotaReferences": {
+            "afterObservation": null,
+            "attribution": "unavailable",
+            "beforeObservation": null
+          },
+          "strategy": "scout-first",
+          "usage": {
+            "combined": {
+              "cacheRead": 168320,
+              "cacheWrite": 0,
+              "input": 31672,
+              "output": 2417,
+              "totalTokens": 202409
+            },
+            "parent": {
+              "cacheRead": 45952,
+              "cacheWrite": 0,
+              "input": 9282,
+              "output": 1406,
+              "totalTokens": 56640
+            },
+            "scouts": [
+              {
+                "cacheRead": 122368,
+                "cacheWrite": 0,
+                "input": 22390,
+                "output": 1011,
+                "totalTokens": 145769
+              }
+            ]
+          },
+          "valid": true
+        }
+      ],
+      "taskId": "implementation-inventory"
+    },
+    {
+      "pairOrder": [
+        "scout-first",
+        "direct"
+      ],
+      "runs": [
+        {
+          "concurrency": {
+            "details": "Task pairs ran sequentially; orchestrator waited during the batch. Other account activity was not independently observable.",
+            "status": "unknown"
+          },
+          "correct": true,
+          "efficiencyWin": false,
+          "followUp": {
+            "parentBashCallsAfterScout": 1,
+            "parentReadCallsAfterScout": 5
+          },
+          "invalidReasons": [],
+          "latencyMs": 126558,
+          "pairPosition": 1,
+          "peakParentInputFootprint": 13890,
+          "quotaReferences": {
+            "afterObservation": null,
+            "attribution": "unavailable",
+            "beforeObservation": null
+          },
+          "strategy": "scout-first",
+          "usage": {
+            "combined": {
+              "cacheRead": 84864,
+              "cacheWrite": 0,
+              "input": 29557,
+              "output": 3667,
+              "totalTokens": 118088
+            },
+            "parent": {
+              "cacheRead": 45440,
+              "cacheWrite": 0,
+              "input": 19469,
+              "output": 2103,
+              "totalTokens": 67012
+            },
+            "scouts": [
+              {
+                "cacheRead": 39424,
+                "cacheWrite": 0,
+                "input": 10088,
+                "output": 1564,
+                "totalTokens": 51076
+              }
+            ]
+          },
+          "valid": true
+        },
+        {
+          "concurrency": {
+            "details": "Task pairs ran sequentially; orchestrator waited during the batch. Other account activity was not independently observable.",
+            "status": "unknown"
+          },
+          "correct": true,
+          "efficiencyWin": false,
+          "followUp": {
+            "parentBashCallsAfterScout": 0,
+            "parentReadCallsAfterScout": 0
+          },
+          "invalidReasons": [],
+          "latencyMs": 75488,
+          "pairPosition": 2,
+          "peakParentInputFootprint": 11162,
+          "quotaReferences": {
+            "afterObservation": null,
+            "attribution": "unavailable",
+            "beforeObservation": null
+          },
+          "strategy": "direct",
+          "usage": {
+            "combined": {
+              "cacheRead": 37248,
+              "cacheWrite": 0,
+              "input": 20032,
+              "output": 1590,
+              "totalTokens": 58870
+            },
+            "parent": {
+              "cacheRead": 37248,
+              "cacheWrite": 0,
+              "input": 20032,
+              "output": 1590,
+              "totalTokens": 58870
+            },
+            "scouts": []
+          },
+          "valid": true
+        }
+      ],
+      "taskId": "repeated-pattern-extraction"
+    },
+    {
+      "pairOrder": [
+        "direct",
+        "scout-first"
+      ],
+      "runs": [
+        {
+          "concurrency": {
+            "details": "Task pairs ran sequentially; orchestrator waited during the batch. Other account activity was not independently observable.",
+            "status": "unknown"
+          },
+          "correct": false,
+          "efficiencyWin": false,
+          "followUp": {
+            "parentBashCallsAfterScout": 0,
+            "parentReadCallsAfterScout": 0
+          },
+          "invalidReasons": [],
+          "latencyMs": 61205,
+          "pairPosition": 1,
+          "peakParentInputFootprint": 39792,
+          "quotaReferences": {
+            "afterObservation": null,
+            "attribution": "unavailable",
+            "beforeObservation": null
+          },
+          "strategy": "direct",
+          "usage": {
+            "combined": {
+              "cacheRead": 86912,
+              "cacheWrite": 0,
+              "input": 41584,
+              "output": 1294,
+              "totalTokens": 129790
+            },
+            "parent": {
+              "cacheRead": 86912,
+              "cacheWrite": 0,
+              "input": 41584,
+              "output": 1294,
+              "totalTokens": 129790
+            },
+            "scouts": []
+          },
+          "valid": true
+        },
+        {
+          "concurrency": {
+            "details": "Task pairs ran sequentially; orchestrator waited during the batch. Other account activity was not independently observable.",
+            "status": "unknown"
+          },
+          "correct": false,
+          "efficiencyWin": false,
+          "followUp": {
+            "parentBashCallsAfterScout": 0,
+            "parentReadCallsAfterScout": 13
+          },
+          "invalidReasons": [],
+          "latencyMs": 120119,
+          "pairPosition": 2,
+          "peakParentInputFootprint": 7825,
+          "quotaReferences": {
+            "afterObservation": null,
+            "attribution": "unavailable",
+            "beforeObservation": null
+          },
+          "strategy": "scout-first",
+          "usage": {
+            "combined": {
+              "cacheRead": 77568,
+              "cacheWrite": 0,
+              "input": 76913,
+              "output": 3161,
+              "totalTokens": 157642
+            },
+            "parent": {
+              "cacheRead": 56064,
+              "cacheWrite": 0,
+              "input": 27113,
+              "output": 1706,
+              "totalTokens": 84883
+            },
+            "scouts": [
+              {
+                "cacheRead": 21504,
+                "cacheWrite": 0,
+                "input": 49800,
+                "output": 1455,
+                "totalTokens": 72759
+              }
+            ]
+          },
+          "valid": true
+        }
+      ],
+      "taskId": "large-log-summarization"
+    },
+    {
+      "pairOrder": [
+        "scout-first",
+        "direct"
+      ],
+      "runs": [
+        {
+          "concurrency": {
+            "details": "Task pairs ran sequentially; orchestrator waited during the batch. Other account activity was not independently observable.",
+            "status": "unknown"
+          },
+          "correct": true,
+          "efficiencyWin": false,
+          "followUp": {
+            "parentBashCallsAfterScout": 0,
+            "parentReadCallsAfterScout": 2
+          },
+          "invalidReasons": [],
+          "latencyMs": 82184,
+          "pairPosition": 1,
+          "peakParentInputFootprint": 4513,
+          "quotaReferences": {
+            "afterObservation": null,
+            "attribution": "unavailable",
+            "beforeObservation": null
+          },
+          "strategy": "scout-first",
+          "usage": {
+            "combined": {
+              "cacheRead": 31616,
+              "cacheWrite": 0,
+              "input": 19077,
+              "output": 2505,
+              "totalTokens": 53198
+            },
+            "parent": {
+              "cacheRead": 10112,
+              "cacheWrite": 0,
+              "input": 5043,
+              "output": 1714,
+              "totalTokens": 16869
+            },
+            "scouts": [
+              {
+                "cacheRead": 21504,
+                "cacheWrite": 0,
+                "input": 14034,
+                "output": 791,
+                "totalTokens": 36329
+              }
+            ]
+          },
+          "valid": true
+        },
+        {
+          "concurrency": {
+            "details": "Task pairs ran sequentially; orchestrator waited during the batch. Other account activity was not independently observable.",
+            "status": "unknown"
+          },
+          "correct": true,
+          "efficiencyWin": false,
+          "followUp": {
+            "parentBashCallsAfterScout": 0,
+            "parentReadCallsAfterScout": 0
+          },
+          "invalidReasons": [],
+          "latencyMs": 63182,
+          "pairPosition": 2,
+          "peakParentInputFootprint": 3401,
+          "quotaReferences": {
+            "afterObservation": null,
+            "attribution": "unavailable",
+            "beforeObservation": null
+          },
+          "strategy": "direct",
+          "usage": {
+            "combined": {
+              "cacheRead": 4864,
+              "cacheWrite": 0,
+              "input": 7095,
+              "output": 1277,
+              "totalTokens": 13236
+            },
+            "parent": {
+              "cacheRead": 4864,
+              "cacheWrite": 0,
+              "input": 7095,
+              "output": 1277,
+              "totalTokens": 13236
+            },
+            "scouts": []
+          },
+          "valid": true
+        }
+      ],
+      "taskId": "exact-integration-contract"
+    }
+  ],
+  "recommendation": "Provisional: actual complete runs require operator review.",
+  "schemaVersion": 1
+}

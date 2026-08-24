@@ -1,0 +1,7 @@
+{{- $providers := include ".data/pi/agent/model-providers.json" | mustFromJson -}}
+{{- $privatePath := joinPath .sourceDir ".data-private/pi/agent/model-providers.json" -}}
+{{- if stat $privatePath -}}
+{{-   $private := include ".data-private/pi/agent/model-providers.json" | mustFromJson -}}
+{{-   $providers = merge (deepCopy $private) $providers -}}
+{{- end -}}
+{{- index $providers .family -}}

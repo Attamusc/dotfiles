@@ -26,6 +26,33 @@ Do not retain a local checkout when the same extension is supplied by a public
 Git package; Pi treats the local path and Git URL as different package
 identities and loads both.
 
+### Pi model providers
+
+`.data/pi/agent/model-providers.json` maps GPT and Claude model families to
+providers. Override either family for one machine in
+`.data-private/pi/agent/model-providers.json`; agent definitions and utility
+extensions render from this map.
+
+```json
+{
+  "gpt": "openai-codex",
+  "claude": "anthropic"
+}
+```
+
+When a machine does not use GitHub Copilot, its private Pi settings should also
+set the matching `defaultProvider` and exclude the Copilot discovery extension:
+
+```json
+{
+  "defaultProvider": "openai-codex",
+  "extensions": ["-extensions/github-copilot-dynamic/index.ts"]
+}
+```
+
+Provider authentication remains in Pi's mode-0600 `auth.json`, not in chezmoi
+source data.
+
 ## MCP settings
 
 MCP maps merge by server key. A private key adds a server or replaces the

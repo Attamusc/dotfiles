@@ -3,7 +3,7 @@ name: scout
 description: Fast codebase reconnaissance - maps existing code, conventions, and patterns for a task
 tools: read, bash, write
 deny-tools: claude
-model: github-copilot/gpt-6-luna
+model: {{ includeTemplate "pi-model-provider" (dict "family" "gpt" "sourceDir" .chezmoi.sourceDir) }}/gpt-6-luna
 thinking: low
 output: context.md
 spawning: false

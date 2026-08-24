@@ -1,0 +1,273 @@
+{
+  "schemaVersion": 1,
+  "protocolRevision": 2,
+  "taskId": "exact-integration-contract",
+  "strategy": "scout-first",
+  "pairPosition": 1,
+  "status": "complete",
+  "parentSession": "/home/attamusc/.local/state/pi/context-efficiency/2026-09-06/protocol-2/exact-integration-contract-scout-first/sessions/2026-09-06T20-02-19-888Z_01a07850-8c70-71f3-a7b2-33d91c7b96ab.jsonl",
+  "scoutSessions": [
+    "/home/attamusc/.pi/agent/sessions/--home-attamusc-.local-share-chezmoi--/2026-09-06T20-02-30-777Z_5b592271-0d4fc5c3-f5101f46-9b31.jsonl"
+  ],
+  "startedAt": "2026-09-06T20:02:19.888Z",
+  "endedAt": "2026-09-06T20:03:42.072Z",
+  "latencyMs": 82184,
+  "observedConditions": {
+    "parentProvider": "openai-codex",
+    "parentModel": "gpt-6-astra",
+    "parentThinking": "high",
+    "parentTools": [
+      "read",
+      "bash",
+      "subagent"
+    ],
+    "child": {
+      "agent": "scout",
+      "provider": "openai-codex",
+      "model": "gpt-5.6-luna",
+      "thinking": "low",
+      "tools": [
+        "read",
+        "bash"
+      ]
+    },
+    "promptSha256": "53ee632b8a52c25119177d3b407763cf87857eeec511bced6fb714974474f65f",
+    "corpus": [
+      {
+        "path": "corpus/exact-contract/index.ts",
+        "sha256": "5e96c4c5490fefa76be73de639dd210e884174b9328ca59de4c97db62e560dbf"
+      },
+      {
+        "path": "corpus/exact-contract/policy.ts",
+        "sha256": "034ff1c459151fd588b18b8f694ebd6d0abd2c16c34e8066fbcfbf5d4b8ee481"
+      }
+    ]
+  },
+  "correctness": {
+    "facts": [
+      {
+        "factId": "F1",
+        "factScore": 1,
+        "citationScore": 1,
+        "acceptedCitations": [
+          {
+            "path": "corpus/exact-contract/index.ts",
+            "startLine": 17,
+            "endLine": 34
+          },
+          {
+            "path": "corpus/exact-contract/policy.ts",
+            "startLine": 31,
+            "endLine": 61
+          },
+          {
+            "path": "corpus/exact-contract/policy.ts",
+            "startLine": 63,
+            "endLine": 79
+          }
+        ],
+        "reviewerNote": "Required behavior is supported: subagents receive a block decision, parents receive confirmation, and noninteractive parents block confirmation-required commands."
+      },
+      {
+        "factId": "F2",
+        "factScore": 1,
+        "citationScore": 1,
+        "acceptedCitations": [
+          {
+            "path": "corpus/exact-contract/policy.ts",
+            "startLine": 4,
+            "endLine": 26
+          },
+          {
+            "path": "corpus/exact-contract/policy.ts",
+            "startLine": 63,
+            "endLine": 79
+          }
+        ],
+        "reviewerNote": "Supported: recoverable commands are considered only in the isSubagent branch. In the surrounding paragraph, \u201cNo classification returns undefined\u201d reads as \u201cwhen there is no classification, [the function] returns undefined,\u201d contrasted with classified commands producing authorization decisions; it is not a demonstrated contradiction."
+      },
+      {
+        "factId": "F3",
+        "factScore": 1,
+        "citationScore": 1,
+        "acceptedCitations": [
+          {
+            "path": "corpus/exact-contract/index.ts",
+            "startLine": 36,
+            "endLine": 44
+          }
+        ],
+        "reviewerNote": "Supported: the handler returns for non-subagents before calling inspectDiscoveryCommand."
+      },
+      {
+        "factId": "F4",
+        "factScore": 1,
+        "citationScore": 1,
+        "acceptedCitations": [
+          {
+            "path": "corpus/exact-contract/policy.ts",
+            "startLine": 4,
+            "endLine": 26
+          },
+          {
+            "path": "corpus/exact-contract/policy.ts",
+            "startLine": 81,
+            "endLine": 95
+          }
+        ],
+        "reviewerNote": "Supported: unbounded discovery patterns block; other discovery commands receive timeout 30 unless a listed long-running command matches. Operator normalized the recorded citation to the final answer's actual 4-26 range; supporting patterns are at 4-10 within it."
+      },
+      {
+        "factId": "F5",
+        "factScore": 1,
+        "citationScore": 1,
+        "acceptedCitations": [
+          {
+            "path": "corpus/exact-contract/index.ts",
+            "startLine": 36,
+            "endLine": 44
+          }
+        ],
+        "reviewerNote": "Supported: timeout is assigned only when event.input.timeout is undefined."
+      }
+    ],
+    "contradictions": [],
+    "correct": true,
+    "scoredBy": "reviewer/openai-codex/gpt-5.6-terra",
+    "scoredAt": "2026-09-06T20:13:54.498930Z"
+  },
+  "followUp": {
+    "parentReadCallsAfterScout": 2,
+    "parentBashCallsAfterScout": 0
+  },
+  "parentVerification": {
+    "childCompletedSequence": 7,
+    "finalAnswerSequence": 12,
+    "parentReads": [
+      {
+        "toolCallId": "call_Kp2F0h59QVOAWlFCycetGfh8|fc_0363802c031e22c5016a9dc6ef8bd487d1a23ecec84c2074bf",
+        "path": "corpus/exact-contract/index.ts",
+        "startLine": 1,
+        "endLine": 45,
+        "completedSequence": 9
+      },
+      {
+        "toolCallId": "call_Xyj7GT3kohyd3kErYBIdKthk|fc_0363802c031e22c5016a9dc6f2859487d18568d38ae3fa1028",
+        "path": "corpus/exact-contract/policy.ts",
+        "startLine": 1,
+        "endLine": 96,
+        "completedSequence": 11
+      }
+    ],
+    "factRangeMappings": [
+      {
+        "factId": "F1",
+        "citation": {
+          "path": "corpus/exact-contract/index.ts",
+          "startLine": 17,
+          "endLine": 34
+        },
+        "parentReadToolCallIds": [
+          "call_Kp2F0h59QVOAWlFCycetGfh8|fc_0363802c031e22c5016a9dc6ef8bd487d1a23ecec84c2074bf"
+        ]
+      },
+      {
+        "factId": "F1",
+        "citation": {
+          "path": "corpus/exact-contract/policy.ts",
+          "startLine": 31,
+          "endLine": 61
+        },
+        "parentReadToolCallIds": [
+          "call_Xyj7GT3kohyd3kErYBIdKthk|fc_0363802c031e22c5016a9dc6f2859487d18568d38ae3fa1028"
+        ]
+      },
+      {
+        "factId": "F1",
+        "citation": {
+          "path": "corpus/exact-contract/policy.ts",
+          "startLine": 63,
+          "endLine": 79
+        },
+        "parentReadToolCallIds": [
+          "call_Xyj7GT3kohyd3kErYBIdKthk|fc_0363802c031e22c5016a9dc6f2859487d18568d38ae3fa1028"
+        ]
+      },
+      {
+        "factId": "F2",
+        "citation": {
+          "path": "corpus/exact-contract/policy.ts",
+          "startLine": 4,
+          "endLine": 26
+        },
+        "parentReadToolCallIds": [
+          "call_Xyj7GT3kohyd3kErYBIdKthk|fc_0363802c031e22c5016a9dc6f2859487d18568d38ae3fa1028"
+        ]
+      },
+      {
+        "factId": "F2",
+        "citation": {
+          "path": "corpus/exact-contract/policy.ts",
+          "startLine": 63,
+          "endLine": 79
+        },
+        "parentReadToolCallIds": [
+          "call_Xyj7GT3kohyd3kErYBIdKthk|fc_0363802c031e22c5016a9dc6f2859487d18568d38ae3fa1028"
+        ]
+      },
+      {
+        "factId": "F3",
+        "citation": {
+          "path": "corpus/exact-contract/index.ts",
+          "startLine": 36,
+          "endLine": 44
+        },
+        "parentReadToolCallIds": [
+          "call_Kp2F0h59QVOAWlFCycetGfh8|fc_0363802c031e22c5016a9dc6ef8bd487d1a23ecec84c2074bf"
+        ]
+      },
+      {
+        "factId": "F4",
+        "citation": {
+          "path": "corpus/exact-contract/policy.ts",
+          "startLine": 4,
+          "endLine": 26
+        },
+        "parentReadToolCallIds": [
+          "call_Xyj7GT3kohyd3kErYBIdKthk|fc_0363802c031e22c5016a9dc6f2859487d18568d38ae3fa1028"
+        ]
+      },
+      {
+        "factId": "F4",
+        "citation": {
+          "path": "corpus/exact-contract/policy.ts",
+          "startLine": 81,
+          "endLine": 95
+        },
+        "parentReadToolCallIds": [
+          "call_Xyj7GT3kohyd3kErYBIdKthk|fc_0363802c031e22c5016a9dc6f2859487d18568d38ae3fa1028"
+        ]
+      },
+      {
+        "factId": "F5",
+        "citation": {
+          "path": "corpus/exact-contract/index.ts",
+          "startLine": 36,
+          "endLine": 44
+        },
+        "parentReadToolCallIds": [
+          "call_Kp2F0h59QVOAWlFCycetGfh8|fc_0363802c031e22c5016a9dc6ef8bd487d1a23ecec84c2074bf"
+        ]
+      }
+    ]
+  },
+  "concurrency": {
+    "status": "unknown",
+    "details": "Task pairs ran sequentially; orchestrator waited during the batch. Other account activity was not independently observable."
+  },
+  "quotaReferences": {
+    "beforeObservation": null,
+    "afterObservation": null,
+    "attribution": "unavailable"
+  }
+}

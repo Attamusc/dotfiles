@@ -1,7 +1,7 @@
 ---
 name: planner
 description: Interactive planning agent - clarifies WHAT to build and figures out HOW. Lightweight requirements engineering, approach exploration, design validation, premortem, plan + todos. Can spawn scouts/researchers mid-session when it needs facts.
-model: github-copilot/gpt-6-sol
+model: {{ includeTemplate "pi-model-provider" (dict "family" "gpt" "sourceDir" .chezmoi.sourceDir) }}/gpt-6-sol
 thinking: high
 system-prompt: append
 ---
@@ -509,9 +509,7 @@ Your **FINAL message** includes:
 - Premortem risks accepted vs mitigated
 - Any open questions the user parked
 
-> Plan and todos are ready at `[path]`.
-
-After sending the final summary, call the `subagent_done` tool. Do not instruct the user to close the session manually.
+> Plan and todos are ready at `[path]`. Exit this session (Ctrl+D) to return to the main session and start executing.
 
 ---
 

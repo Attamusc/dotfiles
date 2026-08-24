@@ -1,0 +1,185 @@
+{
+  "schemaVersion": 1,
+  "protocolRevision": 2,
+  "taskId": "implementation-inventory",
+  "strategy": "direct",
+  "pairPosition": 1,
+  "status": "complete",
+  "parentSession": "/home/attamusc/.local/state/pi/context-efficiency/2026-09-06/protocol-2/implementation-inventory-direct/sessions/2026-09-06T19-52-55-446Z_01a07847-ef96-7a1b-adcb-231d4806827b.jsonl",
+  "scoutSessions": [],
+  "startedAt": "2026-09-06T19:52:55.446Z",
+  "endedAt": "2026-09-06T19:53:48.317Z",
+  "latencyMs": 52871,
+  "observedConditions": {
+    "parentProvider": "openai-codex",
+    "parentModel": "gpt-6-astra",
+    "parentThinking": "high",
+    "parentTools": [
+      "read",
+      "bash"
+    ],
+    "child": {
+      "agent": null,
+      "provider": null,
+      "model": null,
+      "thinking": null,
+      "tools": []
+    },
+    "promptSha256": "bc2c81f0c95508f85cee575dbc371ad7cd4fee9627f28cfec2fd870e1489f1df",
+    "corpus": [
+      {
+        "path": "corpus/implementation-inventory/index.ts",
+        "sha256": "6f4861b87eb34ef4c5660bc84adeb807dded72aef7d9bcecaaca01780e488b46"
+      },
+      {
+        "path": "corpus/implementation-inventory/scope.ts",
+        "sha256": "0d61ba4765aa500f7695eb464d34b275626c271ff2b99601f93fbe5854d7a5fd"
+      }
+    ]
+  },
+  "correctness": {
+    "facts": [
+      {
+        "factId": "F1",
+        "factScore": 1,
+        "citationScore": 1,
+        "acceptedCitations": [
+          {
+            "path": "corpus/implementation-inventory/index.ts",
+            "startLine": 1420,
+            "endLine": 1455
+          },
+          {
+            "path": "corpus/implementation-inventory/index.ts",
+            "startLine": 1799,
+            "endLine": 1830
+          }
+        ],
+        "reviewerNote": "Supported: the final states both the registered todo tool and /todos command, and both cited ranges substantiate those entry points."
+      },
+      {
+        "factId": "F2",
+        "factScore": 1,
+        "citationScore": 1,
+        "acceptedCitations": [
+          {
+            "path": "corpus/implementation-inventory/index.ts",
+            "startLine": 60,
+            "endLine": 69
+          },
+          {
+            "path": "corpus/implementation-inventory/index.ts",
+            "startLine": 710,
+            "endLine": 728
+          }
+        ],
+        "reviewerNote": "Supported: the final identifies PI_TODO_PATH as the trimmed override and the repository-scoped ~/.pi/history default."
+      },
+      {
+        "factId": "F3",
+        "factScore": 1,
+        "citationScore": 1,
+        "acceptedCitations": [
+          {
+            "path": "corpus/implementation-inventory/scope.ts",
+            "startLine": 6,
+            "endLine": 24
+          }
+        ],
+        "reviewerNote": "Supported: repositoryRoot canonicalizes the root and projectScopeSlug combines its basename with the first eight SHA-256 hex characters."
+      },
+      {
+        "factId": "F4",
+        "factScore": 1,
+        "citationScore": 1,
+        "acceptedCitations": [
+          {
+            "path": "corpus/implementation-inventory/scope.ts",
+            "startLine": 26,
+            "endLine": 67
+          }
+        ],
+        "reviewerNote": "Supported: migration renames legacy storage into the scoped location and creates the directory compatibility symlink."
+      },
+      {
+        "factId": "F5",
+        "factScore": 1,
+        "citationScore": 1,
+        "acceptedCitations": [
+          {
+            "path": "corpus/implementation-inventory/index.ts",
+            "startLine": 60,
+            "endLine": 69
+          }
+        ],
+        "reviewerNote": "Supported: the cited LOCK_TTL_MS definition is 30 * 60 * 1000 milliseconds."
+      }
+    ],
+    "contradictions": [],
+    "correct": true,
+    "scoredBy": "reviewer/openai-codex/gpt-5.6-terra",
+    "scoredAt": "2026-09-06T20:12:15.062781Z"
+  },
+  "followUp": {
+    "parentReadCallsAfterScout": 0,
+    "parentBashCallsAfterScout": 0
+  },
+  "parentVerification": {
+    "childCompletedSequence": null,
+    "finalAnswerSequence": 18,
+    "parentReads": [
+      {
+        "toolCallId": "call_jxR3Lcswsh1SoR6IEzunkW5X|fc_09e2535402dbcbfb016a9dc49a0cd487d1b976115053fe8866",
+        "path": "corpus/implementation-inventory/index.ts",
+        "startLine": 1,
+        "endLine": 220,
+        "completedSequence": 5
+      },
+      {
+        "toolCallId": "call_gyoMQENlohFFk78biwlEofQT|fc_09e2535402dbcbfb016a9dc49cefe887d1bac200c16f7a88a2",
+        "path": "corpus/implementation-inventory/scope.ts",
+        "startLine": 1,
+        "endLine": 68,
+        "completedSequence": 7
+      },
+      {
+        "toolCallId": "call_b9vfenCury71TFy8VZMZAOEY|fc_09e2535402dbcbfb016a9dc4a233f487d19414bdeca2745cd6",
+        "path": "corpus/implementation-inventory/index.ts",
+        "startLine": 710,
+        "endLine": 794,
+        "completedSequence": 11
+      },
+      {
+        "toolCallId": "call_KqRRaP63iqJ75J9NHCVEWN10|fc_09e2535402dbcbfb016a9dc4a4b57087d1a640abfe22a62743",
+        "path": "corpus/implementation-inventory/index.ts",
+        "startLine": 919,
+        "endLine": 1019,
+        "completedSequence": 13
+      },
+      {
+        "toolCallId": "call_MYtX9WxTsNSUby0nDz8vE55A|fc_09e2535402dbcbfb016a9dc4a799d887d19f3259b32d2b78c8",
+        "path": "corpus/implementation-inventory/index.ts",
+        "startLine": 1277,
+        "endLine": 1576,
+        "completedSequence": 15
+      },
+      {
+        "toolCallId": "call_HFjxyYVpHbHPXSTe4KAvQAaI|fc_09e2535402dbcbfb016a9dc4aa4d4c87d1b87a43105ec81179",
+        "path": "corpus/implementation-inventory/index.ts",
+        "startLine": 1780,
+        "endLine": 2090,
+        "completedSequence": 17
+      }
+    ],
+    "factRangeMappings": []
+  },
+  "concurrency": {
+    "status": "unknown",
+    "details": "Task pairs ran sequentially; orchestrator waited during the batch. Other account activity was not independently observable."
+  },
+  "quotaReferences": {
+    "beforeObservation": null,
+    "afterObservation": null,
+    "attribution": "unavailable"
+  }
+}

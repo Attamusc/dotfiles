@@ -1,0 +1,332 @@
+{
+  "schemaVersion": 1,
+  "protocolRevision": 2,
+  "taskId": "repeated-pattern-extraction",
+  "strategy": "scout-first",
+  "pairPosition": 1,
+  "status": "complete",
+  "parentSession": "/home/attamusc/.local/state/pi/context-efficiency/2026-09-06/protocol-2/repeated-pattern-extraction-scout-first/sessions/2026-09-06T19-55-42-233Z_01a0784a-7b19-776e-8fc2-9e932332ca5c.jsonl",
+  "scoutSessions": [
+    "/home/attamusc/.pi/agent/sessions/--home-attamusc-.local-share-chezmoi--/2026-09-06T19-55-56-238Z_e9c5bda3-49ce132f-dc66daf8-af2b.jsonl"
+  ],
+  "startedAt": "2026-09-06T19:55:42.233Z",
+  "endedAt": "2026-09-06T19:57:48.791Z",
+  "latencyMs": 126558,
+  "observedConditions": {
+    "parentProvider": "openai-codex",
+    "parentModel": "gpt-6-astra",
+    "parentThinking": "high",
+    "parentTools": [
+      "read",
+      "bash",
+      "subagent"
+    ],
+    "child": {
+      "agent": "scout",
+      "provider": "openai-codex",
+      "model": "gpt-5.6-luna",
+      "thinking": "low",
+      "tools": [
+        "read",
+        "bash"
+      ]
+    },
+    "promptSha256": "676af7512647816f574cddb9b477c25be28c4e1fd2b020511f0d45bbd8bb2498",
+    "corpus": [
+      {
+        "path": "corpus/repeated-patterns/diagnose-and-fix.ts",
+        "sha256": "986dd542b05ba38d0c096eb23cbae776834246964ab7e9acd6f859cbc328d5bc"
+      },
+      {
+        "path": "corpus/repeated-patterns/investigate.ts",
+        "sha256": "cfa4bf277ebbcde2a3efd8269b65392dae93013b0b927aee9d04aaa4e15df9f4"
+      },
+      {
+        "path": "corpus/repeated-patterns/report-validate.ts",
+        "sha256": "c133a20f8a119f9dc8de09499b8154adfcf5c47a9e577c17d04a20190f41470d"
+      },
+      {
+        "path": "corpus/repeated-patterns/verify-claims.ts",
+        "sha256": "62bce64aeb2412c0dad02fcb1dcc3ad97aeab03ffb51acff6493d0d5fac5adf4"
+      }
+    ]
+  },
+  "correctness": {
+    "facts": [
+      {
+        "factId": "F1",
+        "factScore": 1,
+        "citationScore": 1,
+        "acceptedCitations": [
+          {
+            "path": "corpus/repeated-patterns/diagnose-and-fix.ts",
+            "startLine": 29,
+            "endLine": 76
+          },
+          {
+            "path": "corpus/repeated-patterns/diagnose-and-fix.ts",
+            "startLine": 78,
+            "endLine": 120
+          },
+          {
+            "path": "corpus/repeated-patterns/investigate.ts",
+            "startLine": 82,
+            "endLine": 144
+          },
+          {
+            "path": "corpus/repeated-patterns/investigate.ts",
+            "startLine": 150,
+            "endLine": 246
+          },
+          {
+            "path": "corpus/repeated-patterns/report-validate.ts",
+            "startLine": 51,
+            "endLine": 115
+          },
+          {
+            "path": "corpus/repeated-patterns/verify-claims.ts",
+            "startLine": 83,
+            "endLine": 164
+          },
+          {
+            "path": "corpus/repeated-patterns/verify-claims.ts",
+            "startLine": 166,
+            "endLine": 274
+          }
+        ],
+        "reviewerNote": "The cited ranges show each workflow sets wf.budget and returns wf.report on its outcome paths."
+      },
+      {
+        "factId": "F2",
+        "factScore": 1,
+        "citationScore": 1,
+        "acceptedCitations": [
+          {
+            "path": "corpus/repeated-patterns/diagnose-and-fix.ts",
+            "startLine": 29,
+            "endLine": 76
+          },
+          {
+            "path": "corpus/repeated-patterns/diagnose-and-fix.ts",
+            "startLine": 78,
+            "endLine": 120
+          },
+          {
+            "path": "corpus/repeated-patterns/investigate.ts",
+            "startLine": 82,
+            "endLine": 144
+          },
+          {
+            "path": "corpus/repeated-patterns/investigate.ts",
+            "startLine": 150,
+            "endLine": 246
+          },
+          {
+            "path": "corpus/repeated-patterns/report-validate.ts",
+            "startLine": 51,
+            "endLine": 115
+          },
+          {
+            "path": "corpus/repeated-patterns/verify-claims.ts",
+            "startLine": 83,
+            "endLine": 164
+          },
+          {
+            "path": "corpus/repeated-patterns/verify-claims.ts",
+            "startLine": 166,
+            "endLine": 274
+          }
+        ],
+        "reviewerNote": "The cited spawn/parallel/map calls show timeoutMs and a tools array for every spawned agent across all four workflows."
+      },
+      {
+        "factId": "F3",
+        "factScore": 1,
+        "citationScore": 1,
+        "acceptedCitations": [
+          {
+            "path": "corpus/repeated-patterns/diagnose-and-fix.ts",
+            "startLine": 29,
+            "endLine": 76
+          },
+          {
+            "path": "corpus/repeated-patterns/diagnose-and-fix.ts",
+            "startLine": 78,
+            "endLine": 120
+          },
+          {
+            "path": "corpus/repeated-patterns/investigate.ts",
+            "startLine": 82,
+            "endLine": 144
+          },
+          {
+            "path": "corpus/repeated-patterns/investigate.ts",
+            "startLine": 150,
+            "endLine": 246
+          },
+          {
+            "path": "corpus/repeated-patterns/report-validate.ts",
+            "startLine": 51,
+            "endLine": 115
+          },
+          {
+            "path": "corpus/repeated-patterns/verify-claims.ts",
+            "startLine": 83,
+            "endLine": 164
+          },
+          {
+            "path": "corpus/repeated-patterns/verify-claims.ts",
+            "startLine": 166,
+            "endLine": 274
+          }
+        ],
+        "reviewerNote": "investigate.ts invokes wf.parallel (82-143); the cited complete workflow ranges for the other three use sequential spawn, one spawn, or wf.map, not wf.parallel."
+      },
+      {
+        "factId": "F4",
+        "factScore": 1,
+        "citationScore": 1,
+        "acceptedCitations": [
+          {
+            "path": "corpus/repeated-patterns/diagnose-and-fix.ts",
+            "startLine": 29,
+            "endLine": 76
+          },
+          {
+            "path": "corpus/repeated-patterns/diagnose-and-fix.ts",
+            "startLine": 78,
+            "endLine": 120
+          },
+          {
+            "path": "corpus/repeated-patterns/investigate.ts",
+            "startLine": 82,
+            "endLine": 144
+          },
+          {
+            "path": "corpus/repeated-patterns/investigate.ts",
+            "startLine": 150,
+            "endLine": 246
+          },
+          {
+            "path": "corpus/repeated-patterns/report-validate.ts",
+            "startLine": 51,
+            "endLine": 115
+          },
+          {
+            "path": "corpus/repeated-patterns/verify-claims.ts",
+            "startLine": 83,
+            "endLine": 164
+          },
+          {
+            "path": "corpus/repeated-patterns/verify-claims.ts",
+            "startLine": 166,
+            "endLine": 274
+          }
+        ],
+        "reviewerNote": "diagnose-and-fix.ts grants write and edit only to its fix worker; the cited ranges for the other workflows restrict spawned agents to read."
+      },
+      {
+        "factId": "F5",
+        "factScore": 1,
+        "citationScore": 1,
+        "acceptedCitations": [
+          {
+            "path": "corpus/repeated-patterns/diagnose-and-fix.ts",
+            "startLine": 29,
+            "endLine": 76
+          },
+          {
+            "path": "corpus/repeated-patterns/diagnose-and-fix.ts",
+            "startLine": 78,
+            "endLine": 120
+          },
+          {
+            "path": "corpus/repeated-patterns/investigate.ts",
+            "startLine": 82,
+            "endLine": 144
+          },
+          {
+            "path": "corpus/repeated-patterns/investigate.ts",
+            "startLine": 150,
+            "endLine": 246
+          },
+          {
+            "path": "corpus/repeated-patterns/report-validate.ts",
+            "startLine": 51,
+            "endLine": 115
+          },
+          {
+            "path": "corpus/repeated-patterns/verify-claims.ts",
+            "startLine": 83,
+            "endLine": 164
+          },
+          {
+            "path": "corpus/repeated-patterns/verify-claims.ts",
+            "startLine": 166,
+            "endLine": 274
+          }
+        ],
+        "reviewerNote": "The cited outcome paths use usageTotal: wf.usage(), including completed reports and handled agent/budget failure reports."
+      }
+    ],
+    "contradictions": [],
+    "correct": true,
+    "scoredBy": "reviewer/openai-codex/gpt-5.6-terra",
+    "scoredAt": "2026-09-06T20:10:48Z"
+  },
+  "followUp": {
+    "parentReadCallsAfterScout": 5,
+    "parentBashCallsAfterScout": 1
+  },
+  "parentVerification": {
+    "childCompletedSequence": 7,
+    "finalAnswerSequence": 20,
+    "parentReads": [
+      {
+        "toolCallId": "call_NDcZyLpsNyCARUTRM87jFExm|fc_06f78c1409e6544f016a9dc570700c87d1ba4b816748533443",
+        "path": "corpus/repeated-patterns/diagnose-and-fix.ts",
+        "startLine": 1,
+        "endLine": 121,
+        "completedSequence": 9
+      },
+      {
+        "toolCallId": "call_8fINIIVRw1STRtlN7ZyrOu4c|fc_06f78c1409e6544f016a9dc575eeec87d18ccebda01f691683",
+        "path": "corpus/repeated-patterns/investigate.ts",
+        "startLine": 1,
+        "endLine": 248,
+        "completedSequence": 11
+      },
+      {
+        "toolCallId": "call_dWM9gYbfRXGdH29TLhwj1GRa|fc_06f78c1409e6544f016a9dc579581887d1a9d939c68e5e1a9b",
+        "path": "corpus/repeated-patterns/report-validate.ts",
+        "startLine": 1,
+        "endLine": 116,
+        "completedSequence": 13
+      },
+      {
+        "toolCallId": "call_ZYy9jIsNBI7BGMigFlaZY0cM|fc_06f78c1409e6544f016a9dc57cf58c87d1857823aeb2ed8486",
+        "path": "corpus/repeated-patterns/verify-claims.ts",
+        "startLine": 1,
+        "endLine": 275,
+        "completedSequence": 15
+      },
+      {
+        "toolCallId": "call_yX8MDQ2VtvDoE3oCSzzFFpiv|fc_06f78c1409e6544f016a9dc597c46887d1bbdd2326a5e80420",
+        "path": "corpus/repeated-patterns/investigate.ts",
+        "startLine": 82,
+        "endLine": 246,
+        "completedSequence": 19
+      }
+    ],
+    "factRangeMappings": []
+  },
+  "concurrency": {
+    "status": "unknown",
+    "details": "Task pairs ran sequentially; orchestrator waited during the batch. Other account activity was not independently observable."
+  },
+  "quotaReferences": {
+    "beforeObservation": null,
+    "afterObservation": null,
+    "attribution": "unavailable"
+  }
+}

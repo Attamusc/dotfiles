@@ -1,0 +1,181 @@
+{
+  "schemaVersion": 1,
+  "protocolRevision": 2,
+  "taskId": "exact-integration-contract",
+  "strategy": "direct",
+  "pairPosition": 2,
+  "status": "complete",
+  "parentSession": "/home/attamusc/.local/state/pi/context-efficiency/2026-09-06/protocol-2/exact-integration-contract-direct/sessions/2026-09-06T20-03-45-605Z_01a07851-db45-78cb-8051-bc8bc215016e.jsonl",
+  "scoutSessions": [],
+  "startedAt": "2026-09-06T20:03:45.605Z",
+  "endedAt": "2026-09-06T20:04:48.787Z",
+  "latencyMs": 63182,
+  "observedConditions": {
+    "parentProvider": "openai-codex",
+    "parentModel": "gpt-6-astra",
+    "parentThinking": "high",
+    "parentTools": [
+      "read",
+      "bash"
+    ],
+    "child": {
+      "agent": null,
+      "provider": null,
+      "model": null,
+      "thinking": null,
+      "tools": []
+    },
+    "promptSha256": "32494d677d624789127aab72a3f078bbe5543a2b959e99b353a6068c166e959f",
+    "corpus": [
+      {
+        "path": "corpus/exact-contract/index.ts",
+        "sha256": "5e96c4c5490fefa76be73de639dd210e884174b9328ca59de4c97db62e560dbf"
+      },
+      {
+        "path": "corpus/exact-contract/policy.ts",
+        "sha256": "034ff1c459151fd588b18b8f694ebd6d0abd2c16c34e8066fbcfbf5d4b8ee481"
+      }
+    ]
+  },
+  "correctness": {
+    "facts": [
+      {
+        "factId": "F1",
+        "factScore": 1,
+        "citationScore": 1,
+        "acceptedCitations": [
+          {
+            "path": "corpus/exact-contract/index.ts",
+            "startLine": 17,
+            "endLine": 34
+          },
+          {
+            "path": "corpus/exact-contract/policy.ts",
+            "startLine": 31,
+            "endLine": 61
+          },
+          {
+            "path": "corpus/exact-contract/policy.ts",
+            "startLine": 63,
+            "endLine": 79
+          }
+        ],
+        "reviewerNote": "Required behavior is supported: subagents receive a block decision, parents receive confirmation, and noninteractive parents block confirmation-required commands."
+      },
+      {
+        "factId": "F2",
+        "factScore": 1,
+        "citationScore": 1,
+        "acceptedCitations": [
+          {
+            "path": "corpus/exact-contract/policy.ts",
+            "startLine": 12,
+            "endLine": 26
+          },
+          {
+            "path": "corpus/exact-contract/policy.ts",
+            "startLine": 63,
+            "endLine": 79
+          }
+        ],
+        "reviewerNote": "Supported: recoverable commands are considered only in the isSubagent branch. In the surrounding paragraph, \u201cNo classification returns undefined\u201d reads as \u201cwhen there is no classification, [the function] returns undefined,\u201d contrasted with classified commands producing authorization decisions; it is not a demonstrated contradiction."
+      },
+      {
+        "factId": "F3",
+        "factScore": 1,
+        "citationScore": 1,
+        "acceptedCitations": [
+          {
+            "path": "corpus/exact-contract/index.ts",
+            "startLine": 36,
+            "endLine": 42
+          }
+        ],
+        "reviewerNote": "Supported: the handler returns for non-subagents before calling inspectDiscoveryCommand."
+      },
+      {
+        "factId": "F4",
+        "factScore": 1,
+        "citationScore": 1,
+        "acceptedCitations": [
+          {
+            "path": "corpus/exact-contract/policy.ts",
+            "startLine": 4,
+            "endLine": 10
+          },
+          {
+            "path": "corpus/exact-contract/policy.ts",
+            "startLine": 81,
+            "endLine": 95
+          }
+        ],
+        "reviewerNote": "Supported: unbounded discovery patterns block; other discovery commands receive timeout 30 unless a listed long-running command matches."
+      },
+      {
+        "factId": "F5",
+        "factScore": 1,
+        "citationScore": 1,
+        "acceptedCitations": [
+          {
+            "path": "corpus/exact-contract/index.ts",
+            "startLine": 36,
+            "endLine": 42
+          }
+        ],
+        "reviewerNote": "Supported: timeout is assigned only when event.input.timeout is undefined."
+      }
+    ],
+    "contradictions": [],
+    "correct": true,
+    "scoredBy": "reviewer/openai-codex/gpt-5.6-terra",
+    "scoredAt": "2026-09-06T20:13:54.498930Z"
+  },
+  "followUp": {
+    "parentReadCallsAfterScout": 0,
+    "parentBashCallsAfterScout": 0
+  },
+  "parentVerification": {
+    "childCompletedSequence": null,
+    "finalAnswerSequence": 12,
+    "parentReads": [
+      {
+        "toolCallId": "call_ebySNN7VHV48NJrlWJeMPm0R|fc_05ca5b78fef8640d016a9dc72411b487d19bf8c3a73349cc0c",
+        "path": "corpus/exact-contract/index.ts",
+        "startLine": 1,
+        "endLine": 45,
+        "completedSequence": 5
+      },
+      {
+        "toolCallId": "call_v7YbN9FpfLIJtl1cM1co3ZtE|fc_05ca5b78fef8640d016a9dc727798887d1b0655f1f228c31cb",
+        "path": "corpus/exact-contract/policy.ts",
+        "startLine": 1,
+        "endLine": 96,
+        "completedSequence": 7
+      },
+      {
+        "toolCallId": "call_DMMBySGwrTlx0o17HLcjHtED|fc_05ca5b78fef8640d016a9dc73242b087d1bfeee2d76d4c0252",
+        "path": "corpus/exact-contract/policy.ts",
+        "startLine": 31,
+        "endLine": 79,
+        "completedSequence": 9
+      },
+      {
+        "toolCallId": "call_XgduWsiYpw0QKfbtwq2aG0sn|fc_05ca5b78fef8640d016a9dc734723c87d1995e7d6c4980bf8e",
+        "path": "corpus/exact-contract/policy.ts",
+        "startLine": 81,
+        "endLine": 96,
+        "completedSequence": 11
+      }
+    ],
+    "factRangeMappings": []
+  },
+  "concurrency": {
+    "status": "unknown",
+    "details": "Task pairs ran sequentially; orchestrator waited during the batch. Other account activity was not independently observable."
+  },
+  "quotaReferences": {
+    "beforeObservation": null,
+    "afterObservation": null,
+    "attribution": "unavailable"
+  }
+}

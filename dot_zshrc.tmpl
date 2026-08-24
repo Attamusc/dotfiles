@@ -26,6 +26,8 @@ then
   source ~/.localrc
 fi
 
+export SSH_AUTH_SOCK="${XDG_RUNTIME_DIR}/ssh-agent.socket"
+
 {{ if not .headless -}}
 if (( $+commands[starship] )); then
   eval "$(starship init zsh)"

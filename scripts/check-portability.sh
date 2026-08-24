@@ -1040,6 +1040,11 @@ check_agent_contract() {
   local opencode_template=dot_config/opencode/private_opencode.jsonc.tmpl
   local opencode_public="$WORK/opencode-public.json"
   local opencode_private="$WORK/opencode-private.json"
+  local pi_routing_public="$WORK/pi-routing-public"
+  local pi_routing_private="$WORK/pi-routing-private"
+  local private_providers="$PUBLIC_SOURCE/.data-private/pi/agent/model-providers.json"
+  local private_settings="$PUBLIC_SOURCE/.data-private/pi/agent/settings.json"
+  local agent
   local private_mcp="$PUBLIC_SOURCE/.data-private/pi/agent/mcp.json"
   local public_mcp_backup="$WORK/public-mcp-backup.json"
   local hook=.chezmoiscripts/run_onchange_after_30-setup-pi.sh.tmpl
@@ -1135,6 +1140,95 @@ assert opencode == {
 for document in (settings, mcp, opencode):
     encoded=json.dumps(document)
     assert "/Users/" not in encoded and "/home/" not in encoded
+PY
+
+  mkdir -p "$pi_routing_public" "$pi_routing_private"
+  for agent in adversarial-reviewer planner researcher reviewer scout validator worker; do
+    render_source_template darwin arm64 '' '' \
+      "dot_pi/agent/agents/$agent.md.tmpl" "$pi_routing_public/$agent.md"
+  done
+  render_source_template darwin arm64 '' '' \
+    dot_pi/agent/extensions/answer/index.ts.tmpl "$pi_routing_public/answer.ts"
+  render_source_template darwin arm64 '' '' \
+    dot_pi/agent/extensions/smart-sessions/index.ts.tmpl "$pi_routing_public/smart-sessions.ts"
+  render_source_template darwin arm64 '' '' \
+    dot_pi/agent/settings.json.tmpl "$pi_routing_public/settings.json"
+
+  mkdir -p "$(dirname "$private_providers")"
+  cat >"$private_providers" <<'EOF'
+{
+  "gpt": "openai-codex",
+  "claude": "anthropic"
+}
+EOF
+  cat >"$private_settings" <<'EOF'
+{
+  "defaultProvider": "openai-codex",
+  "extensions": ["-extensions/github-copilot-dynamic/index.ts"]
+}
+EOF
+  for agent in adversarial-reviewer planner researcher reviewer scout validator worker; do
+    render_source_template darwin arm64 '' '' \
+      "dot_pi/agent/agents/$agent.md.tmpl" "$pi_routing_private/$agent.md"
+  done
+  render_source_template darwin arm64 '' '' \
+    dot_pi/agent/extensions/answer/index.ts.tmpl "$pi_routing_private/answer.ts"
+  render_source_template darwin arm64 '' '' \
+    dot_pi/agent/extensions/smart-sessions/index.ts.tmpl "$pi_routing_private/smart-sessions.ts"
+  render_source_template darwin arm64 '' '' \
+    dot_pi/agent/settings.json.tmpl "$pi_routing_private/settings.json"
+  rm -rf -- "$PUBLIC_SOURCE/.data-private"
+
+  python3 - "$pi_routing_public" "$pi_routing_private" <<'PY'
+import json
+import pathlib
+import re
+import sys
+
+def check(root, gpt_provider, claude_provider, expected_extensions):
+    root = pathlib.Path(root)
+    expected_models = {
+        "adversarial-reviewer.md": f"{claude_provider}/claude-opus-5",
+        "planner.md": f"{gpt_provider}/gpt-5.6-sol",
+        "researcher.md": f"{gpt_provider}/gpt-5.6-terra",
+        "reviewer.md": f"{claude_provider}/claude-sonnet-5",
+        "scout.md": f"{gpt_provider}/gpt-5.6-luna",
+        "validator.md": f"{claude_provider}/claude-opus-5",
+        "worker.md": f"{gpt_provider}/gpt-5.6-sol",
+    }
+    for filename, expected in expected_models.items():
+        source = (root / filename).read_text()
+        actual = re.search(r"^model:\s*(\S+)$", source, re.MULTILINE).group(1)
+        assert actual == expected, (filename, actual, expected)
+
+    answer = (root / "answer.ts").read_text()
+    assert f'const PROVIDER_ID = "{gpt_provider}";' in answer
+    smart_sessions = (root / "smart-sessions.ts").read_text()
+    assert f'const GPT_PROVIDER_ID = "{gpt_provider}";' in smart_sessions
+    assert smart_sessions.index("find(GPT_PROVIDER_ID, LUNA_MODEL_ID)") < smart_sessions.index(
+        'find("anthropic", HAIKU_MODEL_ID)'
+    )
+
+    settings = json.loads((root / "settings.json").read_text())
+    assert settings["defaultProvider"] == gpt_provider
+    assert settings["defaultModel"] == "gpt-5.6-sol"
+    assert settings["extensions"] == expected_extensions
+
+check(
+    sys.argv[1],
+    "github-copilot",
+    "github-copilot",
+    ["+extensions/smart-sessions/index.ts"],
+)
+check(
+    sys.argv[2],
+    "openai-codex",
+    "anthropic",
+    [
+        "+extensions/smart-sessions/index.ts",
+        "-extensions/github-copilot-dynamic/index.ts",
+    ],
+)
 PY
 
   cp "$mcp" "$public_mcp_backup"
@@ -1560,6 +1654,8 @@ check_documentation_contract() {
   done
   grep -Fq 'Private `packages` and `extensions` append to public arrays' "$overlays" || \
     fail "private overlay array semantics are undocumented"
+  grep -Fq '.data-private/pi/agent/model-providers.json' "$overlays" || \
+    fail "private Pi model-provider routing is undocumented"
   grep -Fq 'MCP maps merge by server key' "$overlays" || \
     fail "private MCP merge semantics are undocumented"
   grep -Fq 'Authenticate Git and `gh`' "$instructions" || \

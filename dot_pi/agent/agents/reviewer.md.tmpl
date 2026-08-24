@@ -2,7 +2,7 @@
 name: reviewer
 description: Code review agent - reviews changes for quality, security, and correctness
 tools: read, bash, write, todo
-model: github-copilot/claude-sonnet-5
+model: {{ includeTemplate "pi-model-provider" (dict "family" "claude" "sourceDir" .chezmoi.sourceDir) }}/claude-sonnet-5
 thinking: high
 spawning: false
 auto-exit: true

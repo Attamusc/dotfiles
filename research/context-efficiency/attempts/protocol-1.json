@@ -1,0 +1,66 @@
+[
+  {
+    "taskId": "implementation-inventory",
+    "strategy": "direct",
+    "protocolRevision": 1,
+    "status": "invalid",
+    "reason": "Uncertifiable shell forms; original prompts did not specify supported grammar. Not an efficiency result.",
+    "parentSession": "/home/attamusc/.local/state/pi/context-efficiency/2026-09-06/protocol-1/direct/sessions/2026-09-06T19-15-19-402Z_01a07825-82ea-7919-8c6a-ccc70f35c256.jsonl",
+    "scoutSessions": [],
+    "usage": {
+      "parent": {
+        "input": 20717,
+        "output": 1141,
+        "cacheRead": 50304,
+        "cacheWrite": 0,
+        "totalTokens": 72162
+      },
+      "scouts": [],
+      "combined": {
+        "input": 20717,
+        "output": 1141,
+        "cacheRead": 50304,
+        "cacheWrite": 0,
+        "totalTokens": 72162
+      }
+    },
+    "launcherCleanup": "normal exit"
+  },
+  {
+    "taskId": "implementation-inventory",
+    "strategy": "scout-first",
+    "protocolRevision": 1,
+    "status": "invalid",
+    "reason": "Uncertifiable shell forms; original prompts did not specify supported grammar. Not an efficiency result.",
+    "parentSession": "/home/attamusc/.local/state/pi/context-efficiency/2026-09-06/protocol-1/scout-first/sessions/2026-09-06T19-16-11-116Z_01a07826-4cec-7d6e-9b72-6cbcf6598588.jsonl",
+    "scoutSessions": [
+      "/home/attamusc/.pi/agent/sessions/--home-attamusc-.local-share-chezmoi--/2026-09-06T19-16-20-619Z_9ebcc26d-29f432d9-9d42ec54-2b40.jsonl"
+    ],
+    "usage": {
+      "parent": {
+        "input": 25794,
+        "output": 1353,
+        "cacheRead": 39936,
+        "cacheWrite": 0,
+        "totalTokens": 67083
+      },
+      "scouts": [
+        {
+          "input": 32298,
+          "output": 1046,
+          "cacheRead": 60928,
+          "cacheWrite": 0,
+          "totalTokens": 94272
+        }
+      ],
+      "combined": {
+        "input": 58092,
+        "output": 2399,
+        "cacheRead": 100864,
+        "cacheWrite": 0,
+        "totalTokens": 161355
+      }
+    },
+    "launcherCleanup": "scout-first completed before outer shell timeout; later lifecycle regression reproduced and fixed"
+  }
+]

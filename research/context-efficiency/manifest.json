@@ -1,0 +1,601 @@
+{
+  "schemaVersion": 1,
+  "protocolRevision": 2,
+  "protocolChange": "Explicit common inspection grammar after two invalid revision-1 attempts; corpus and correctness facts unchanged. Scoring is by named independent agents, not a claimed human review.",
+  "conditions": {
+    "parentProvider": "openai-codex",
+    "parentModel": "gpt-6-astra",
+    "parentThinking": "high",
+    "freshSession": true,
+    "persistSession": true,
+    "strategies": {
+      "direct": {
+        "parentTools": [
+          "read",
+          "bash"
+        ],
+        "children": {
+          "required": 0,
+          "maximum": 0
+        }
+      },
+      "scout-first": {
+        "parentTools": [
+          "read",
+          "bash",
+          "subagent"
+        ],
+        "children": {
+          "required": 1,
+          "maximum": 1,
+          "agent": "scout",
+          "provider": "openai-codex",
+          "model": "gpt-5.6-luna",
+          "thinking": "low",
+          "tools": [
+            "read",
+            "bash"
+          ]
+        }
+      }
+    }
+  },
+  "routingInstructions": {
+    "direct": "ROUTING: Work directly. Do not delegate. Use only read and bash.",
+    "scout-first": "ROUTING: First delegate exactly one bounded extraction of the allowlisted corpus to agent scout, pinned to openai-codex/gpt-5.6-luna at low thinking with only read and bash. Include the child startup, prompt, and output in the run. After it completes, use only read and bash for parent verification. Do not delegate again."
+  },
+  "correctnessScoring": {
+    "factScore": "For each required fact, the named reviewer decides whether the answer is substantively accurate and assigns only 0 or 1.",
+    "citationScore": "For each required fact, assign 1 only when at least one final-answer citation is within the task corpus and semantically supports that fact. The citation may be a subrange, superrange, or overlapping equivalent of a preregistered reviewerAnchor; exact anchor-string equality is not required.",
+    "reviewerAnchors": "Anchors are operator-only semantic-review locations and are never included in model input.",
+    "correct": "true only when every fact has factScore=1 and citationScore=1 and no answer claim contradicts the frozen corpus",
+    "partialCreditChangesGate": false,
+    "semanticReview": "Manual; validate.py checks structure, hashes, paths, and range bounds only."
+  },
+  "runRecordSchema": {
+    "schemaVersion": 1,
+    "record": {
+      "schemaVersion": 1,
+      "taskId": "string",
+      "strategy": "direct|scout-first",
+      "pairPosition": "1|2",
+      "status": "complete|incomplete|invalid",
+      "parentSession": "absolute persisted JSONL path",
+      "scoutSessions": [
+        "absolute persisted child JSONL path"
+      ],
+      "startedAt": "UTC ISO-8601",
+      "endedAt": "UTC ISO-8601",
+      "latencyMs": "nonnegative integer",
+      "observedConditions": {
+        "parentProvider": "string",
+        "parentModel": "string",
+        "parentThinking": "string",
+        "parentTools": [
+          "string"
+        ],
+        "child": {
+          "agent": "string|null",
+          "provider": "string|null",
+          "model": "string|null",
+          "thinking": "string|null",
+          "tools": [
+            "string"
+          ]
+        },
+        "promptSha256": "64 lowercase hex",
+        "corpus": [
+          {
+            "path": "manifest-relative path",
+            "sha256": "64 lowercase hex"
+          }
+        ]
+      },
+      "correctness": {
+        "facts": [
+          {
+            "factId": "string",
+            "factScore": "0|1",
+            "citationScore": "0|1",
+            "acceptedCitations": [
+              {
+                "path": "corpus-relative path",
+                "startLine": "positive integer",
+                "endLine": "positive integer"
+              }
+            ],
+            "reviewerNote": "string"
+          }
+        ],
+        "contradictions": [
+          "string"
+        ],
+        "correct": "boolean",
+        "scoredBy": "string",
+        "scoredAt": "UTC ISO-8601"
+      },
+      "followUp": {
+        "parentReadCallsAfterScout": "nonnegative integer",
+        "parentBashCallsAfterScout": "nonnegative integer"
+      },
+      "parentVerification": {
+        "childCompletedSequence": "integer or null",
+        "finalAnswerSequence": "integer",
+        "parentReads": [
+          {
+            "toolCallId": "string",
+            "path": "corpus-relative path",
+            "startLine": "positive integer",
+            "endLine": "positive integer",
+            "completedSequence": "integer"
+          }
+        ],
+        "factRangeMappings": [
+          {
+            "factId": "string",
+            "citation": {
+              "path": "corpus-relative path",
+              "startLine": "positive integer",
+              "endLine": "positive integer"
+            },
+            "parentReadToolCallIds": [
+              "string"
+            ]
+          }
+        ]
+      },
+      "concurrency": {
+        "status": "none-observed|observed|unknown",
+        "details": "string without account identifiers"
+      },
+      "quotaReferences": {
+        "beforeObservation": "string|null",
+        "afterObservation": "string|null",
+        "attribution": "unconfounded|confounded|unavailable"
+      }
+    },
+    "strategyRules": {
+      "direct": "scoutSessions is empty; every observedConditions.child scalar is null and its tools array is empty; parentVerification child sequence is null and mapping arrays may be empty.",
+      "scout-first": "exactly one scout session; observedConditions.child contains agent/provider/model/thinking/tools; all child startup/prompt/output usage is included."
+    },
+    "exactContractVerificationRule": "For exact-integration-contract scout-first, every citation parsed from the final answer must appear in correctness facts and have a factRangeMapping to one or more parentReads whose union covers the entire cited interval, with completedSequence > childCompletedSequence and < finalAnswerSequence.",
+    "invalidWhen": [
+      "missing or aborted parent session",
+      "missing or extra child session",
+      "condition, prompt, tool, or corpus-hash mismatch",
+      "required exact-contract parent verification lacks parser-verifiable order or full cited-range coverage"
+    ]
+  },
+  "tasks": [
+    {
+      "id": "implementation-inventory",
+      "definition": "tasks/implementation-inventory.md",
+      "definitionSha256": "0399142ece68e48c385f6e3b52fe08d02ed47a4defc434f2709f3bfb698276cf",
+      "strategies": [
+        "direct",
+        "scout-first"
+      ],
+      "pairOrder": [
+        "direct",
+        "scout-first"
+      ],
+      "corpus": [
+        {
+          "path": "corpus/implementation-inventory/index.ts",
+          "sha256": "6f4861b87eb34ef4c5660bc84adeb807dded72aef7d9bcecaaca01780e488b46"
+        },
+        {
+          "path": "corpus/implementation-inventory/scope.ts",
+          "sha256": "0d61ba4765aa500f7695eb464d34b275626c271ff2b99601f93fbe5854d7a5fd"
+        }
+      ],
+      "rubric": {
+        "requiredFacts": [
+          {
+            "id": "F1",
+            "text": "The extension exposes a todo tool and a /todos command.",
+            "reviewerAnchors": [
+              {
+                "path": "corpus/implementation-inventory/index.ts",
+                "startLine": 1433,
+                "endLine": 1449
+              },
+              {
+                "path": "corpus/implementation-inventory/index.ts",
+                "startLine": 1799,
+                "endLine": 1805
+              }
+            ]
+          },
+          {
+            "id": "F2",
+            "text": "PI_TODO_PATH is the override and the default storage is repository-scoped under the global history directory.",
+            "reviewerAnchors": [
+              {
+                "path": "corpus/implementation-inventory/index.ts",
+                "startLine": 60,
+                "endLine": 60
+              },
+              {
+                "path": "corpus/implementation-inventory/index.ts",
+                "startLine": 709,
+                "endLine": 715
+              }
+            ]
+          },
+          {
+            "id": "F3",
+            "text": "Repository scope uses the repository basename plus the first eight hex characters of a SHA-256 digest of the real repository root.",
+            "reviewerAnchors": [
+              {
+                "path": "corpus/implementation-inventory/scope.ts",
+                "startLine": 8,
+                "endLine": 24
+              }
+            ]
+          },
+          {
+            "id": "F4",
+            "text": "Legacy todo migration can rename the legacy directory and create a compatibility symlink.",
+            "reviewerAnchors": [
+              {
+                "path": "corpus/implementation-inventory/scope.ts",
+                "startLine": 25,
+                "endLine": 67
+              }
+            ]
+          },
+          {
+            "id": "F5",
+            "text": "The lock time-to-live is 30 minutes.",
+            "reviewerAnchors": [
+              {
+                "path": "corpus/implementation-inventory/index.ts",
+                "startLine": 69,
+                "endLine": 69
+              },
+              {
+                "path": "corpus/implementation-inventory/index.ts",
+                "startLine": 978,
+                "endLine": 986
+              }
+            ]
+          }
+        ],
+        "operatorOnly": true,
+        "citationAcceptance": "Any allowlisted final-answer range that semantically supports the fact; reviewer anchors guide review but exact equality is not required."
+      }
+    },
+    {
+      "id": "repeated-pattern-extraction",
+      "definition": "tasks/repeated-pattern-extraction.md",
+      "definitionSha256": "73af13da688272e1f36cb7d7118de0e88a52ebf8464807a0b859d6fbe7042212",
+      "strategies": [
+        "direct",
+        "scout-first"
+      ],
+      "pairOrder": [
+        "scout-first",
+        "direct"
+      ],
+      "corpus": [
+        {
+          "path": "corpus/repeated-patterns/diagnose-and-fix.ts",
+          "sha256": "986dd542b05ba38d0c096eb23cbae776834246964ab7e9acd6f859cbc328d5bc"
+        },
+        {
+          "path": "corpus/repeated-patterns/investigate.ts",
+          "sha256": "cfa4bf277ebbcde2a3efd8269b65392dae93013b0b927aee9d04aaa4e15df9f4"
+        },
+        {
+          "path": "corpus/repeated-patterns/report-validate.ts",
+          "sha256": "c133a20f8a119f9dc8de09499b8154adfcf5c47a9e577c17d04a20190f41470d"
+        },
+        {
+          "path": "corpus/repeated-patterns/verify-claims.ts",
+          "sha256": "62bce64aeb2412c0dad02fcb1dcc3ad97aeab03ffb51acff6493d0d5fac5adf4"
+        }
+      ],
+      "rubric": {
+        "requiredFacts": [
+          {
+            "id": "F1",
+            "text": "All four workflows set a cost budget and terminate through wf.report.",
+            "reviewerAnchors": [
+              {
+                "path": "corpus/repeated-patterns/diagnose-and-fix.ts",
+                "startLine": 35,
+                "endLine": 118
+              },
+              {
+                "path": "corpus/repeated-patterns/investigate.ts",
+                "startLine": 85,
+                "endLine": 238
+              },
+              {
+                "path": "corpus/repeated-patterns/report-validate.ts",
+                "startLine": 77,
+                "endLine": 112
+              },
+              {
+                "path": "corpus/repeated-patterns/verify-claims.ts",
+                "startLine": 109,
+                "endLine": 270
+              }
+            ]
+          },
+          {
+            "id": "F2",
+            "text": "All four spawn agents with explicit timeoutMs and tools lists.",
+            "reviewerAnchors": [
+              {
+                "path": "corpus/repeated-patterns/diagnose-and-fix.ts",
+                "startLine": 37,
+                "endLine": 98
+              },
+              {
+                "path": "corpus/repeated-patterns/investigate.ts",
+                "startLine": 114,
+                "endLine": 212
+              },
+              {
+                "path": "corpus/repeated-patterns/report-validate.ts",
+                "startLine": 79,
+                "endLine": 83
+              },
+              {
+                "path": "corpus/repeated-patterns/verify-claims.ts",
+                "startLine": 120,
+                "endLine": 235
+              }
+            ]
+          },
+          {
+            "id": "F3",
+            "text": "investigate is the only file in this corpus that uses wf.parallel.",
+            "reviewerAnchors": [
+              {
+                "path": "corpus/repeated-patterns/investigate.ts",
+                "startLine": 114,
+                "endLine": 135
+              }
+            ]
+          },
+          {
+            "id": "F4",
+            "text": "diagnose-and-fix is the only file in this corpus that grants write and edit tools to a spawned agent.",
+            "reviewerAnchors": [
+              {
+                "path": "corpus/repeated-patterns/diagnose-and-fix.ts",
+                "startLine": 54,
+                "endLine": 59
+              }
+            ]
+          },
+          {
+            "id": "F5",
+            "text": "The files report usageTotal from wf.usage on result or failure paths.",
+            "reviewerAnchors": [
+              {
+                "path": "corpus/repeated-patterns/diagnose-and-fix.ts",
+                "startLine": 51,
+                "endLine": 118
+              },
+              {
+                "path": "corpus/repeated-patterns/investigate.ts",
+                "startLine": 136,
+                "endLine": 245
+              },
+              {
+                "path": "corpus/repeated-patterns/report-validate.ts",
+                "startLine": 95,
+                "endLine": 112
+              },
+              {
+                "path": "corpus/repeated-patterns/verify-claims.ts",
+                "startLine": 142,
+                "endLine": 270
+              }
+            ]
+          }
+        ],
+        "operatorOnly": true,
+        "citationAcceptance": "Any allowlisted final-answer range that semantically supports the fact; reviewer anchors guide review but exact equality is not required."
+      }
+    },
+    {
+      "id": "large-log-summarization",
+      "definition": "tasks/large-log-summarization.md",
+      "definitionSha256": "b62c1db8c73224329b3f49f79549b8549fd4f0c99354e2739a4589794a25c723",
+      "strategies": [
+        "direct",
+        "scout-first"
+      ],
+      "pairOrder": [
+        "direct",
+        "scout-first"
+      ],
+      "corpus": [
+        {
+          "path": "corpus/large-log/portability-run.log",
+          "sha256": "f767cb7f4de0284b26bb60d634e0e9486c31ad61438d05aaae28fda1eabde67a"
+        }
+      ],
+      "rubric": {
+        "requiredFacts": [
+          {
+            "id": "F1",
+            "text": "Runs 017 and 018 failed because --no-graph was incorrectly passed to jj show.",
+            "reviewerAnchors": [
+              {
+                "path": "corpus/large-log/portability-run.log",
+                "startLine": 101,
+                "endLine": 154
+              },
+              {
+                "path": "corpus/large-log/portability-run.log",
+                "startLine": 401,
+                "endLine": 454
+              }
+            ]
+          },
+          {
+            "id": "F2",
+            "text": "The jj usage text permits --no-pager and a REVSET, not --no-graph.",
+            "reviewerAnchors": [
+              {
+                "path": "corpus/large-log/portability-run.log",
+                "startLine": 151,
+                "endLine": 153
+              },
+              {
+                "path": "corpus/large-log/portability-run.log",
+                "startLine": 451,
+                "endLine": 453
+              }
+            ]
+          },
+          {
+            "id": "F3",
+            "text": "Run 019 passed TypeScript loading and the corrected jj command, then stopped on shellcheck SC2086.",
+            "reviewerAnchors": [
+              {
+                "path": "corpus/large-log/portability-run.log",
+                "startLine": 701,
+                "endLine": 781
+              }
+            ]
+          },
+          {
+            "id": "F4",
+            "text": "Run 020 passed TypeScript, jj, shellcheck, and macOS static checks and completed in 434 ms.",
+            "reviewerAnchors": [
+              {
+                "path": "corpus/large-log/portability-run.log",
+                "startLine": 1001,
+                "endLine": 1200
+              }
+            ]
+          },
+          {
+            "id": "F5",
+            "text": "The fixture is sanitized synthetic data reconstructed from a recent failure shape, not benchmark results.",
+            "reviewerAnchors": [
+              {
+                "path": "corpus/large-log/portability-run.log",
+                "startLine": 1,
+                "endLine": 5
+              }
+            ]
+          }
+        ],
+        "operatorOnly": true,
+        "citationAcceptance": "Any allowlisted final-answer range that semantically supports the fact; reviewer anchors guide review but exact equality is not required."
+      }
+    },
+    {
+      "id": "exact-integration-contract",
+      "definition": "tasks/exact-integration-contract.md",
+      "definitionSha256": "c781780bd097a7dc15fa77bcf46feb801bdc303c0fda4ff4f49369d4dab13134",
+      "strategies": [
+        "direct",
+        "scout-first"
+      ],
+      "pairOrder": [
+        "scout-first",
+        "direct"
+      ],
+      "corpus": [
+        {
+          "path": "corpus/exact-contract/index.ts",
+          "sha256": "5e96c4c5490fefa76be73de639dd210e884174b9328ca59de4c97db62e560dbf"
+        },
+        {
+          "path": "corpus/exact-contract/policy.ts",
+          "sha256": "034ff1c459151fd588b18b8f694ebd6d0abd2c16c34e8066fbcfbf5d4b8ee481"
+        }
+      ],
+      "rubric": {
+        "requiredFacts": [
+          {
+            "id": "F1",
+            "text": "A destructive command is blocked for subagents but requires interactive confirmation for parent agents; a noninteractive parent is blocked.",
+            "reviewerAnchors": [
+              {
+                "path": "corpus/exact-contract/index.ts",
+                "startLine": 21,
+                "endLine": 34
+              },
+              {
+                "path": "corpus/exact-contract/policy.ts",
+                "startLine": 76,
+                "endLine": 78
+              }
+            ]
+          },
+          {
+            "id": "F2",
+            "text": "Recoverable destructive commands are classified only for subagents.",
+            "reviewerAnchors": [
+              {
+                "path": "corpus/exact-contract/policy.ts",
+                "startLine": 12,
+                "endLine": 17
+              },
+              {
+                "path": "corpus/exact-contract/policy.ts",
+                "startLine": 72,
+                "endLine": 74
+              }
+            ]
+          },
+          {
+            "id": "F3",
+            "text": "Discovery policy is applied only after the handler returns early for non-subagents.",
+            "reviewerAnchors": [
+              {
+                "path": "corpus/exact-contract/index.ts",
+                "startLine": 36,
+                "endLine": 38
+              }
+            ]
+          },
+          {
+            "id": "F4",
+            "text": "Unbounded find/search is blocked; other discovery commands receive a 30-second timeout unless they also match a listed long-running command.",
+            "reviewerAnchors": [
+              {
+                "path": "corpus/exact-contract/policy.ts",
+                "startLine": 5,
+                "endLine": 10
+              },
+              {
+                "path": "corpus/exact-contract/policy.ts",
+                "startLine": 81,
+                "endLine": 93
+              }
+            ]
+          },
+          {
+            "id": "F5",
+            "text": "The handler injects the discovery timeout only when the caller did not provide one.",
+            "reviewerAnchors": [
+              {
+                "path": "corpus/exact-contract/index.ts",
+                "startLine": 38,
+                "endLine": 41
+              }
+            ]
+          }
+        ],
+        "operatorOnly": true,
+        "citationAcceptance": "Any allowlisted final-answer range that semantically supports the fact; reviewer anchors guide review but exact equality is not required."
+      },
+      "parentVerification": {
+        "requiredForStrategy": "scout-first",
+        "timing": "after child completion and before final answer",
+        "coverage": "Every final-answer cited range must be fully covered by at least one completed parent read result. Record every final fact/range to parent read tool-call ID mapping; offline parser verifies ordering, completeness, and line coverage."
+      }
+    }
+  ]
+}

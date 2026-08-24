@@ -1,0 +1,250 @@
+{
+  "schemaVersion": 1,
+  "protocolRevision": 2,
+  "taskId": "large-log-summarization",
+  "strategy": "scout-first",
+  "pairPosition": 2,
+  "status": "complete",
+  "parentSession": "/home/attamusc/.local/state/pi/context-efficiency/2026-09-06/protocol-2/large-log-summarization-scout-first/sessions/2026-09-06T20-00-16-187Z_01a0784e-a93b-78d3-9026-9001e400d9fc.jsonl",
+  "scoutSessions": [
+    "/home/attamusc/.pi/agent/sessions/--home-attamusc-.local-share-chezmoi--/2026-09-06T20-00-27-349Z_5daa5cd3-6bba6f53-76e9b881-1716.jsonl"
+  ],
+  "startedAt": "2026-09-06T20:00:16.187Z",
+  "endedAt": "2026-09-06T20:02:16.306Z",
+  "latencyMs": 120119,
+  "observedConditions": {
+    "parentProvider": "openai-codex",
+    "parentModel": "gpt-6-astra",
+    "parentThinking": "high",
+    "parentTools": [
+      "read",
+      "bash",
+      "subagent"
+    ],
+    "child": {
+      "agent": "scout",
+      "provider": "openai-codex",
+      "model": "gpt-5.6-luna",
+      "thinking": "low",
+      "tools": [
+        "read",
+        "bash"
+      ]
+    },
+    "promptSha256": "dd2f611866ca2835b8cc8b9153a0f1ee620adbb78e9510b7bfad07547f697c95",
+    "corpus": [
+      {
+        "path": "corpus/large-log/portability-run.log",
+        "sha256": "f767cb7f4de0284b26bb60d634e0e9486c31ad61438d05aaae28fda1eabde67a"
+      }
+    ]
+  },
+  "correctness": {
+    "facts": [
+      {
+        "factId": "F1",
+        "factScore": 1,
+        "citationScore": 1,
+        "acceptedCitations": [
+          {
+            "path": "corpus/large-log/portability-run.log",
+            "startLine": 151,
+            "endLine": 154
+          },
+          {
+            "path": "corpus/large-log/portability-run.log",
+            "startLine": 451,
+            "endLine": 454
+          }
+        ],
+        "reviewerNote": "The cited run-017 and run-018 records show jj show rejecting --no-graph (exit 2) and both VCS-stage aborts."
+      },
+      {
+        "factId": "F2",
+        "factScore": 1,
+        "citationScore": 1,
+        "acceptedCitations": [
+          {
+            "path": "corpus/large-log/portability-run.log",
+            "startLine": 151,
+            "endLine": 154
+          },
+          {
+            "path": "corpus/large-log/portability-run.log",
+            "startLine": 451,
+            "endLine": 454
+          }
+        ],
+        "reviewerNote": "The cited jj usage records permit --no-pager and [REVSET], while the preceding errors reject --no-graph."
+      },
+      {
+        "factId": "F3",
+        "factScore": 0,
+        "citationScore": 0,
+        "acceptedCitations": [],
+        "reviewerNote": "The final states that run 019 passed VCS and then aborted on ShellCheck, but omits its TypeScript-loading pass. Its cited 751-752 and 780-781 ranges also do not support that missing component (source line 720 does)."
+      },
+      {
+        "factId": "F4",
+        "factScore": 1,
+        "citationScore": 1,
+        "acceptedCitations": [
+          {
+            "path": "corpus/large-log/portability-run.log",
+            "startLine": 1020,
+            "endLine": 1020
+          },
+          {
+            "path": "corpus/large-log/portability-run.log",
+            "startLine": 1051,
+            "endLine": 1052
+          },
+          {
+            "path": "corpus/large-log/portability-run.log",
+            "startLine": 1080,
+            "endLine": 1080
+          },
+          {
+            "path": "corpus/large-log/portability-run.log",
+            "startLine": 1120,
+            "endLine": 1120
+          },
+          {
+            "path": "corpus/large-log/portability-run.log",
+            "startLine": 1200,
+            "endLine": 1200
+          }
+        ],
+        "reviewerNote": "The cited run-020 records show successful TypeScript, VCS, ShellCheck, and macOS-static stages and completion in 434 ms."
+      },
+      {
+        "factId": "F5",
+        "factScore": 1,
+        "citationScore": 1,
+        "acceptedCitations": [
+          {
+            "path": "corpus/large-log/portability-run.log",
+            "startLine": 1,
+            "endLine": 5
+          }
+        ],
+        "reviewerNote": "The header explicitly identifies sanitized synthetic data reconstructed from a failure shape and says it is not a benchmark result."
+      }
+    ],
+    "contradictions": [],
+    "correct": false,
+    "scoredBy": "reviewer/openai-codex/gpt-5.6-terra",
+    "scoredAt": "2026-09-06T20:10:48Z"
+  },
+  "followUp": {
+    "parentReadCallsAfterScout": 13,
+    "parentBashCallsAfterScout": 0
+  },
+  "parentVerification": {
+    "childCompletedSequence": 7,
+    "finalAnswerSequence": 34,
+    "parentReads": [
+      {
+        "toolCallId": "call_s7gGVe97ibUK0C1klLSNPPeS|fc_02da577652cc433f016a9dc67e43f087d19923ceaacc5dcde2",
+        "path": "corpus/large-log/portability-run.log",
+        "startLine": 1,
+        "endLine": 8,
+        "completedSequence": 9
+      },
+      {
+        "toolCallId": "call_EDJmGTWZUIxWxmxRA9KWJLrY|fc_02da577652cc433f016a9dc682845487d1b5561f0e8df46a9e",
+        "path": "corpus/large-log/portability-run.log",
+        "startLine": 101,
+        "endLine": 120,
+        "completedSequence": 11
+      },
+      {
+        "toolCallId": "call_Zz43yVgqoMZY4o6IeQK7tsUR|fc_02da577652cc433f016a9dc685396087d1a800b72b7d4c956b",
+        "path": "corpus/large-log/portability-run.log",
+        "startLine": 151,
+        "endLine": 154,
+        "completedSequence": 13
+      },
+      {
+        "toolCallId": "call_n7uFS4UN70IQIStn5fKZ89Wa|fc_02da577652cc433f016a9dc688919c87d19d222ed3e7b59bba",
+        "path": "corpus/large-log/portability-run.log",
+        "startLine": 401,
+        "endLine": 401,
+        "completedSequence": 15
+      },
+      {
+        "toolCallId": "call_4wLl5OAeZRkALFzdYH12uFIQ|fc_02da577652cc433f016a9dc68c661c87d1990ac626fdb77357",
+        "path": "corpus/large-log/portability-run.log",
+        "startLine": 451,
+        "endLine": 454,
+        "completedSequence": 17
+      },
+      {
+        "toolCallId": "call_sZLUoBDmfznAoL8e8uaDe7jI|fc_02da577652cc433f016a9dc68facc087d1b37b79c2a32552a9",
+        "path": "corpus/large-log/portability-run.log",
+        "startLine": 701,
+        "endLine": 701,
+        "completedSequence": 19
+      },
+      {
+        "toolCallId": "call_UfnIMOWK0HH1IIReoLghEwDd|fc_02da577652cc433f016a9dc69294d087d19bb8a9df125c67da",
+        "path": "corpus/large-log/portability-run.log",
+        "startLine": 751,
+        "endLine": 754,
+        "completedSequence": 21
+      },
+      {
+        "toolCallId": "call_E3JA70y3mjnUrsOKyG3pDTFr|fc_02da577652cc433f016a9dc69a9f2c87d18bbcc212b68c8bba",
+        "path": "corpus/large-log/portability-run.log",
+        "startLine": 755,
+        "endLine": 804,
+        "completedSequence": 23
+      },
+      {
+        "toolCallId": "call_GPVOIUFhFQrZKO2en99OmMtF|fc_02da577652cc433f016a9dc69ceea087d1b1b88d44675c2b2c",
+        "path": "corpus/large-log/portability-run.log",
+        "startLine": 1001,
+        "endLine": 1020,
+        "completedSequence": 25
+      },
+      {
+        "toolCallId": "call_1qVD5YDPDb3e39q8nSd2o9Xb|fc_02da577652cc433f016a9dc6a0ebb887d198cdcd47a075f86d",
+        "path": "corpus/large-log/portability-run.log",
+        "startLine": 1051,
+        "endLine": 1052,
+        "completedSequence": 27
+      },
+      {
+        "toolCallId": "call_JgCSnm0rdNWZml2syay6D5HK|fc_02da577652cc433f016a9dc6a5624c87d1a7e85488a913547e",
+        "path": "corpus/large-log/portability-run.log",
+        "startLine": 1080,
+        "endLine": 1081,
+        "completedSequence": 29
+      },
+      {
+        "toolCallId": "call_CwWmCJtBLp6nIb35EQHokQpq|fc_02da577652cc433f016a9dc6a91be487d18c5538b8cae4009c",
+        "path": "corpus/large-log/portability-run.log",
+        "startLine": 1120,
+        "endLine": 1121,
+        "completedSequence": 31
+      },
+      {
+        "toolCallId": "call_eLQZJIiR3rNU8xGm40XSjhUA|fc_02da577652cc433f016a9dc6ac246087d1a938177e44afbeb3",
+        "path": "corpus/large-log/portability-run.log",
+        "startLine": 1200,
+        "endLine": 1201,
+        "completedSequence": 33
+      }
+    ],
+    "factRangeMappings": []
+  },
+  "concurrency": {
+    "status": "unknown",
+    "details": "Task pairs ran sequentially; orchestrator waited during the batch. Other account activity was not independently observable."
+  },
+  "quotaReferences": {
+    "beforeObservation": null,
+    "afterObservation": null,
+    "attribution": "unavailable"
+  }
+}

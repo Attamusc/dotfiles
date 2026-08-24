@@ -1,0 +1,188 @@
+{
+  "schemaVersion": 1,
+  "protocolRevision": 2,
+  "taskId": "large-log-summarization",
+  "strategy": "direct",
+  "pairPosition": 1,
+  "status": "complete",
+  "parentSession": "/home/attamusc/.local/state/pi/context-efficiency/2026-09-06/protocol-2/large-log-summarization-direct/sessions/2026-09-06T19-59-11-393Z_01a0784d-ac21-71d7-9903-f3a1ea37799b.jsonl",
+  "scoutSessions": [],
+  "startedAt": "2026-09-06T19:59:11.393Z",
+  "endedAt": "2026-09-06T20:00:12.598Z",
+  "latencyMs": 61205,
+  "observedConditions": {
+    "parentProvider": "openai-codex",
+    "parentModel": "gpt-6-astra",
+    "parentThinking": "high",
+    "parentTools": [
+      "read",
+      "bash"
+    ],
+    "child": {
+      "agent": null,
+      "provider": null,
+      "model": null,
+      "thinking": null,
+      "tools": []
+    },
+    "promptSha256": "0617c0acb1f03701670b4b82a4d3b62c34d28ce43f7e306605f4b579d1255243",
+    "corpus": [
+      {
+        "path": "corpus/large-log/portability-run.log",
+        "sha256": "f767cb7f4de0284b26bb60d634e0e9486c31ad61438d05aaae28fda1eabde67a"
+      }
+    ]
+  },
+  "correctness": {
+    "facts": [
+      {
+        "factId": "F1",
+        "factScore": 1,
+        "citationScore": 1,
+        "acceptedCitations": [
+          {
+            "path": "corpus/large-log/portability-run.log",
+            "startLine": 151,
+            "endLine": 154
+          },
+          {
+            "path": "corpus/large-log/portability-run.log",
+            "startLine": 451,
+            "endLine": 454
+          }
+        ],
+        "reviewerNote": "The cited run-017 and run-018 records show jj show rejecting --no-graph (exit 2) and both VCS-stage aborts."
+      },
+      {
+        "factId": "F2",
+        "factScore": 1,
+        "citationScore": 1,
+        "acceptedCitations": [
+          {
+            "path": "corpus/large-log/portability-run.log",
+            "startLine": 151,
+            "endLine": 154
+          },
+          {
+            "path": "corpus/large-log/portability-run.log",
+            "startLine": 451,
+            "endLine": 454
+          }
+        ],
+        "reviewerNote": "The cited jj usage records permit --no-pager and [REVSET], while the preceding errors reject --no-graph."
+      },
+      {
+        "factId": "F3",
+        "factScore": 0,
+        "citationScore": 0,
+        "acceptedCitations": [],
+        "reviewerNote": "The final states that run 019 passed VCS and then aborted on ShellCheck, but omits its TypeScript-loading pass. Its cited 751-752 and 780-781 ranges also do not support that missing component (source line 720 does)."
+      },
+      {
+        "factId": "F4",
+        "factScore": 1,
+        "citationScore": 1,
+        "acceptedCitations": [
+          {
+            "path": "corpus/large-log/portability-run.log",
+            "startLine": 1020,
+            "endLine": 1020
+          },
+          {
+            "path": "corpus/large-log/portability-run.log",
+            "startLine": 1051,
+            "endLine": 1052
+          },
+          {
+            "path": "corpus/large-log/portability-run.log",
+            "startLine": 1080,
+            "endLine": 1080
+          },
+          {
+            "path": "corpus/large-log/portability-run.log",
+            "startLine": 1120,
+            "endLine": 1120
+          },
+          {
+            "path": "corpus/large-log/portability-run.log",
+            "startLine": 1200,
+            "endLine": 1200
+          }
+        ],
+        "reviewerNote": "The cited run-020 records show successful TypeScript, VCS, ShellCheck, and macOS-static stages and completion in 434 ms."
+      },
+      {
+        "factId": "F5",
+        "factScore": 1,
+        "citationScore": 1,
+        "acceptedCitations": [
+          {
+            "path": "corpus/large-log/portability-run.log",
+            "startLine": 1,
+            "endLine": 5
+          }
+        ],
+        "reviewerNote": "The header explicitly identifies sanitized synthetic data reconstructed from a failure shape and says it is not a benchmark result."
+      }
+    ],
+    "contradictions": [],
+    "correct": false,
+    "scoredBy": "reviewer/openai-codex/gpt-5.6-terra",
+    "scoredAt": "2026-09-06T20:10:48Z"
+  },
+  "followUp": {
+    "parentReadCallsAfterScout": 0,
+    "parentBashCallsAfterScout": 0
+  },
+  "parentVerification": {
+    "childCompletedSequence": null,
+    "finalAnswerSequence": 16,
+    "parentReads": [
+      {
+        "toolCallId": "call_IpWrR7Fl3qMx95Dm2Y7NWvDY|fc_093c150752434d4f016a9dc61340c087d1b30bc4b665ef6155",
+        "path": "corpus/large-log/portability-run.log",
+        "startLine": 1,
+        "endLine": 100,
+        "completedSequence": 5
+      },
+      {
+        "toolCallId": "call_tA6wtzd0YClGaUoOtOj6zj0i|fc_093c150752434d4f016a9dc61bfddc87d19ac3f76a7b396e58",
+        "path": "corpus/large-log/portability-run.log",
+        "startLine": 101,
+        "endLine": 454,
+        "completedSequence": 9
+      },
+      {
+        "toolCallId": "call_e4RXLUKIIsYlXAiycDgMXryr|fc_093c150752434d4f016a9dc620e34c87d1b4ebb27e91af83f9",
+        "path": "corpus/large-log/portability-run.log",
+        "startLine": 455,
+        "endLine": 781,
+        "completedSequence": 11
+      },
+      {
+        "toolCallId": "call_NrpxrXt7V0faFBreL9RETSRO|fc_093c150752434d4f016a9dc624bfd487d1a746e8a8f6a4dc39",
+        "path": "corpus/large-log/portability-run.log",
+        "startLine": 782,
+        "endLine": 1051,
+        "completedSequence": 13
+      },
+      {
+        "toolCallId": "call_WnlYHRG2vLbfO2eyBdMkqat1|fc_093c150752434d4f016a9dc62828b087d18ac0702458505e95",
+        "path": "corpus/large-log/portability-run.log",
+        "startLine": 1052,
+        "endLine": 1201,
+        "completedSequence": 15
+      }
+    ],
+    "factRangeMappings": []
+  },
+  "concurrency": {
+    "status": "unknown",
+    "details": "Task pairs ran sequentially; orchestrator waited during the batch. Other account activity was not independently observable."
+  },
+  "quotaReferences": {
+    "beforeObservation": null,
+    "afterObservation": null,
+    "attribution": "unavailable"
+  }
+}

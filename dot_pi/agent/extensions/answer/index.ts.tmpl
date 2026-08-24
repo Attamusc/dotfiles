@@ -72,7 +72,7 @@ Example output:
   ]
 }`;
 
-const PROVIDER_ID = "github-copilot";
+const PROVIDER_ID = "{{ includeTemplate "pi-model-provider" (dict "family" "gpt" "sourceDir" .chezmoi.sourceDir) }}";
 const EXTRACTION_MODEL_ID = "gpt-6-luna";
 
 /**
