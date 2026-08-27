@@ -11,8 +11,31 @@ show_agent_labels_on_pane_borders = false
 prompt_new_tab_name = false
 
 [theme]
-name = "rose-pine"
+name = "catppuccin"
 auto_switch = false
+
+# Herdr's built-in dark Catppuccin theme is Mocha. Override its palette
+# with Macchiato until Herdr offers that flavor directly.
+[theme.custom]
+accent = "#8aadf4"
+panel_bg = "#181926"
+sidebar_bg = "default"
+active_row_bg = "#24273a"
+selection_bg = "#363a4f"
+surface0 = "#363a4f"
+surface1 = "#494d64"
+surface_dim = "#24273a"
+overlay0 = "#6e738d"
+overlay1 = "#8087a2"
+text = "#cad3f5"
+subtext0 = "#a5adcb"
+mauve = "#c6a0f6"
+green = "#a6da95"
+yellow = "#eed49f"
+red = "#ed8796"
+blue = "#8aadf4"
+teal = "#8bd5ca"
+peach = "#f5a97f"
 
 [keys]
 # Match cmux's spatial navigation: horizontal movement changes tabs;

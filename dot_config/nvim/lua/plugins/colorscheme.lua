@@ -1,16 +1,16 @@
 return {
   {
-    "rose-pine/neovim",
-    name = "rose-pine",
+    "catppuccin/nvim",
+    name = "catppuccin",
     lazy = true,
     opts = {
-      variant = "moon",
+      flavour = "macchiato",
     },
   },
   {
     "LazyVim/LazyVim",
     opts = {
-      colorscheme = "rose-pine",
+      colorscheme = "catppuccin",
     },
   },
 }

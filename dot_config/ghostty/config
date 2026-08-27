@@ -9,7 +9,7 @@ window-padding-balance = true
 window-padding-x = 0
 window-padding-y = 0
 
-theme = Rose Pine Moon
+theme = Catppuccin Macchiato
 
 cursor-style-blink = false
 window-inherit-working-directory = true

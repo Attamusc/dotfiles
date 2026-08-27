@@ -2,7 +2,7 @@ local wezterm = require("wezterm")
 
 local config = {
 	use_fancy_tab_bar = false,
-	color_scheme = "Catppuccin Mocha",
+	color_scheme = "Catppuccin Macchiato",
 }
 
 -- Fonts
@@ -31,15 +31,15 @@ config.window_frame = {
 	font = wezterm.font { family = font, weight = 'Regular' },
 	font_size = 14.0,
 	-- Fancy tab bar
-	active_titlebar_bg = '#574131',
-	inactive_titlebar_bg = '#352a21',
+	active_titlebar_bg = '#363a4f',
+	inactive_titlebar_bg = '#1e2030',
 }
 
 -- Command Palette
 config.command_palette_rows = 7
 config.command_palette_font_size = 15
-config.command_palette_bg_color = "#44382D"
-config.command_palette_fg_color = "#c4a389"
+config.command_palette_bg_color = "#363a4f"
+config.command_palette_fg_color = "#cad3f5"
 
 -- Bell
 config.audible_bell = "Disabled";

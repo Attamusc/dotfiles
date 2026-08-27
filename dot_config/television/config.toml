@@ -109,11 +109,26 @@ sort_alphabetically = true
 # as hex values (e.g., "#ff0000", "#1e1e2e").
 #
 # Example overrides:
-# [ui.theme_overrides]
-# background = "#000000"
-# text_fg = "#ffffff"
-# selection_bg = "#444444"
-# match_fg = "#ff0000"
+[ui.theme_overrides]
+background = "#24273a"
+border_fg = "#6e738d"
+text_fg = "#cad3f5"
+dimmed_text_fg = "#6e738d"
+input_text_fg = "#ed8796"
+result_count_fg = "#ed8796"
+result_name_fg = "#8aadf4"
+result_line_number_fg = "#eed49f"
+result_value_fg = "#b7bdf8"
+selection_fg = "#a6da95"
+selection_bg = "#363a4f"
+match_fg = "#ed8796"
+preview_title_fg = "#f5a97f"
+channel_mode_fg = "#24273a"
+channel_mode_bg = "#f5bde6"
+remote_control_mode_fg = "#24273a"
+remote_control_mode_bg = "#a6da95"
+action_picker_mode_fg = "#24273a"
+action_picker_mode_bg = "#8aadf4"
 
 # Keybindings and Events
 # ----------------------------------------------------------------------------

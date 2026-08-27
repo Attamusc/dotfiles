@@ -6,8 +6,7 @@
 # loaded earlier with those loaded later in the chain. The file itself will
 # always be loaded last.
 import:
-  # - C:\Users\Sean\Projects\tools\rose-pine-alacritty\rose-pine-moon.yml
-  - ~/projects/personal/tools/alacritty/rose-pine-moon.yml
+  - ~/.config/alacritty/catppuccin-macchiato.yml
 
 # Any items in the `env` entry below will be added as
 # environment variables. Some entries may override variables
