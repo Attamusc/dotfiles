@@ -1,3 +1,18 @@
+export type CopilotApi = "anthropic-messages" | "openai-completions" | "openai-responses";
+
+/** Prefer the wire protocols advertised by Copilot's live model metadata. */
+export function getApi(model): CopilotApi {
+  const endpoints = Array.isArray(model.supported_endpoints) ? model.supported_endpoints : [];
+  if (endpoints.includes("/v1/messages")) return "anthropic-messages";
+  if (endpoints.includes("/responses")) return "openai-responses";
+  if (endpoints.includes("/chat/completions")) return "openai-completions";
+
+  // Older Copilot responses did not include supported_endpoints.
+  if (/^claude-/.test(model.id)) return "anthropic-messages";
+  if (/^gpt-(5|6)/.test(model.id)) return "openai-responses";
+  return "openai-completions";
+}
+
 /** Derive provider compatibility flags from live model capabilities. */
 export function getCompat(model) {
   if (

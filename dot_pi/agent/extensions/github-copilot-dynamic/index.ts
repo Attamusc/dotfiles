@@ -14,18 +14,16 @@
  *
  * The refreshed JWT is kept in-memory only; auth.json is never written.
  *
- * Each model's `api` is derived from its id family (see `getApi`) to match
- * pi-ai's static registry — Claude models route to anthropic-messages, GPT-5
- * to openai-responses, and GPT-4 / Gemini / Grok to openai-completions.
- * Unknown id families default to openai-completions and emit a console
- * warning so novel models are visible rather than silently broken.
+ * Each model's `api` is derived from the endpoint capabilities advertised by
+ * Copilot's live model metadata. Model-family fallbacks cover older responses
+ * that did not include `supported_endpoints`.
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { getCompat, getThinkingLevelMap } from "./model-mapping.ts";
+import { getApi, getCompat, getThinkingLevelMap } from "./model-mapping.ts";
 
 // Re-declared from pi-ai's COPILOT_HEADERS (not exported by pi-ai).
 const COPILOT_HEADERS: Record<string, string> = {
@@ -101,6 +99,7 @@ interface RawModel {
   id: string;
   name?: string;
   model_picker_enabled?: boolean;
+  supported_endpoints?: string[];
   policy?: { state: string } | null;
   capabilities?: {
     limits?: {
@@ -208,29 +207,11 @@ function isModelEligible(model: RawModel): boolean {
   return true;
 }
 
-/**
- * Derive the API protocol from a model id. Mirrors the static github-copilot
- * registry in pi-ai's models.generated.js — Copilot proxies multiple upstream
- * providers behind one base URL, and each model family speaks a different
- * wire protocol.
- */
-type CopilotApi = "anthropic-messages" | "openai-completions" | "openai-responses";
-
-function getApi(id: string): CopilotApi {
-  if (/^claude-/.test(id)) return "anthropic-messages";
-  if (/^gpt-5/.test(id)) return "openai-responses";
-  if (/^(gpt-4|gemini|grok)/.test(id)) return "openai-completions";
-  console.error(
-    `${TAG} unknown model id family for "${id}", defaulting api to "openai-completions"`,
-  );
-  return "openai-completions";
-}
-
 function toPiModel(raw: RawModel) {
   return {
     id: raw.id,
     name: raw.name ?? raw.id,
-    api: getApi(raw.id),
+    api: getApi(raw),
     headers: { ...COPILOT_HEADERS },
     compat: getCompat(raw),
     reasoning: true,

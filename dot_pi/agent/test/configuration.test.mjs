@@ -8,7 +8,7 @@ import {
   inspectDestructiveCommand,
   inspectDiscoveryCommand,
 } from "../extensions/command-safety/policy.ts";
-import { getCompat, getThinkingLevelMap } from "../extensions/github-copilot-dynamic/model-mapping.ts";
+import { getApi, getCompat, getThinkingLevelMap } from "../extensions/github-copilot-dynamic/model-mapping.ts";
 import { migrateLegacyTodos, projectScopeSlug } from "../extensions/todos/scope.ts";
 import { patchWhitespaceFailures } from "../workflows/portability-phase.ts";
 
@@ -29,6 +29,31 @@ function parseAgent(file) {
   const thinking = frontmatter.match(/^thinking:\s*(\S+)$/m)?.[1];
   return { file, body, tools, model, thinking };
 }
+
+test("dynamic Copilot models use their advertised endpoint", () => {
+  assert.equal(
+    getApi({ id: "gpt-6-astra", supported_endpoints: ["/responses", "ws:/responses"] }),
+    "openai-responses",
+  );
+  assert.equal(
+    getApi({ id: "gpt-5.4", supported_endpoints: ["/responses", "/chat/completions"] }),
+    "openai-responses",
+  );
+  assert.equal(
+    getApi({ id: "claude-opus-5", supported_endpoints: ["/v1/messages", "/chat/completions"] }),
+    "anthropic-messages",
+  );
+  assert.equal(
+    getApi({ id: "gemini-3.8-flash", supported_endpoints: ["/chat/completions"] }),
+    "openai-completions",
+  );
+});
+
+test("dynamic Copilot models retain protocol fallbacks for older metadata", () => {
+  assert.equal(getApi({ id: "gpt-6-astra" }), "openai-responses");
+  assert.equal(getApi({ id: "claude-haiku-4.5" }), "anthropic-messages");
+  assert.equal(getApi({ id: "gemini-3.5-flash" }), "openai-completions");
+});
 
 test("dynamic Copilot models use live adaptive-thinking and effort capabilities", () => {
   const opus5 = {
