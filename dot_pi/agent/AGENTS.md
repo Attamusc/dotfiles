@@ -193,7 +193,7 @@ no case where higher effort changed a correctness outcome, while `scout` at `hig
 
 Subagents spawn visible pi sessions in Herdr panes. The user can watch progress in real-time and optionally interact. Autonomous agents call `subagent_done` to self-terminate.
 
-This repository configures and guarantees Herdr as its sole Pi/subagent multiplexer. External packages may retain other generic backends, but agents must not route through retired backends or treat tmux as a supported fallback. Herdr starts its per-user server automatically; do not add a second lifecycle manager.
+This repository configures and guarantees Herdr as its sole Pi/subagent multiplexer. External packages may retain other generic backends, but agents must not route through retired backends or treat tmux as a supported fallback. Herdr starts its per-user server automatically; do not add a second lifecycle manager. Herdr's managed Pi integration owns agent status and Session identity; do not add or restore a separate Pi-to-Herdr status reporter.
 
 The `agent` parameter loads defaults from `~/.pi/agent/agents/<name>.md`. Model, tools, skills, thinking — all inherited. Explicit params override agent defaults.
 

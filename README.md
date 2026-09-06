@@ -57,7 +57,7 @@ lifecycle:
 5. Install the mise-managed language toolchain and Spin.
 6. Install the checksum-verified pi-hunk-review core release.
 7. Activate Bob's stable Neovim.
-8. Reconcile pinned Pi packages.
+8. Reconcile pinned Pi packages and install Herdr's managed Pi integration.
 
 Package-manager, download, checksum, and command-verification failures stop the
 responsible stage. Re-running `./install.sh` resumes the idempotent stages.

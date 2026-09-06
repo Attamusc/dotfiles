@@ -4,7 +4,7 @@ set -euo pipefail
 
 # Public Pi settings SHA-256: {{ include ".data/pi/agent/settings.json" | sha256sum }}
 # Private Pi settings SHA-256: {{ $private := joinPath .chezmoi.sourceDir ".data-private/pi/agent/settings.json" }}{{ if stat $private }}{{ include ".data-private/pi/agent/settings.json" | sha256sum }}{{ else }}absent{{ end }}
-printf '[30 - Pi packages] Reconcile configured packages\n'
+printf '[30 - Pi integration] Reconcile packages and Herdr integration\n'
 
 command -v gh >/dev/null 2>&1 || {
   echo "GitHub CLI is required to reconcile private Pi packages." >&2
@@ -29,6 +29,7 @@ else
 fi
 brew_prefix=$("$brew" --prefix)
 pi_bin="$brew_prefix/bin/pi"
+herdr_bin="$brew_prefix/bin/herdr"
 {{ else if and (eq .chezmoi.os "linux") (eq .chezmoi.osRelease.id "fedora") (eq .chezmoi.osRelease.versionID "44") -}}
 mise_bin="$HOME/.local/bin/mise"
 config="$HOME/.config/mise/config.toml"
@@ -46,12 +47,20 @@ exit 1
   echo "Pi executable is missing." >&2
   exit 1
 }
+{{ if eq .chezmoi.os "darwin" -}}
+[[ -x "$herdr_bin" ]] || {
+  echo "Herdr executable is missing." >&2
+  exit 1
+}
+{{ end -}}
 
 {{ if eq .chezmoi.os "darwin" -}}
 "$pi_bin" --version
 GIT_TERMINAL_PROMPT=0 "$pi_bin" update --extensions
+"$herdr_bin" integration install pi
 {{ else -}}
 MISE_GLOBAL_CONFIG_FILE="$config" "$mise_bin" exec -- pi --version
 GIT_TERMINAL_PROMPT=0 MISE_GLOBAL_CONFIG_FILE="$config" "$mise_bin" exec -- pi update --extensions
+MISE_GLOBAL_CONFIG_FILE="$config" "$mise_bin" exec -- herdr integration install pi
 {{ end -}}
-printf '[30 - Pi packages] Configured packages reconciled\n'
+printf '[30 - Pi integration] Packages reconciled; Herdr-managed Pi integration installed\n'

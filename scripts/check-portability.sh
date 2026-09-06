@@ -1111,7 +1111,6 @@ expected_packages=[
     "git:github.com/Attamusc/pi-interactive-subagents@fa7600194341071e722692da20f5e1f8d087c26d",
     "git:github.com/HazAT/pi-autoresearch",
     "git:github.com/carderne/pi-nvim",
-    "git:github.com/Attamusc/pi-herdr@d975127b94df95a615282ece14b02865b9a2c3d9",
     "git:github.com/Attamusc/pi-television@c3826bc268e05a1045e1d2339fc5a0cd3fd17a7e",
     "git:github.com/Attamusc/pi-hunk-review@v0.1.1",
 ]
@@ -1120,6 +1119,7 @@ assert settings["extensions"] == ["+extensions/smart-sessions/index.ts"]
 assert len(settings["packages"]) == len(set(settings["packages"]))
 for package in settings["packages"]:
     assert "pi-cmux" not in package
+    assert "pi-herdr" not in package
 for package in settings["packages"]:
     if package == "git:github.com/Attamusc/pi-hunk-review@v0.1.1":
         continue
@@ -1237,6 +1237,8 @@ PY
     fail "Pi hook is not content-addressed to private settings"
   grep -Fq '"$pi_bin" update --extensions' "$darwin_hook" || \
     fail "macOS Pi hook does not reconcile configured extensions"
+  grep -Fq '"$herdr_bin" integration install pi' "$darwin_hook" || \
+    fail "macOS Pi hook does not install Herdr-managed Pi integration"
   grep -Fq 'brew_prefix=$("$brew" --prefix)' "$darwin_hook" || \
     fail "macOS Pi ownership is not Homebrew-derived"
   grep -Fq '"$mise_bin" which pi' "$fedora_hook" || fail "Fedora Pi ownership is not mise-derived"
@@ -1244,6 +1246,8 @@ PY
     fail "Fedora Pi version check does not run inside mise"
   grep -Fq '"$mise_bin" exec -- pi update --extensions' "$fedora_hook" || \
     fail "Fedora Pi reconciliation does not run inside mise"
+  grep -Fq '"$mise_bin" exec -- herdr integration install pi' "$fedora_hook" || \
+    fail "Fedora Pi hook does not install Herdr-managed Pi integration"
   grep -Fq 'gh auth status --hostname github.com' "$fedora_hook" || \
     fail "Pi hook does not require authenticated private-package access"
   grep -Fq 'GIT_CONFIG_GLOBAL="$local_git_config" gh auth setup-git' "$fedora_hook" || \
@@ -1299,6 +1303,7 @@ EOF
 which pi
 exec -- pi --version
 exec -- pi update --extensions
+exec -- herdr integration install pi
 EOF
   diff -u "$mise_stub_expected" "$mise_stub_log" >/dev/null || \
     fail "Fedora Pi mise execution arguments are incorrect"
@@ -1326,13 +1331,14 @@ check_herdr_contract() {
   local adr1="$PUBLIC_SOURCE/docs/adr/0001-additive-migration-cmux-herdr.md"
   local adr2="$PUBLIC_SOURCE/docs/adr/0002-fork-strategy-pi-interactive-subagents.md"
   local adr6="$PUBLIC_SOURCE/docs/adr/0006-herdr-is-the-sole-supported-multiplexer.md"
+  local adr7="$PUBLIC_SOURCE/docs/adr/0007-herdr-managed-pi-integration.md"
   local agents="$PUBLIC_SOURCE/dot_pi/agent/AGENTS.md"
   local lifecycle_files="$WORK/herdr-lifecycle-files"
   local lifecycle_probe="$WORK/herdr-lifecycle-probe.sh"
   local lifecycle_pattern='systemctl([^#]*)(enable|start)([^#]*)herdr|(^|[;&|[:space:]])herdr[[:space:]]+(serve|server|daemon|start-server)([;&|[:space:]]|$)'
   local relative_path runtime_file
 
-  [[ -f "$adr1" && -f "$adr2" && -f "$adr6" && -f "$agents" ]] || \
+  [[ -f "$adr1" && -f "$adr2" && -f "$adr6" && -f "$adr7" && -f "$agents" ]] || \
     fail "Herdr architecture decision set is incomplete"
   grep -Fq '**Status:** Superseded' "$adr1" || fail "ADR-0001 still claims the active mux contract"
   grep -Fq '**Superseded by:** ADR-0006' "$adr1" || fail "ADR-0001 lacks its Herdr-only forward reference"
@@ -1343,12 +1349,19 @@ check_herdr_contract() {
     fail "Herdr-only ADR does not state the sole mux contract"
   grep -Fq 'Rollback is version-control-based' "$adr6" || \
     fail "Herdr-only ADR lacks the version-control rollback boundary"
+  grep -Fq '**Status:** Accepted' "$adr7" || fail "Herdr-managed Pi integration ADR is not accepted"
+  grep -Fq 'does not install the external `Attamusc/pi-herdr` package' "$adr7" || \
+    fail "Pi integration ADR does not retire the external reporter"
+  grep -Fq 'herdr integration install pi' "$adr7" || \
+    fail "Pi integration ADR does not name the managed install contract"
   grep -Fq 'Herdr as its sole Pi/subagent multiplexer' "$agents" || \
     fail "active agent guidance does not name Herdr as sole mux"
   grep -Fq 'tmux as a supported fallback' "$agents" || \
     fail "active agent guidance does not delimit tmux ownership"
   grep -Fq 'Herdr starts its per-user server automatically; do not add a second lifecycle manager.' "$agents" || \
     fail "active agent guidance does not preserve Herdr's sole lifecycle manager"
+  grep -Fq "Herdr's managed Pi integration owns agent status and Session identity" "$agents" || \
+    fail "active agent guidance does not preserve managed Pi integration ownership"
 
   : >"$lifecycle_files"
   while IFS= read -r -d '' runtime_file; do
