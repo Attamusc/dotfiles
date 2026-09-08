@@ -1113,7 +1113,7 @@ expected_packages=[
     "git:github.com/carderne/pi-nvim",
     "git:github.com/Attamusc/pi-television@c3826bc268e05a1045e1d2339fc5a0cd3fd17a7e",
     "git:github.com/Attamusc/pi-hunk-review@v0.1.1",
-    "git:github.com/Attamusc/pi-lsp@22a4ece9a673d6db00fbba3f8c162cc62c073397",
+    "git:github.com/Attamusc/pi-lsp@a8a850ec8b660e239e0a1c84d0ede63b73f95120",
 ]
 assert settings["packages"] == expected_packages
 assert settings["extensions"] == ["+extensions/smart-sessions/index.ts"]

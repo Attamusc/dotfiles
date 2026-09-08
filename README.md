@@ -115,9 +115,11 @@ packages follow the same policy: installing a capability does not guarantee its
 server executables. See [ADR-0008](docs/adr/0008-semantic-intelligence-as-a-pi-package.md)
 for the standalone LSP package boundary and optional-server decision.
 
-The pinned `pi-lsp` package provides TypeScript/JavaScript definition and reference
-navigation. It requires both `typescript-language-server` and TypeScript on the
-machine; neither is installed by the shared bootstrap. The package README has
+The pinned `pi-lsp` 0.2.0 package provides TypeScript/JavaScript definitions,
+references, hover, workspace symbols, and explicit diagnostics through one tool
+(contract v2). Diagnostics do not run automatically after edits. It requires both
+`typescript-language-server` and TypeScript on the machine; neither is installed
+by the shared bootstrap. The package README has
 optional installation instructions. Check prerequisites with
 `command -v typescript-language-server tsserver`. A missing server produces a
 nonfatal tool error. Slow projects can use `PI_LSP_TIMEOUT_MS=30000 pi` (default
