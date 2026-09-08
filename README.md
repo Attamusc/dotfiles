@@ -115,14 +115,20 @@ packages follow the same policy: installing a capability does not guarantee its
 server executables. See [ADR-0008](docs/adr/0008-semantic-intelligence-as-a-pi-package.md)
 for the standalone LSP package boundary and optional-server decision.
 
-The pinned `pi-lsp` 0.2.0 package provides TypeScript/JavaScript definitions,
-references, hover, workspace symbols, and explicit diagnostics through one tool
-(contract v2). Diagnostics do not run automatically after edits. It requires both
-`typescript-language-server` and TypeScript on the machine; neither is installed
-by the shared bootstrap. The package README has
-optional installation instructions. Check prerequisites with
-`command -v typescript-language-server tsserver`. A missing server produces a
-nonfatal tool error. Slow projects can use `PI_LSP_TIMEOUT_MS=30000 pi` (default
+The pinned `pi-lsp` 0.3.0 package supports TypeScript/JavaScript, Rust, and Ruby
+through one tool (contract v3): definitions, references, hover, workspace symbols,
+and explicit diagnostics where the selected backend supports them. Diagnostics
+do not run automatically after edits. Rust diagnostics are partial native
+snapshots, not cargo-check results; Ruby diagnostics are syntax-only and its
+references are best-effort.
+
+All server runtimes remain optional and machine-owned. TS/JS need
+`typescript-language-server` plus TypeScript. Rust needs the tested standalone
+analyzer and a compatible toolchain/rust-src; Ruby needs an absolute Ruby executable
+and a dedicated preinstalled gem environment. Ruby's normal Bundler launcher and
+workspace add-ons are not used. See the package README for exact versions, setup,
+limits, and `PI_LSP_RUST_*` / `PI_LSP_RUBY_*` settings. None are installed by the
+shared bootstrap. Slow starts can use `PI_LSP_TIMEOUT_MS=30000 pi` (default
 10,000 ms; maximum 120,000 ms).
 
 Datadog is the macOS exception: the official Pup CLI and pinned `dd-docs`,

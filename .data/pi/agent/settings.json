@@ -10,7 +10,7 @@
     "git:github.com/carderne/pi-nvim",
     "git:github.com/Attamusc/pi-television@c3826bc268e05a1045e1d2339fc5a0cd3fd17a7e",
     "git:github.com/Attamusc/pi-hunk-review@v0.1.1",
-    "git:github.com/Attamusc/pi-lsp@a8a850ec8b660e239e0a1c84d0ede63b73f95120"
+    "git:github.com/Attamusc/pi-lsp@9496ab5a4fd6309c5647e4f358d1b6a0b0ff8409"
   ],
   "extensions": [
     "+extensions/smart-sessions/index.ts"
