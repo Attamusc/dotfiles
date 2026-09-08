@@ -110,7 +110,7 @@ examples.
 
 Specialist packages are also machine-owned: cloud/Kubernetes CLIs, container
 engines, additional language toolchains and language servers, QMK, Ollama, and
-OCR/media tooling are outside the shared manifests. Language-server-backed Pi
+OCR/media tooling are outside the automatic shared install baseline. Language-server-backed Pi
 packages follow the same policy: installing a capability does not guarantee its
 server executables. See [ADR-0008](docs/adr/0008-semantic-intelligence-as-a-pi-package.md)
 for the standalone LSP package boundary and optional-server decision.
@@ -135,6 +135,49 @@ Datadog is the macOS exception: the official Pup CLI and pinned `dd-docs`,
 `dd-pup`, `dd-audit`, and `dd-apm` skills are installed for Pi and OpenCode.
 Pup defaults to enforced read-only mode, and OAuth credentials remain in Pup's
 secure machine-local storage. Fedora renders none of this Datadog configuration.
+
+### Optional native LSP setup through chezmoi
+
+Native runtime setup is defined here, not by edits to generated home files:
+
+- `dot_config/pi-lsp/runtimes.json` pins versions, artifact URLs, and SHA-256 hashes.
+- `dot_local/bin/executable_pi-lsp-setup` installs verified runtime artifacts on
+  explicit invocation; no bootstrap hook invokes it.
+- `dot_local/bin/executable_pi-lsp-rust-analyzer.tmpl` selects Rust 1.97.1 only for
+  the analyzer and its children, without changing the shell's toolchain choice.
+- `dot_config/private_zsh/config/pi-lsp.zsh.tmpl` configures Pi's runtime paths and
+  a 30-second LSP deadline through the existing zsh loader.
+
+The setup command requires already-installed Rust 1.97.1, mise-managed Ruby 4.0.1,
+`curl`, Python 3, `make`, and a C compiler for the RBS gem. It does not install toolchains
+or change their global selection. If needed, provision them explicitly first:
+
+```sh
+rustup toolchain install 1.97.1 --profile minimal --no-self-update
+mise install ruby@4.0.1
+```
+
+Preview and apply only these managed files, then run the opt-in installer:
+
+```sh
+chezmoi diff --exclude=scripts ~/.config/pi-lsp \
+  ~/.config/zsh/config/pi-lsp.zsh ~/.local/bin/pi-lsp-rust-analyzer ~/.local/bin/pi-lsp-setup
+chezmoi apply --exclude=scripts ~/.config/pi-lsp \
+  ~/.config/zsh/config/pi-lsp.zsh ~/.local/bin/pi-lsp-rust-analyzer ~/.local/bin/pi-lsp-setup
+pi-lsp-setup
+```
+
+Artifacts are stored in versioned directories under `~/.local/share/pi-lsp/`.
+The installer verifies downloads before use, isolates Ruby gems from project and
+user Bundler state, and verifies installed files on reruns. It refuses corrupt or
+unowned existing targets rather than overwriting them. A pin change that retains
+the same version-directory name also requires moving that directory aside
+explicitly before rerunning setup. Source changes belong in this repository;
+installed artifacts are outputs, not configuration to edit.
+
+Open a fresh shell and start a new Pi process after setup. `/reload` refreshes
+extensions but cannot import environment changes into an existing process.
+Neither the global Ruby gem set nor the ordinary Rust default is changed.
 
 ## Preview and apply
 

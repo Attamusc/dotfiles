@@ -1,0 +1,313 @@
+#!/usr/bin/env python3
+"""Install the pinned, native runtimes used by pi-lsp. Run explicitly."""
+from __future__ import annotations
+
+import argparse
+import fcntl
+import gzip
+import hashlib
+import json
+import os
+from pathlib import Path, PurePosixPath
+import platform
+import re
+import signal
+import shutil
+import subprocess
+import sys
+import tarfile
+import tempfile
+import urllib.parse
+
+MAX_MEMBERS = 10000
+MAX_FILE = 128 * 1024 * 1024
+MAX_TOTAL = 1024 * 1024 * 1024
+SAFE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._+-]*$")
+SHA = re.compile(r"^[0-9a-f]{64}$")
+
+class SetupError(RuntimeError):
+    pass
+
+def _safe(value, label):
+    if not isinstance(value, str) or not SAFE.fullmatch(value) or value in (".", ".."):
+        raise SetupError(f"unsafe {label}: {value!r}")
+    return value
+
+def validate_manifest(m):
+    try:
+        if type(m["schema_version"]) is not int or m["schema_version"] != 1: raise SetupError("unsupported manifest schema")
+        r, rb = m["rust"], m["ruby"]
+        _safe(r["toolchain"], "Rust toolchain")
+        _safe(r["analyzer"]["release"], "analyzer release")
+        if not isinstance(r["analyzer"]["version"], str) or not r["analyzer"]["version"]: raise SetupError("invalid analyzer version")
+        for key, asset in r["analyzer"]["assets"].items():
+            _safe(key, "platform") ; _asset(asset)
+        _asset(r["source"])
+        _archive_path(r["source"]["library_prefix"])
+        _safe(rb["version"], "Ruby version"); _safe(rb["lsp_version"], "Ruby LSP version")
+        if len(rb["gems"]) != 4: raise SetupError("manifest must pin exactly four gems")
+        names = set()
+        for gem in rb["gems"]:
+            name = _safe(gem["name"], "gem name"); _safe(gem["version"], "gem version"); _asset(gem)
+            if name in names: raise SetupError("duplicate gem name")
+            names.add(name)
+        if names != {"language_server-protocol", "logger", "rbs", "ruby-lsp"}: raise SetupError("unexpected gem set")
+    except (KeyError, TypeError) as e:
+        raise SetupError(f"invalid manifest: missing or malformed {e}") from e
+    return m
+
+def _asset(a):
+    u = urllib.parse.urlparse(a["url"])
+    if u.scheme != "https" or not u.netloc or u.username or u.password: raise SetupError("asset URL must be credential-free HTTPS")
+    if not SHA.fullmatch(a["sha256"]): raise SetupError("asset SHA-256 must be 64 lowercase hex characters")
+
+def _archive_path(s):
+    if not isinstance(s, str) or "\\" in s or s.startswith("/"):
+        raise SetupError(f"unsafe archive path: {s!r}")
+    # Validate raw segments: PurePosixPath normalizes away empty and dot segments.
+    if any(x in ("", ".", "..") for x in s.split("/")):
+        raise SetupError(f"unsafe archive path: {s!r}")
+
+def platform_key(system=None, machine=None, os_release=None):
+    system, machine = system or platform.system(), machine or platform.machine()
+    if system == "Linux":
+        if os_release is None:
+            try: os_release = Path("/etc/os-release").read_text()
+            except OSError: os_release = ""
+        fields = dict(line.split("=", 1) for line in os_release.splitlines() if "=" in line)
+        fields = {k: v.strip('"') for k, v in fields.items()}
+        if fields.get("ID") != "fedora" or fields.get("VERSION_ID") != "44":
+            raise SetupError(f"unsupported Linux distribution: require Fedora 44 ({fields.get('ID', 'unknown')} {fields.get('VERSION_ID', 'unknown')})")
+    keys = {("Darwin", "arm64"): "darwin-arm64", ("Darwin", "aarch64"): "darwin-arm64",
+            ("Darwin", "x86_64"): "darwin-amd64", ("Linux", "x86_64"): "linux-amd64"}
+    try: return keys[(system, machine)]
+    except KeyError: raise SetupError(f"unsupported platform: {system} {machine}")
+
+def run(argv, *, env=None, cwd=None, timeout=30):
+    """Run without shells, bounded lifetime, or unbounded in-memory output."""
+    argv = list(argv)
+    if not os.path.isabs(argv[0]):
+        executable = shutil.which(argv[0], path=(env or {}).get("PATH", _clean_path()))
+        if not executable: raise SetupError(f"required command not found: {argv[0]}")
+        argv[0] = executable
+    with tempfile.TemporaryFile() as stdout, tempfile.TemporaryFile() as stderr:
+        process = subprocess.Popen(argv, env=env, cwd=cwd, stdout=stdout, stderr=stderr,
+                                   start_new_session=True)
+        try:
+            returncode = process.wait(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            try: os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError: pass
+            process.wait()
+            raise SetupError(f"command timed out after {timeout}s: {argv[0]}")
+        def tail(stream):
+            size = stream.tell(); stream.seek(max(0, size - 65536))
+            return stream.read().decode("utf-8", "replace")
+        out, err = tail(stdout), tail(stderr)
+    result = subprocess.CompletedProcess(argv, returncode, out, err)
+    if returncode: raise subprocess.CalledProcessError(returncode, argv, out, err)
+    return result
+
+def _clean_path():
+    return os.pathsep.join(p for p in os.environ.get("PATH", "").split(os.pathsep) if p and os.path.isabs(p))
+
+def prerequisites(m, home):
+    path = _clean_path()
+    for command in ("curl", "rustup", "make"):
+        if not shutil.which(command, path=path): raise SetupError(f"required command not found: {command}")
+    if not any(shutil.which(c, path=path) for c in ("cc", "gcc", "clang")):
+        raise SetupError("RBS requires a C compiler (cc, gcc, or clang)")
+    tc = m["rust"]["toolchain"]
+    with tempfile.TemporaryDirectory(prefix="pi-lsp-preflight-") as scratch:
+        rust_env = {"HOME": str(home), "PATH": path, "RUSTUP_AUTO_INSTALL": "0"}
+        try: out = run([shutil.which("rustup", path=path), "run", tc, "rustc", "--version"], env=rust_env, cwd=scratch).stdout
+        except (subprocess.CalledProcessError, FileNotFoundError): raise SetupError(f"Rust toolchain {tc} is not installed; install it explicitly with rustup")
+        if not re.search(rf"\brustc {re.escape(tc)}(?:\s|$)", out): raise SetupError(f"rustup toolchain {tc} returned an unexpected rustc version")
+        ruby = home / ".local/share/mise/installs/ruby" / m["ruby"]["version"] / "bin/ruby"
+        if not ruby.is_file() or ruby.is_symlink(): raise SetupError(f"Ruby {m['ruby']['version']} is not installed at {ruby}; install it explicitly with mise")
+        ruby_env = {"HOME": scratch, "PATH": path}
+        try: rv = run([str(ruby), "-e", "print RUBY_VERSION"], env=ruby_env, cwd=scratch).stdout
+        except subprocess.CalledProcessError: raise SetupError(f"unable to run pinned Ruby at {ruby}")
+    if rv != m["ruby"]["version"]: raise SetupError(f"pinned Ruby reports version {rv!r}")
+    return ruby
+
+def download(asset, cache):
+    suffix = ".gem" if urllib.parse.urlparse(asset["url"]).path.endswith(".gem") else ""
+    name = asset["sha256"] + suffix
+    path = cache / name
+    if os.path.lexists(path) and (path.is_symlink() or not path.is_file()): raise SetupError(f"unsafe cache entry: {path}")
+    if not path.exists():
+        fd, raw = tempfile.mkstemp(prefix=".download-", suffix=suffix, dir=cache)
+        os.close(fd); tmp = Path(raw)
+        try:
+            run(["curl", "--disable", "--fail", "--location", "--proto", "=https", "--proto-redir", "=https",
+                 "--connect-timeout", "15", "--max-time", "300", "--output", str(tmp), asset["url"]], timeout=360)
+            if _hash(tmp) != asset["sha256"]: raise SetupError(f"checksum mismatch for {asset['url']}")
+            try: os.link(tmp, path)
+            except FileExistsError: pass
+        finally:
+            tmp.unlink(missing_ok=True)
+    if _hash(path) != asset["sha256"]: raise SetupError(f"checksum mismatch for cached asset {path}")
+    return path
+
+def _hash(path):
+    h = hashlib.sha256()
+    with path.open("rb") as f:
+        for block in iter(lambda: f.read(1024 * 1024), b""): h.update(block)
+    return h.hexdigest()
+
+def extract_rust_source(archive, dest, prefix):
+    _archive_path(prefix)
+    seen, total, count = set(), 0, 0
+    with tarfile.open(archive, "r|gz") as tf:
+        for member in tf:
+            count += 1
+            if count > MAX_MEMBERS: raise SetupError("Rust source archive has too many members")
+            _archive_path(member.name)
+            p = PurePosixPath(member.name); pre = PurePosixPath(prefix)
+            try: rel = p.relative_to(pre)
+            except ValueError: continue
+            if not rel.parts: continue
+            key = rel.as_posix()
+            if key in seen: raise SetupError(f"duplicate archive member: {key}")
+            seen.add(key)
+            target = dest.joinpath(*rel.parts)
+            if member.isdir(): target.mkdir(parents=True, exist_ok=True); continue
+            if not member.isfile(): raise SetupError(f"non-regular archive member: {member.name}")
+            total += member.size
+            if member.size > MAX_FILE or total > MAX_TOTAL: raise SetupError("Rust source archive exceeds size bounds")
+            if target.exists() and target.is_dir(): raise SetupError(f"archive path conflict: {key}")
+            target.parent.mkdir(parents=True, exist_ok=True)
+            src = tf.extractfile(member)
+            with target.open("xb") as out: shutil.copyfileobj(src, out)
+    if not seen: raise SetupError("Rust source archive contains no library files")
+
+def inventory(root):
+    files = {}
+    receipt = root / ".pi-lsp-receipt.json"
+    for p in sorted(root.rglob("*")):
+        if p.is_symlink(): raise SetupError(f"managed target contains symlink: {p}")
+        if p.is_file() and p != receipt:
+            files[p.relative_to(root).as_posix()] = {"sha256": _hash(p), "mode": p.stat().st_mode & 0o777}
+    return files
+
+def write_receipt(root, recipe):
+    payload = {"schema_version": 1, "recipe": recipe, "files": inventory(root)}
+    (root / ".pi-lsp-receipt.json").write_text(json.dumps(payload, sort_keys=True, indent=2) + "\n")
+
+def verify_target(root, recipe):
+    if root.is_symlink() or not root.is_dir(): return False
+    receipt = root / ".pi-lsp-receipt.json"
+    if receipt.is_symlink(): return False
+    try: got = json.loads(receipt.read_text())
+    except (OSError, ValueError): return False
+    return got == {"schema_version": 1, "recipe": recipe, "files": inventory(root)}
+
+def recipe_digest(value):
+    return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
+def component_recipes(m, key):
+    return [
+        recipe_digest({"schema": 1, "platform": key, "analyzer": m["rust"]["analyzer"]["release"],
+                       "version": m["rust"]["analyzer"]["version"], "asset": m["rust"]["analyzer"]["assets"].get(key)}),
+        recipe_digest({"schema": 1, "toolchain": m["rust"]["toolchain"], "source": m["rust"]["source"]}),
+        recipe_digest({"schema": 1, "platform": key, "ruby": m["ruby"]}),
+    ]
+
+def isolated_env(home, gemhome):
+    env = {"PATH": _clean_path(), "HOME": str(home), "GEM_HOME": str(gemhome), "GEM_PATH": str(gemhome)}
+    for key in ("TMPDIR", "TEMP", "TMP", "SYSTEMROOT"):
+        if key in os.environ: env[key] = os.environ[key]
+    return env
+
+def verify_component(index, root, m, ruby, scratch):
+    if index == 0:
+        return run([str(root/"rust-analyzer"), "--version"]).stdout.strip() == m["rust"]["analyzer"]["version"]
+    if index == 1:
+        return all((root/p).is_file() and not (root/p).is_symlink() for p in
+                   ("library/Cargo.toml", "library/core/src/lib.rs", "library/std/src/lib.rs"))
+    env = isolated_env(scratch, root)
+    code = "require 'rubygems'; puts Gem::Specification.reject(&:default_gem?).map{|s| s.name+'='+s.version.to_s}.sort"
+    expected = {g["name"]+"="+g["version"] for g in m["ruby"]["gems"]}
+    actual = set(run([str(ruby), "-e", code], env=env, cwd=scratch).stdout.splitlines())
+    raw = root/"gems"/f"ruby-lsp-{m['ruby']['lsp_version']}"/"exe/ruby-lsp"
+    if not raw.is_file() or raw.is_symlink(): return False
+    got = run([str(ruby), str(raw), "--version"], env=env, cwd=scratch).stdout.strip()
+    return actual == expected and got == m["ruby"]["lsp_version"]
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--manifest", type=Path, default=Path.home()/".config/pi-lsp/runtimes.json")
+    args = ap.parse_args(argv)
+    os.umask(0o077)
+    home = Path.home(); root = home/".local/share/pi-lsp"; cache = root/"runtime-cache"
+    m = validate_manifest(json.loads(args.manifest.read_text())); key = platform_key()
+    asset = m["rust"]["analyzer"]["assets"].get(key)
+    if not asset: raise SetupError(f"manifest has no analyzer asset for {key}")
+    ruby = prerequisites(m, home)  # Every prerequisite is checked before the first download.
+    if os.path.lexists(root) and (root.is_symlink() or not root.is_dir()): raise SetupError(f"managed root must be a real directory: {root}")
+    root.mkdir(parents=True, exist_ok=True)
+    lock = root/".setup.lock"
+    if lock.is_symlink(): raise SetupError(f"setup lock must not be a symlink: {lock}")
+    with lock.open("a+b") as lock_file:
+        try: fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError: raise SetupError("another pi-lsp-setup invocation is running; retry after it finishes")
+        if os.path.lexists(cache) and (cache.is_symlink() or not cache.is_dir()): raise SetupError(f"runtime cache must be a real directory: {cache}")
+        cache.mkdir(mode=0o700, exist_ok=True)
+        recipes = component_recipes(m, key)
+        targets = [root/f"rust-analyzer-{m['rust']['analyzer']['release']}", root/f"rust-src-{m['rust']['toolchain']}", root/f"ruby-lsp-{m['ruby']['lsp_version']}-ruby-{m['ruby']['version']}"]
+        existing = [os.path.lexists(t) for t in targets]
+        with tempfile.TemporaryDirectory(prefix=".pi-lsp-check-", dir=root) as check:
+            for i, (t, exists) in enumerate(zip(targets, existing)):
+                valid = False
+                if exists and verify_target(t, recipes[i]):
+                    try: valid = verify_component(i, t, m, ruby, check)
+                    except (OSError, subprocess.CalledProcessError, SetupError): valid = False
+                if exists and not valid: raise SetupError(f"refusing corrupt or unowned target {t}; move it aside manually and retry")
+        if all(existing): print("pi-lsp runtimes already installed and verified"); return 0
+        work = Path(tempfile.mkdtemp(prefix=".pi-lsp-stage-", dir=root))
+        stages = [work/str(i) for i in range(3)]
+        try:
+            for s in stages: s.mkdir()
+            if not existing[0]:
+                with gzip.open(download(asset, cache), "rb") as src, (stages[0]/"rust-analyzer").open("xb") as out: shutil.copyfileobj(src, out)
+                (stages[0]/"rust-analyzer").chmod(0o755)
+            if not existing[1]:
+                src = m["rust"]["source"]
+                extract_rust_source(download(src, cache), stages[1]/"library", src["library_prefix"])
+            if not existing[2]:
+                gemhome = stages[2]; scratch = work/"home"; scratch.mkdir()
+                gem_files = work/"gem-files"; gem_files.mkdir()
+                gems = []
+                for gem in m["ruby"]["gems"]:
+                    cached = download(gem, cache)
+                    local = gem_files/f"{gem['name']}-{gem['version']}.gem"
+                    os.link(cached, local); gems.append(local)
+                gem_command = ruby.parent/"gem"
+                if not gem_command.is_file() or gem_command.is_symlink(): raise SetupError(f"pinned Ruby gem command is missing or unsafe: {gem_command}")
+                run([str(ruby), str(gem_command), "install", "--local", "--ignore-dependencies", "--no-document", *map(str, gems)],
+                    env=isolated_env(scratch, gemhome), cwd=scratch, timeout=600)
+            with tempfile.TemporaryDirectory(prefix="verify-", dir=work) as check:
+                for i, (stage, exists) in enumerate(zip(stages, existing)):
+                    if not exists:
+                        if not verify_component(i, stage, m, ruby, check): raise SetupError(f"verification failed for staged target {targets[i].name}")
+                        write_receipt(stage, recipes[i])
+            # All components are complete before any destination is published.
+            for t, exists in zip(targets, existing):
+                if not exists and os.path.lexists(t): raise SetupError(f"target appeared during installation: {t}; refusing to overwrite it")
+            for s, t, exists in zip(stages, targets, existing):
+                if not exists: s.rename(t)
+            print("installed and verified pi-lsp runtimes")
+            return 0
+        finally:
+            shutil.rmtree(work, ignore_errors=True)
+
+if __name__ == "__main__":
+    try: raise SystemExit(main())
+    except subprocess.CalledProcessError as e:
+        print(f"pi-lsp-setup: command failed: {e.cmd[0]} (exit {e.returncode})", file=sys.stderr)
+        for output in (e.stdout, e.stderr):
+            if output: print(output[-8192:], file=sys.stderr)
+        raise SystemExit(1)
+    except (SetupError, OSError, json.JSONDecodeError) as e:
+        print(f"pi-lsp-setup: {e}", file=sys.stderr); raise SystemExit(1)

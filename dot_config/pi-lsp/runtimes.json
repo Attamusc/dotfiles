@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "rust": {
+    "toolchain": "1.97.1",
+    "analyzer": {
+      "release": "2026-09-07",
+      "version": "rust-analyzer 0.3.3041-standalone (9074e9b4c6 2026-09-06)",
+      "assets": {
+        "darwin-arm64": {
+          "url": "https://github.com/rust-lang/rust-analyzer/releases/download/2026-09-07/rust-analyzer-aarch64-apple-darwin.gz",
+          "sha256": "16e9b2af9db7c0ce015ffe88f85db27669b05c84887a59c737d697d2c5f8d349"
+        },
+        "darwin-amd64": {
+          "url": "https://github.com/rust-lang/rust-analyzer/releases/download/2026-09-07/rust-analyzer-x86_64-apple-darwin.gz",
+          "sha256": "41161c05bd7e2396a5cea86a691d37919ec0af331a06bbdc0f323979034f9dad"
+        },
+        "linux-amd64": {
+          "url": "https://github.com/rust-lang/rust-analyzer/releases/download/2026-09-07/rust-analyzer-x86_64-unknown-linux-gnu.gz",
+          "sha256": "a3500183aa08bf740c0da6e030ad262d4cfa1c19e7ce195ab5f772bdf9ddfb12"
+        }
+      }
+    },
+    "source": {
+      "url": "https://static.rust-lang.org/dist/2026-07-16/rust-src-1.97.1.tar.gz",
+      "sha256": "59f02b4f23fd8d7193a3cb17ea192255ccf02f1109783d7988521334891d27ae",
+      "library_prefix": "rust-src-1.97.1/rust-src/lib/rustlib/src/rust/library"
+    }
+  },
+  "ruby": {
+    "version": "4.0.1",
+    "lsp_version": "0.26.11",
+    "gems": [
+      {
+        "name": "language_server-protocol",
+        "version": "3.17.0.6",
+        "url": "https://rubygems.org/downloads/language_server-protocol-3.17.0.6.gem",
+        "sha256": "5ef2c0c138f8267e1bc631d3328347d354f96724b0af22f2c79516120443b7f0"
+      },
+      {
+        "name": "logger",
+        "version": "1.7.0",
+        "url": "https://rubygems.org/downloads/logger-1.7.0.gem",
+        "sha256": "196edec7cc44b66cfb40f9755ce11b392f21f7967696af15d274dde7edff0203"
+      },
+      {
+        "name": "rbs",
+        "version": "4.2.0",
+        "url": "https://rubygems.org/downloads/rbs-4.2.0.gem",
+        "sha256": "51f7b886dcc05bc09e10b901daa6a81829f6adc03101d6ca9ea4aac6103e0674"
+      },
+      {
+        "name": "ruby-lsp",
+        "version": "0.26.11",
+        "url": "https://rubygems.org/downloads/ruby-lsp-0.26.11.gem",
+        "sha256": "4cc8f1587237ff8c9031680b5491df901a82559eeaa1ae96863ffe700b32583d"
+      }
+    ]
+  }
+}

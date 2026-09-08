@@ -1,0 +1,7 @@
+{{- $runtimes := include "dot_config/pi-lsp/runtimes.json" | fromJson -}}
+# Optional runtimes are installed explicitly with pi-lsp-setup.
+export PI_LSP_RUST_ANALYZER="$HOME/.local/bin/pi-lsp-rust-analyzer"
+export PI_LSP_RUST_SYSROOT_SRC="$HOME/.local/share/pi-lsp/rust-src-{{ $runtimes.rust.toolchain }}/library"
+export PI_LSP_RUBY_EXECUTABLE="$HOME/.local/share/mise/installs/ruby/{{ $runtimes.ruby.version }}/bin/ruby"
+export PI_LSP_RUBY_GEM_HOME="$HOME/.local/share/pi-lsp/ruby-lsp-{{ $runtimes.ruby.lsp_version }}-ruby-{{ $runtimes.ruby.version }}"
+export PI_LSP_TIMEOUT_MS=30000

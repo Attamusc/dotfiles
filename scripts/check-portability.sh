@@ -1465,6 +1465,71 @@ PY
   printf 'ok: remote pi-hunk-review release contract\n'
 }
 
+check_pi_lsp_runtime_contract() {
+  local platform architecture release version label env_script launcher
+  for label in darwin-arm64 darwin-amd64 linux-amd64; do
+    platform=${label%-*}
+    architecture=${label#*-}
+    release=''
+    version=''
+    if [[ "$platform" == linux ]]; then release=fedora; version=44; fi
+    env_script="$WORK/pi-lsp-$label.zsh"
+    launcher="$WORK/pi-lsp-$label.sh"
+    render_source_template "$platform" "$architecture" "$release" "$version" \
+      dot_config/private_zsh/config/pi-lsp.zsh.tmpl "$env_script"
+    render_source_template "$platform" "$architecture" "$release" "$version" \
+      dot_local/bin/executable_pi-lsp-rust-analyzer.tmpl "$launcher"
+    zsh -n "$env_script"
+    sh -n "$launcher"
+  done
+
+  python3 - "$PUBLIC_SOURCE" "$WORK" <<'PY'
+import json
+import os
+import pathlib
+import subprocess
+import sys
+
+source, work = map(pathlib.Path, sys.argv[1:])
+manifest = json.loads((source / 'dot_config/pi-lsp/runtimes.json').read_text())
+assert manifest['schema_version'] == 1
+assert manifest['rust']['toolchain'] == '1.97.1'
+assert manifest['ruby']['version'] == '4.0.1'
+assert manifest['ruby']['lsp_version'] == '0.26.11'
+assert manifest['rust']['analyzer']['release'] == '2026-09-07'
+assert set(manifest['rust']['analyzer']['assets']) == {'darwin-arm64', 'darwin-amd64', 'linux-amd64'}
+assert [(gem['name'], gem['version']) for gem in manifest['ruby']['gems']] == [
+    ('language_server-protocol', '3.17.0.6'), ('logger', '1.7.0'), ('rbs', '4.2.0'), ('ruby-lsp', '0.26.11'),
+]
+for hook in (source / '.chezmoiscripts').iterdir():
+    assert 'pi-lsp-setup' not in hook.read_text(), 'native LSP setup must stay opt-in'
+
+home = work / 'pi-lsp-runtime-home'
+home.mkdir()
+binary = home / '.local/share/pi-lsp/rust-analyzer-2026-09-07/rust-analyzer'
+binary.parent.mkdir(parents=True)
+binary.write_text('#!/bin/sh\nprintf "%s\\n" "$RUSTUP_TOOLCHAIN" "$CARGO_NET_OFFLINE" "$RUSTUP_AUTO_INSTALL" "$@"\n')
+binary.chmod(0o755)
+env = {'HOME': str(home), 'PATH': os.environ['PATH'], 'RUSTUP_TOOLCHAIN': 'application-choice', 'GEM_HOME': 'application-gems'}
+for label in ['darwin-arm64', 'darwin-amd64', 'linux-amd64']:
+    command = 'source "$1"; printf "%s\\n" "$PI_LSP_RUST_ANALYZER" "$PI_LSP_RUST_SYSROOT_SRC" "$PI_LSP_RUBY_EXECUTABLE" "$PI_LSP_RUBY_GEM_HOME" "$PI_LSP_TIMEOUT_MS" "$RUSTUP_TOOLCHAIN" "$GEM_HOME"'
+    values = subprocess.check_output(['zsh', '-dfc', command, '_', str(work / f'pi-lsp-{label}.zsh')], env=env, text=True, timeout=10).splitlines()
+    assert values == [
+        str(home / '.local/bin/pi-lsp-rust-analyzer'),
+        str(home / '.local/share/pi-lsp/rust-src-1.97.1/library'),
+        str(home / '.local/share/mise/installs/ruby/4.0.1/bin/ruby'),
+        str(home / '.local/share/pi-lsp/ruby-lsp-0.26.11-ruby-4.0.1'),
+        '30000', 'application-choice', 'application-gems',
+    ], (label, values)
+    output = subprocess.check_output(['sh', str(work / f'pi-lsp-{label}.sh'), '--probe', 'two words'], env=env, text=True, timeout=10).splitlines()
+    assert output == ['1.97.1', 'true', '0', '--probe', 'two words'], (label, output)
+installer = source / 'dot_local/bin/executable_pi-lsp-setup'
+compile(installer.read_text(), str(installer), 'exec')
+PY
+  python3 "$PUBLIC_SOURCE/tests/portability/test-pi-lsp-setup.py"
+  printf 'ok: source-owned optional Pi LSP runtimes and isolated installer tests\n'
+}
+
 check_documentation_contract() {
   local readme="$PUBLIC_SOURCE/README.md"
   local overlays="$PUBLIC_SOURCE/docs/private-overlays.md"
@@ -1684,6 +1749,7 @@ check_shell_contract
 check_agent_contract
 check_herdr_contract
 check_hunk_review_contract
+check_pi_lsp_runtime_contract
 check_documentation_contract
 check_ci_contract
 rm -- "$PUBLIC_SOURCE/.chezmoi.toml.tmpl"

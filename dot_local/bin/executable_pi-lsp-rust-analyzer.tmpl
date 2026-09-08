@@ -1,0 +1,9 @@
+{{- $runtimes := include "dot_config/pi-lsp/runtimes.json" | fromJson -}}
+#!/bin/sh
+set -eu
+
+# Select this toolchain only for the analyzer and its children, not the shell.
+export RUSTUP_TOOLCHAIN={{ $runtimes.rust.toolchain | quote }}
+export RUSTUP_AUTO_INSTALL=0
+export CARGO_NET_OFFLINE=true
+exec "$HOME/.local/share/pi-lsp/rust-analyzer-{{ $runtimes.rust.analyzer.release }}/rust-analyzer" "$@"
