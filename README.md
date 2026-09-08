@@ -109,7 +109,10 @@ examples.
 
 Specialist packages are also machine-owned: cloud/Kubernetes CLIs, container
 engines, additional language toolchains and language servers, QMK, Ollama, and
-OCR/media tooling are outside the shared manifests.
+OCR/media tooling are outside the shared manifests. Language-server-backed Pi
+packages follow the same policy: installing a capability does not guarantee its
+server executables. See [ADR-0008](docs/adr/0008-semantic-intelligence-as-a-pi-package.md)
+for the standalone LSP package boundary and optional-server decision.
 
 Datadog is the macOS exception: the official Pup CLI and pinned `dd-docs`,
 `dd-pup`, `dd-audit`, and `dd-apm` skills are installed for Pi and OpenCode.
