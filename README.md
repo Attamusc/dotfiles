@@ -23,9 +23,10 @@ tmux remains available as an interactive terminal tool, not an agent fallback.
 
 ## Before bootstrap
 
-The `Attamusc/pi-hunk-review` package and release are private. Authenticate Git
-and GitHub CLI before running the dotfiles installer on a new host. The account
-must be able to clone that repository and download its release assets.
+The `Attamusc/pi-hunk-review` and `Attamusc/pi-lsp` repositories are private.
+Authenticate Git and GitHub CLI before running the dotfiles installer on a new
+host. The account must be able to clone both repositories and download the
+pi-hunk-review release assets.
 
 ```sh
 gh auth login
@@ -113,6 +114,14 @@ OCR/media tooling are outside the shared manifests. Language-server-backed Pi
 packages follow the same policy: installing a capability does not guarantee its
 server executables. See [ADR-0008](docs/adr/0008-semantic-intelligence-as-a-pi-package.md)
 for the standalone LSP package boundary and optional-server decision.
+
+The pinned `pi-lsp` package provides TypeScript/JavaScript definition and reference
+navigation. It requires both `typescript-language-server` and TypeScript on the
+machine; neither is installed by the shared bootstrap. The package README has
+optional installation instructions. Check prerequisites with
+`command -v typescript-language-server tsserver`. A missing server produces a
+nonfatal tool error. Slow projects can use `PI_LSP_TIMEOUT_MS=30000 pi` (default
+10,000 ms; maximum 120,000 ms).
 
 Datadog is the macOS exception: the official Pup CLI and pinned `dd-docs`,
 `dd-pup`, `dd-audit`, and `dd-apm` skills are installed for Pi and OpenCode.

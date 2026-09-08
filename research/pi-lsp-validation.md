@@ -18,7 +18,8 @@ portable repository artifacts. The unrelated stale config test was not changed.
 
 Standalone source: `~/projects/github.com/Attamusc/pi-lsp`.
 Reviewed local commit: `22a4ece9a673d6db00fbba3f8c162cc62c073397` (`0.1.0`).
-No remote repository, release, or shared package pin has been published.
+The initial development pass was local-only. Publication and integration of
+this same reviewed commit are recorded below.
 
 | Command / check | Exit | Observed result |
 |---|---:|---|
@@ -129,11 +130,63 @@ restarts it; this does not change navigation results but could mislead triage.
 No compatibility code was added for hypothetical hosts that reuse an extension
 after session shutdown; current Pi reconstructs it.
 
-## Pending gates
+## Private-repository rollout
+
+The user created `Attamusc/pi-lsp` as a private repository. Inspection confirmed
+its `main` branch already contained the reviewed commit, so no additional push
+or package source change was necessary.
+
+Shared Pi settings now select:
+
+```text
+git:github.com/Attamusc/pi-lsp@22a4ece9a673d6db00fbba3f8c162cc62c073397
+```
+
+The exact same pin is asserted by `scripts/check-portability.sh`. The README
+now documents access to both private repositories before bootstrap, optional
+server prerequisites, and the configurable deadline. No native manifests,
+bootstrap hooks, existing package pins, workflow definitions, or Herdr settings
+changed.
+
+| Check | Exit | Observed result |
+|---|---:|---|
+| `gh repo view Attamusc/pi-lsp --json nameWithOwner,visibility,url,defaultBranchRef` | 0 | Private repository, default branch `main` |
+| `git ls-remote origin refs/heads/main` from standalone checkout | 0 | Published SHA matches `22a4ece9a673d6db00fbba3f8c162cc62c073397` |
+| Isolated `PI_CODING_AGENT_DIR=... pi install <pin>` | 0 | Clean authenticated Git install of exact commit; three client dependencies, no test toolchains |
+| `PI_CODING_AGENT_DIR=... pi update --extensions` with only settings in an otherwise empty agent directory | 0 | Bootstrap reconciliation installs the missing global package at the exact pinned SHA |
+| Actual Pi loader and semantic smoke against that Git install | 0 | One `lsp` tool, no loader errors; cross-file definition and exact references correct; shutdown completed |
+| `scripts/check-portability.sh` after pin change | 0 | Darwin/Linux rendered contracts and existing checks passed |
+| Live `pi install <pin>` and `pi list` | 0 | Exact pin installed once in the global Pi package directory |
+| Live settings structural comparison | 0 | All prior packages/order and every non-package value unchanged; package order matches rendered source |
+| Protected-state comparison | 0 | Four protected roots unchanged |
+
+The isolated semantic smoke used the standalone checkout's pinned test-only
+server binaries through PATH. No global TypeScript/server installation was
+performed. Neither `typescript-language-server` nor `tsserver` was on the normal
+host PATH at rollout, so semantic operations need that optional prerequisite.
+
+Live settings were updated using Pi's package installer, not a blanket chezmoi
+apply: the live changelog-version value differed from the source template and
+was preserved. No general `pi update --extensions` ran, avoiding unrelated
+unpinned package updates. The source template and existing setup hook will
+reconcile the pin on future bootstraps. An isolated empty-directory run of that
+same update command confirmed missing global packages are installed, rather
+than merely updating already-present clones.
+
+Independent rollout review: **PASS**, no blocking findings. It checked the pin,
+portability assertion, private-auth and optional-server documentation, actual
+Git install and semantic assertions, installed checkout HEAD, and preservation
+of all existing settings.
+
+Local verification artifacts: `/tmp/pi-lsp-git-smoke.mjs`,
+`/tmp/pi-lsp-git-smoke.log`, `/tmp/pi-lsp-live-install.log`,
+`/tmp/pi-lsp-rollout-settings-check.json`, and
+`/tmp/pi-lsp-rollout-portability.log`, and `/tmp/pi-lsp-bootstrap-smoke.log`.
+These are temporary supporting evidence,
+not portable tests.
+
+## Remaining validation
 - Interactive Pi reload smoke beyond the lifecycle hooks and package tests.
-- Repository visibility decision, then publication and portable full-SHA pin.
-- Post-pin portability check and protected-state comparison; the current
-  documentation-only changes pass the existing portability contract.
 - Representative real-code usefulness evaluation beyond the single synthetic
   natural-selection observation above.
 - Real Fedora runtime and SSH detach/reattach remain untested by local rendering.
