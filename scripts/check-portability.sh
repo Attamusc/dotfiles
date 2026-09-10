@@ -734,7 +734,7 @@ assert fedora == {
     **shared,
     "bob": "4",
     "ghq": "1",
-    "herdr": "0.8.0",
+    "herdr": "0.9.0",
     "jj": "0.44.0",
     "jjui": "0.10.9",
     "lazygit": "0.64.0",
