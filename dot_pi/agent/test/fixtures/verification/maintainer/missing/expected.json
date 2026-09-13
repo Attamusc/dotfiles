@@ -1,0 +1,8 @@
+[
+  {
+    "check": "CHECK-1",
+    "declaredSource": "package.json#scripts.test",
+    "currentEvidence": "package.json#scripts.test source file is absent",
+    "state": "missing"
+  }
+]

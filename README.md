@@ -205,6 +205,15 @@ not install packages or apply home-directory state. Negative tests run only in
 temporary repositories, and protected ignored state is compared before and
 after mutation-capable phases.
 
+## Pi verification
+
+The managed Phase 1 verification bundle provides five shared actions for scoped
+verification, project check definitions, maintenance, impact analysis, and live
+CLI control. See [Pi verification bundle](docs/pi-verification.md) for action
+selection, evidence semantics, privacy, ownership, unsupported capabilities,
+and provenance. Later roadmap phases and `pi-workflows` integration are not
+part of this installation.
+
 ## Focused smoke checks
 
 After apply, open a fresh terminal or reconnect over SSH, then run these in that

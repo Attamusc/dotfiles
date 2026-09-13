@@ -1,0 +1,8 @@
+[
+  {
+    "check": "CHECK-1",
+    "declaredSource": "package.json#scripts.test, docs.md#test-command",
+    "currentEvidence": "package.json#scripts.test equals the declared command; docs.md#test-command does not contain the declared command",
+    "state": "ambiguous"
+  }
+]

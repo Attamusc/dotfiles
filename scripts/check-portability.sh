@@ -1772,6 +1772,19 @@ render_platform() {
   for source_only in README.md docs packages research scripts tests; do
     [[ ! -e "$rendered/$source_only" ]] || fail "source-only path leaked into $platform home: $source_only"
   done
+  for skill in verify-this create-verification-skill maintain-verification-skill blast-radius control-cli; do
+    for required in SKILL.md UPSTREAM.md UPSTREAM-SKILL.md; do
+      [[ -f "$rendered/.agents/skills/$skill/$required" ]] || \
+        fail "$platform render is missing Phase 1 verification skill provenance: $skill/$required"
+    done
+    grep -Fq 'Commit: `889ec4b68fa5aab0e867dad71ec3fdf386ae48f3`' \
+      "$rendered/.agents/skills/$skill/UPSTREAM.md" || \
+      fail "$platform Phase 1 verification skill lost its pinned commit: $skill"
+    grep -Fq 'License: MIT' "$rendered/.agents/skills/$skill/UPSTREAM.md" || \
+      fail "$platform Phase 1 verification skill lost its license: $skill"
+    grep -Fq '## Local deviations' "$rendered/.agents/skills/$skill/UPSTREAM.md" || \
+      fail "$platform Phase 1 verification skill lost its deviations: $skill"
+  done
   if [[ "$platform" == darwin ]]; then
     for skill in dd-apm dd-audit dd-docs dd-pup; do
       [[ -f "$rendered/.agents/skills/$skill/SKILL.md" ]] || \

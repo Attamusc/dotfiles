@@ -1,0 +1,8 @@
+[
+  {
+    "check": "CHECK-1",
+    "declaredSource": "package.json#scripts.test",
+    "currentEvidence": "package.json#scripts.test does not equal the declared command",
+    "state": "stale"
+  }
+]
