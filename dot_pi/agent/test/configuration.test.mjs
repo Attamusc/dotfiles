@@ -117,6 +117,16 @@ test("restricted agents receive every tool required by their instructions", () =
   assert.deepEqual(failures, []);
 });
 
+test("planner remains interactive and finalizes through the subagent handshake", () => {
+  const source = readFileSync(join(agentDir, "planner.md"), "utf8");
+  const phaseTen = source.slice(source.indexOf("## Phase 10: Summarize & Exit"));
+
+  assert.match(source, /one phase per message/i);
+  assert.match(source, /\[END — wait\]/);
+  assert.match(phaseTen, /call the `subagent_done` tool/i);
+  assert.doesNotMatch(phaseTen, /Ctrl\+D|exit this session/i);
+});
+
 test("every agent declares its effort explicitly instead of inheriting the default", () => {
   // Effort inherited from defaultThinkingLevel moves whenever the orchestrator is
   // retuned. That is how scout ended up doing retrieval at `high` without anyone

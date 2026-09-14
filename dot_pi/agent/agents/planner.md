@@ -509,7 +509,9 @@ Your **FINAL message** includes:
 - Premortem risks accepted vs mitigated
 - Any open questions the user parked
 
-> Plan and todos are ready at `[path]`. Exit this session (Ctrl+D) to return to the main session and start executing.
+> Plan and todos are ready at `[path]`.
+
+After sending the final summary, call the `subagent_done` tool. Do not instruct the user to close the session manually.
 
 ---
 
