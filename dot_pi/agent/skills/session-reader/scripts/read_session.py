@@ -1,694 +1,293 @@
-# /// script
-# requires-python = ">=3.12"
-# dependencies = []
-# ///
-"""
-Parse pi session JSONL files into readable formats.
+#!/usr/bin/env python3
+"""Canonical, bounded reader for one explicitly selected Pi session file."""
 
-Usage:
-    uv run read_session.py <session_path> [--mode MODE] [--offset N] [--limit N] [--max-content N]
-
-Modes:
-    overview      Session metadata + turn-by-turn summary (default)
-    conversation  User and assistant text only (no tool calls/results)
-    full          Everything including tool calls and results
-    tools         Tool calls and results only
-    costs         Cost breakdown per assistant turn
-    subagents     Subagent calls: task, agent, model, cost, status, session paths
-"""
-
-import json
-import sys
 import argparse
+import json
+import math
+import re
+import sys
 from pathlib import Path
-from datetime import datetime
+
+MAX_OUTPUT_BYTES = 16 * 1024
+MAX_DIAGNOSTIC_LINES = 20
+SUPPORTED_STRUCTURAL_TYPES = {"message", "compaction", "branch_summary", "custom_message"}
+
+SECRET_PATTERNS = (
+    ("private-key", re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----.*?-----END [A-Z ]*PRIVATE KEY-----", re.S)),
+    ("authorization", re.compile(r"(?i)\b(?:bearer|basic)\s+[A-Za-z0-9+/._~=-]{8,}")),
+    ("token", re.compile(r"\b(?:gh[pousr]_[A-Za-z0-9]{8,}|sk-[A-Za-z0-9_-]{8,}|AKIA[A-Z0-9]{12,})\b")),
+    ("url-credential", re.compile(r"(?i)\b[a-z][a-z0-9+.-]*://[^\s/@:]*:[^\s/@]+@")),
+    ("environment-secret", re.compile(r"(?i)\b(?:[A-Z][A-Z0-9_]*_)?(?:API_KEY|ACCESS_KEY|TOKEN|SECRET|PASSWORD|PASSWD)\s*=\s*(?:\"(?:\\.|[^\"\\])*\"|'[^']*'|(?:\\.|[^\s])+)")),
+)
+ENV_RECORD = re.compile(r"^[A-Z_][A-Z0-9_]*=.*$", re.I)
 
 
-def parse_args():
-    parser = argparse.ArgumentParser(description="Read pi session JSONL files")
-    parser.add_argument("session_path", help="Path to the .jsonl session file")
-    parser.add_argument(
-        "--mode",
-        choices=["overview", "conversation", "full", "tools", "costs", "subagents"],
-        default="overview",
-        help="Output mode (default: overview)",
-    )
-    parser.add_argument(
-        "--offset", type=int, default=0, help="Skip first N message turns"
-    )
-    parser.add_argument(
-        "--limit", type=int, default=0, help="Show at most N message turns (0=all)"
-    )
-    parser.add_argument(
-        "--max-content",
-        type=int,
-        default=2000,
-        help="Max chars per content block (default: 2000, 0=unlimited)",
-    )
+class ContractError(Exception):
+    pass
+
+
+class BoundedParser(argparse.ArgumentParser):
+    def error(self, _message):
+        raise ContractError("invalid-arguments")
+
+
+def arguments():
+    parser = BoundedParser(add_help=False)
+    parser.add_argument("session_path")
+    parser.add_argument("--sessions-root")
+    parser.add_argument("--leaf")
+    parser.add_argument("--mode", choices=("resolve", "overview", "conversation", "full", "tools", "costs", "subagents"), default="overview")
+    parser.add_argument("--offset", type=int, default=0)
+    parser.add_argument("--limit", type=int, default=0)
+    parser.add_argument("--max-content", type=int, default=2000)
     return parser.parse_args()
 
 
-def truncate(text: str, max_len: int) -> str:
-    if max_len <= 0 or len(text) <= max_len:
-        return text
-    return text[:max_len] + f"\n... [truncated, {len(text)} chars total]"
-
-
-def format_timestamp(ts) -> str:
-    if not ts:
-        return "?"
+def selected_file(raw_path, raw_root):
+    if not raw_root:
+        raise ContractError("sessions-root-required")
     try:
-        if isinstance(ts, (int, float)):
-            dt = datetime.fromtimestamp(ts / 1000)
-            return dt.strftime("%H:%M:%S")
-        dt = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
-        return dt.strftime("%H:%M:%S")
-    except (ValueError, AttributeError, OSError):
-        return str(ts)[:8]
+        root = Path(raw_root).expanduser().resolve(strict=True)
+        if not root.is_dir():
+            raise ContractError("sessions-root-not-directory")
+        candidate = Path(raw_path).expanduser()
+        if not candidate.is_absolute():
+            candidate = root / candidate
+        path = candidate.resolve(strict=True)
+        path.relative_to(root)
+    except (OSError, ValueError):
+        raise ContractError("session-path-outside-root")
+    if path.suffix != ".jsonl":
+        raise ContractError("session-path-not-jsonl")
+    if not path.is_file() or path.is_symlink():
+        raise ContractError("session-path-not-regular-file")
+    return root, path
 
 
-def format_duration(ms: int | float) -> str:
-    secs = int(ms / 1000)
-    if secs < 60:
-        return f"{secs}s"
-    mins = secs // 60
-    secs = secs % 60
-    return f"{mins}m{secs}s"
+def parse_json_integer(raw):
+    number = float(raw)
+    if math.isfinite(number) and abs(number) <= 9007199254740991:
+        return int(raw)
+    return number
 
 
-def parse_session(path: str) -> tuple[dict, list[dict], list[dict]]:
-    """Parse a session file into (metadata, events, messages)."""
-    metadata = {}
-    events = []
-    messages = []
-
-    with open(path) as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            obj = json.loads(line)
-            t = obj.get("type")
-
-            if t == "session":
-                metadata = obj
-            elif t in ("model_change", "thinking_level_change"):
-                events.append(obj)
-            elif t == "message":
-                messages.append(obj)
-
-    return metadata, events, messages
-
-
-def extract_subagent_details(msg: dict) -> dict | None:
-    """Extract subagent details from a toolResult message."""
-    if msg.get("role") != "toolResult" or msg.get("toolName") != "subagent":
-        return None
-    details = msg.get("details")
-    if not details:
-        return None
-    return details
-
-
-def extract_turns(messages: list[dict]) -> list[dict]:
-    """Convert raw message entries into structured turns."""
-    turns = []
-
-    for entry in messages:
-        msg = entry.get("message", {})
-        role = msg.get("role", "")
-        content = msg.get("content", "")
-        timestamp = entry.get("timestamp", msg.get("timestamp", ""))
-
-        turn = {
-            "role": role,
-            "timestamp": timestamp,
-            "texts": [],
-            "tool_calls": [],
-            "thinking": [],
-            "is_error": msg.get("isError", False),
-        }
-
-        # Extract cost info from assistant messages
-        if role == "assistant":
-            usage = msg.get("usage", {})
-            if usage:
-                turn["model"] = msg.get("model", "")
-                turn["provider"] = msg.get("provider", "")
-                turn["usage"] = usage
-                turn["stop_reason"] = msg.get("stopReason", "")
-
-        if isinstance(content, str):
-            if content.strip():
-                turn["texts"].append(content)
-        elif isinstance(content, list):
-            for item in content:
-                if not isinstance(item, dict):
-                    continue
-                item_type = item.get("type", "")
-
-                if item_type == "text" and item.get("text", "").strip():
-                    turn["texts"].append(item["text"])
-                elif item_type == "toolCall":
-                    turn["tool_calls"].append(
-                        {
-                            "id": item.get("id", ""),
-                            "name": item.get("name", ""),
-                            "arguments": item.get("arguments", {}),
-                        }
-                    )
-                elif item_type == "thinking":
-                    thinking_text = item.get("thinking", "")
-                    if thinking_text:
-                        turn["thinking"].append(thinking_text)
-
-        # For toolResult messages
-        if role == "toolResult":
-            turn["tool_call_id"] = msg.get("toolCallId", "")
-            turn["tool_name"] = msg.get("toolName", "")
-            result_content = msg.get("content", "")
-            turn["texts"] = []
-            if isinstance(result_content, list):
-                for item in result_content:
-                    if isinstance(item, dict) and item.get("type") == "text":
-                        turn["texts"].append(item.get("text", ""))
-            elif isinstance(result_content, str) and result_content.strip():
-                turn["texts"].append(result_content)
-
-            # Capture subagent details
-            subagent_details = extract_subagent_details(msg)
-            if subagent_details:
-                turn["subagent_details"] = subagent_details
-
-        turns.append(turn)
-
-    return turns
-
-
-def format_subagent_summary(details: dict) -> str:
-    """Format a compact subagent result summary."""
-    mode = details.get("mode", "?")
-    results = details.get("results", [])
-
-    parts = []
-    total_cost = 0
-    total_duration = 0
-
-    for r in results:
-        agent = r.get("agent", "?")
-        exit_code = r.get("exitCode", -1)
-        status_icon = "\u2713" if exit_code == 0 else "\u274c"
-        model = r.get("model", "")
-        usage = r.get("usage", {})
-        cost = usage.get("cost", 0)
-        total_cost += cost
-        progress = r.get("progressSummary", {})
-        duration = progress.get("durationMs", 0)
-        total_duration += duration
-        tool_count = progress.get("toolCount", 0)
-        task = r.get("task", "")[:100].replace("\n", " ")
-
-        parts.append(f"  {status_icon} {agent} ({model}): {task}")
-        if cost or duration:
-            parts.append(
-                f"    ${cost:.4f} | {format_duration(duration)} | {tool_count} tools"
+def parse_file(path):
+    entries, malformed = [], []
+    for number, raw_line in enumerate(path.read_bytes().split(b"\n"), 1):
+        if not raw_line.strip():
+            continue
+        try:
+            value = json.loads(
+                raw_line.decode("utf-8"),
+                parse_int=parse_json_integer,
+                parse_constant=lambda _constant: (_ for _ in ()).throw(ValueError()),
             )
-
-    header = f"\U0001f500 SUBAGENT [{mode}] \u2014 {len(results)} run(s), ${total_cost:.4f}, {format_duration(total_duration)}"
-    return header + "\n" + "\n".join(parts)
-
-
-def print_overview(metadata: dict, events: list[dict], turns: list[dict], args):
-    """Print session metadata and a summary of each turn."""
-    print("=" * 70)
-    print("SESSION OVERVIEW")
-    print("=" * 70)
-    print(f"  ID:        {metadata.get('id', 'N/A')}")
-    print(f"  CWD:       {metadata.get('cwd', 'N/A')}")
-    print(f"  Started:   {metadata.get('timestamp', 'N/A')}")
-    print(f"  Version:   {metadata.get('version', 'N/A')}")
-
-    for evt in events:
-        if evt["type"] == "model_change":
-            print(f"  Model:     {evt.get('provider', '')}/{evt.get('modelId', '')}")
-        elif evt["type"] == "thinking_level_change":
-            print(f"  Thinking:  {evt.get('thinkingLevel', '')}")
-
-    # Cost summary (main session only)
-    total_cost = 0
-    total_input = 0
-    total_output = 0
-    for turn in turns:
-        usage = turn.get("usage", {})
-        cost = usage.get("cost", {})
-        total_cost += cost.get("total", 0)
-        total_input += usage.get("input", 0)
-        total_output += usage.get("output", 0)
-
-    # Subagent cost summary
-    subagent_cost = 0
-    subagent_count = 0
-    for turn in turns:
-        details = turn.get("subagent_details")
-        if details:
-            subagent_count += 1
-            for r in details.get("results", []):
-                subagent_cost += r.get("usage", {}).get("cost", 0)
-
-    if total_cost > 0:
-        print(f"  Session cost: ${total_cost:.4f}")
-        print(
-            f"  Session tokens: {total_input + total_output:,} (in:{total_input:,} out:{total_output:,})"
-        )
-    if subagent_cost > 0:
-        print(f"  Subagent cost:  ${subagent_cost:.4f} ({subagent_count} invocations)")
-        print(f"  TOTAL cost:     ${total_cost + subagent_cost:.4f}")
-
-    user_turns = sum(1 for t in turns if t["role"] == "user")
-    assistant_turns = sum(1 for t in turns if t["role"] == "assistant")
-    tool_results = sum(1 for t in turns if t["role"] == "toolResult")
-    print(
-        f"  Turns:     {len(turns)} total ({user_turns} user, {assistant_turns} assistant, {tool_results} tool results)"
-    )
-    if subagent_count:
-        print(f"  Subagent invocations: {subagent_count}")
-    print()
-
-    # Turn-by-turn summary
-    print("-" * 70)
-    print("TURN SUMMARY")
-    print("-" * 70)
-
-    turn_num = 0
-    for turn in turns:
-        role = turn["role"]
-        ts = format_timestamp(turn["timestamp"])
-
-        if role == "user":
-            turn_num += 1
-            if args.offset and turn_num <= args.offset:
-                continue
-            if args.limit and turn_num > args.offset + args.limit:
-                break
-            text = " ".join(turn["texts"])[:200].replace("\n", " ")
-            print(f"\n[{ts}] \U0001f464 USER #{turn_num}: {text}")
-
-        elif role == "assistant":
-            if args.offset and turn_num <= args.offset:
-                continue
-            if args.limit and turn_num > args.offset + args.limit:
-                break
-
-            parts = []
-            if turn["texts"]:
-                text_preview = turn["texts"][0][:150].replace("\n", " ")
-                parts.append(f'"{text_preview}"')
-            if turn["tool_calls"]:
-                tool_names = [tc["name"] for tc in turn["tool_calls"]]
-                parts.append(f"tools: [{', '.join(tool_names)}]")
-
-            usage = turn.get("usage", {})
-            cost = usage.get("cost", {})
-            cost_str = f" (${cost['total']:.4f})" if cost.get("total") else ""
-
-            summary = " | ".join(parts) if parts else "(empty)"
-            print(f"[{ts}] \U0001f916 ASSISTANT: {summary}{cost_str}")
-
-        elif role == "toolResult":
-            if args.offset and turn_num <= args.offset:
-                continue
-            if args.limit and turn_num > args.offset + args.limit:
-                break
-
-            # Subagent results get special formatting
-            details = turn.get("subagent_details")
-            if details:
-                print(f"[{ts}]   {format_subagent_summary(details)}")
-            else:
-                text = " ".join(turn["texts"])
-                preview = text[:100].replace("\n", " ") if text else "(empty)"
-                err = " \u274c" if turn["is_error"] else ""
-                print(f"[{ts}]   \u21b3 {turn.get('tool_name', '?')}{err}: {preview}")
+            if not isinstance(value, dict):
+                raise ValueError
+            entries.append(value)
+        except (UnicodeDecodeError, json.JSONDecodeError, ValueError):
+            malformed.append(number)
+    return entries, malformed
 
 
-def print_conversation(turns: list[dict], args):
-    """Print only user and assistant text (no tool calls)."""
-    print("=" * 70)
-    print("CONVERSATION")
-    print("=" * 70)
-
-    turn_num = 0
-    for turn in turns:
-        role = turn["role"]
-
-        if role == "user":
-            turn_num += 1
-            if args.offset and turn_num <= args.offset:
-                continue
-            if args.limit and turn_num > args.offset + args.limit:
-                break
-            ts = format_timestamp(turn["timestamp"])
-            print(f"\n{'\u2500' * 50}")
-            print(f"\U0001f464 USER [{ts}]")
-            print(f"{'\u2500' * 50}")
-            for text in turn["texts"]:
-                print(truncate(text, args.max_content))
-
-        elif role == "assistant" and turn["texts"]:
-            if args.offset and turn_num <= args.offset:
-                continue
-            if args.limit and turn_num > args.offset + args.limit:
-                break
-            ts = format_timestamp(turn["timestamp"])
-            print(f"\n\U0001f916 ASSISTANT [{ts}]")
-            for text in turn["texts"]:
-                print(truncate(text, args.max_content))
-
-        elif role == "toolResult" and turn.get("subagent_details"):
-            if args.offset and turn_num <= args.offset:
-                continue
-            if args.limit and turn_num > args.offset + args.limit:
-                break
-            # Show subagent results in conversation view too
-            details = turn["subagent_details"]
-            print(f"\n{format_subagent_summary(details)}")
-
-
-def print_full(turns: list[dict], args):
-    """Print everything including tool calls and results."""
-    print("=" * 70)
-    print("FULL SESSION")
-    print("=" * 70)
-
-    turn_num = 0
-    for turn in turns:
-        role = turn["role"]
-        ts = format_timestamp(turn["timestamp"])
-
-        if role == "user":
-            turn_num += 1
-            if args.offset and turn_num <= args.offset:
-                continue
-            if args.limit and turn_num > args.offset + args.limit:
-                break
-            print(f"\n{'\u2550' * 60}")
-            print(f"\U0001f464 USER [{ts}]")
-            print(f"{'\u2550' * 60}")
-            for text in turn["texts"]:
-                print(truncate(text, args.max_content))
-
-        elif role == "assistant":
-            if args.offset and turn_num <= args.offset:
-                continue
-            if args.limit and turn_num > args.offset + args.limit:
-                break
-            model = turn.get("model", "")
-            print(f"\n\U0001f916 ASSISTANT [{ts}]{f' ({model})' if model else ''}")
-
-            if turn["thinking"]:
-                for thought in turn["thinking"]:
-                    print(
-                        f"  \U0001f4ad THINKING: {truncate(thought, args.max_content)}"
-                    )
-
-            for text in turn["texts"]:
-                print(truncate(text, args.max_content))
-
-            for tc in turn["tool_calls"]:
-                args_str = json.dumps(tc["arguments"])
-                print(f"\n  \U0001f527 TOOL CALL: {tc['name']}")
-                print(f"     {truncate(args_str, args.max_content)}")
-
-        elif role == "toolResult":
-            if args.offset and turn_num <= args.offset:
-                continue
-            if args.limit and turn_num > args.offset + args.limit:
-                break
-
-            details = turn.get("subagent_details")
-            if details:
-                print(f"\n  {format_subagent_summary(details)}")
-                # Also show artifact paths for drill-down
-                for r in details.get("results", []):
-                    ap = r.get("artifactPaths", {})
-                    sf = r.get("sessionFile", "")
-                    if sf:
-                        print(f"    \U0001f4c1 session: {sf}")
-                    if ap.get("jsonlPath"):
-                        print(f"    \U0001f4c1 artifact jsonl: {ap['jsonlPath']}")
-                    if ap.get("outputPath"):
-                        print(f"    \U0001f4c1 output: {ap['outputPath']}")
-            else:
-                err = " \u274c ERROR" if turn["is_error"] else ""
-                print(f"\n  \u21b3 RESULT ({turn.get('tool_name', '?')}){err}:")
-                for text in turn["texts"]:
-                    print(f"     {truncate(text, args.max_content)}")
-
-
-def print_tools(turns: list[dict], args):
-    """Print only tool calls and their results."""
-    print("=" * 70)
-    print("TOOL CALLS")
-    print("=" * 70)
-
-    turn_num = 0
-    tool_num = 0
-    for turn in turns:
-        if turn["role"] == "user":
-            turn_num += 1
-
-        if turn["role"] == "assistant" and turn["tool_calls"]:
-            if args.offset and turn_num <= args.offset:
-                continue
-            if args.limit and turn_num > args.offset + args.limit:
-                break
-            ts = format_timestamp(turn["timestamp"])
-            for tc in turn["tool_calls"]:
-                tool_num += 1
-                args_str = json.dumps(tc["arguments"])
-                print(f"\n[{ts}] #{tool_num} {tc['name']}")
-                print(f"  args: {truncate(args_str, args.max_content)}")
-
-        elif turn["role"] == "toolResult":
-            if args.offset and turn_num <= args.offset:
-                continue
-            if args.limit and turn_num > args.offset + args.limit:
-                break
-
-            details = turn.get("subagent_details")
-            if details:
-                print(f"  {format_subagent_summary(details)}")
-            else:
-                err = " \u274c" if turn["is_error"] else " \u2713"
-                text = " ".join(turn["texts"])
-                print(f"  result{err}: {truncate(text, min(args.max_content, 500))}")
-
-
-def print_costs(turns: list[dict], args):
-    """Print cost breakdown per assistant turn."""
-    print("=" * 70)
-    print("COST BREAKDOWN")
-    print("=" * 70)
-    print(
-        f"{'#':<4} {'Time':<10} {'Model':<30} {'In':>8} {'Out':>8} {'Cache':>8} {'Cost':>10}"
-    )
-    print("-" * 80)
-
-    total_cost = 0
-    turn_num = 0
-    assistant_num = 0
-    for turn in turns:
-        if turn["role"] == "user":
-            turn_num += 1
-        if turn["role"] != "assistant" or not turn.get("usage"):
+def validate_and_path(entries, leaf_id):
+    if not leaf_id:
+        raise ContractError("leaf-required")
+    if not entries or entries[0].get("type") != "session" or entries[0].get("version") != 3 or not isinstance(entries[0].get("id"), str) or not entries[0]["id"]:
+        raise ContractError("invalid-session-header")
+    if any(entry.get("type") == "session" for entry in entries[1:]):
+        raise ContractError("invalid-session-header")
+    header, by_id = entries[0], {}
+    for entry in entries[1:]:
+        entry_id = entry.get("id")
+        if entry.get("type") not in SUPPORTED_STRUCTURAL_TYPES and not isinstance(entry_id, str):
             continue
-
-        assistant_num += 1
-        if args.offset and turn_num <= args.offset:
-            continue
-        if args.limit and turn_num > args.offset + args.limit:
+        if not isinstance(entry_id, str) or not entry_id:
+            raise ContractError("entry-id-required")
+        if entry_id in by_id:
+            raise ContractError("duplicate-entry-id")
+        by_id[entry_id] = entry
+    if leaf_id not in by_id:
+        raise ContractError("invalid-leaf")
+    result, seen, current = [], set(), by_id[leaf_id]
+    while current:
+        entry_id = current["id"]
+        if entry_id in seen:
+            raise ContractError("cyclic-parent-chain")
+        if "parentId" not in current:
+            raise ContractError("missing-parent-id")
+        seen.add(entry_id)
+        result.append(current)
+        parent = current["parentId"]
+        if parent is None:
             break
-
-        usage = turn["usage"]
-        cost = usage.get("cost", {})
-        total = cost.get("total", 0)
-        total_cost += total
-        ts = format_timestamp(turn["timestamp"])
-        model = turn.get("model", "?")
-
-        print(
-            f"{assistant_num:<4} {ts:<10} {model:<30} "
-            f"{usage.get('input', 0):>8,} {usage.get('output', 0):>8,} "
-            f"{usage.get('cacheRead', 0):>8,} ${total:>9.4f}"
-        )
-
-    # Subagent costs
-    subagent_cost = 0
-    sub_num = 0
-    for turn in turns:
-        details = turn.get("subagent_details")
-        if not details:
-            continue
-        for r in details.get("results", []):
-            sub_num += 1
-            usage = r.get("usage", {})
-            cost = usage.get("cost", 0)
-            subagent_cost += cost
-            model = r.get("model", "?")
-            agent = r.get("agent", "?")
-            progress = r.get("progressSummary", {})
-            tokens_in = usage.get("input", 0)
-            tokens_out = usage.get("output", 0)
-            cache = usage.get("cacheRead", 0)
-            print(
-                f"{'S' + str(sub_num):<4} {'subagent':<10} {agent + '/' + model:<30} "
-                f"{tokens_in:>8,} {tokens_out:>8,} "
-                f"{cache:>8,} ${cost:>9.4f}"
-            )
-
-    print("-" * 80)
-    grand_total = total_cost + subagent_cost
-    if subagent_cost > 0:
-        print(f"{'SESSION':<54} ${total_cost:>9.4f}")
-        print(f"{'SUBAGENTS':<54} ${subagent_cost:>9.4f}")
-    print(f"{'TOTAL':<54} ${grand_total:>9.4f}")
+        if not isinstance(parent, str) or parent not in by_id:
+            raise ContractError("orphan-parent")
+        if parent == entry_id:
+            raise ContractError("self-parent")
+        current = by_id[parent]
+    result.reverse()
+    if sum(entry.get("parentId") is None for entry in result) != 1:
+        raise ContractError("incomplete-parent-chain")
+    return header, result
 
 
-def print_subagents(turns: list[dict], messages: list[dict], args):
-    """Print detailed subagent information."""
-    print("=" * 70)
-    print("SUBAGENT RUNS")
-    print("=" * 70)
+def context_path(path):
+    compactions = [entry for entry in path if entry.get("type") == "compaction"]
+    if any("retainedTail" in entry for entry in compactions):
+        raise ContractError("unsupported-session-contract")
+    if not compactions:
+        return path, []
+    latest = compactions[-1]
+    index = path.index(latest)
+    before, found = [], False
+    for entry in path[:index]:
+        if entry["id"] == latest.get("firstKeptEntryId"):
+            found = True
+        if found:
+            before.append(entry)
+    return [latest, *before, *path[index + 1:]], ([] if found else ["missing-first-kept-boundary"])
 
-    sub_num = 0
-    found_any = False
 
-    # Collect subagent calls and their details together
-    for i, entry in enumerate(messages):
-        msg = entry.get("message", {})
-        details = extract_subagent_details(msg)
-        if not details:
-            continue
+def finite_number(value):
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return 0.0
+    try:
+        number = float(value)
+    except OverflowError:
+        return 0.0
+    return number if math.isfinite(number) else 0.0
 
-        found_any = True
-        mode = details.get("mode", "?")
-        results = details.get("results", [])
-        artifacts = details.get("artifacts", {})
 
-        # Find the matching subagent tool call (look backwards)
-        call_args = {}
-        for j in range(i - 1, max(i - 5, -1), -1):
-            prev_msg = messages[j].get("message", {})
-            prev_content = prev_msg.get("content", [])
-            if isinstance(prev_content, list):
-                for item in prev_content:
-                    if (
-                        isinstance(item, dict)
-                        and item.get("type") == "toolCall"
-                        and item.get("name") == "subagent"
-                    ):
-                        call_args = item.get("arguments", {})
-                        break
+def entry_cost(entry):
+    if entry.get("type") in ("compaction", "branch_summary"):
+        usage = entry.get("usage", {})
+    elif entry.get("type") == "message" and isinstance(entry.get("message"), dict) and entry["message"].get("role") == "assistant":
+        usage = entry["message"].get("usage", {})
+    else:
+        return 0.0
+    if not isinstance(usage, dict):
+        return 0.0
+    cost = usage.get("cost", 0)
+    return finite_number(cost.get("total", 0) if isinstance(cost, dict) else cost)
 
-        print(f"\n{'\u2501' * 60}")
-        print(f"INVOCATION #{sub_num + 1} \u2014 mode: {mode}")
-        print(f"{'\u2501' * 60}")
 
-        if call_args.get("chain"):
-            print(f"  Chain steps: {len(call_args['chain'])}")
-            for step in call_args["chain"]:
-                print(
-                    f"    \u2192 {step.get('agent', '?')}: {str(step.get('task', ''))[:120]}"
-                )
-        elif call_args.get("tasks"):
-            print(f"  Parallel tasks: {len(call_args['tasks'])}")
-            for t in call_args["tasks"]:
-                print(
-                    f"    \u2192 {t.get('agent', '?')}: {str(t.get('task', ''))[:120]}"
-                )
+def redact(text, counts):
+    for kind, pattern in SECRET_PATTERNS:
+        def replacement(_match, redaction_kind=kind):
+            counts[redaction_kind] = counts.get(redaction_kind, 0) + 1
+            return f"[REDACTED:{redaction_kind}]"
+        text = pattern.sub(replacement, text)
+    return text
 
-        total_cost = 0
-        total_duration = 0
 
-        for r in results:
-            sub_num += 1
-            agent = r.get("agent", "?")
-            exit_code = r.get("exitCode", -1)
-            status = "\u2713 completed" if exit_code == 0 else "\u274c failed"
-            model = r.get("model", "")
-            usage = r.get("usage", {})
-            cost = usage.get("cost", 0)
-            total_cost += cost
-            turns_count = usage.get("turns", 0)
-            progress = r.get("progressSummary", {})
-            duration = progress.get("durationMs", 0)
-            total_duration += duration
-            tool_count = progress.get("toolCount", 0)
-            skills = r.get("skills", [])
-            task = r.get("task", "")
-            session_file = r.get("sessionFile", "")
-            artifact_paths = r.get("artifactPaths", {})
+def normalized_text(entry):
+    kind = entry.get("type")
+    if kind in ("compaction", "branch_summary"):
+        return entry.get("summary", ""), ("compaction-summary (derived)" if kind == "compaction" else "branch-summary (derived)"), kind
+    if kind == "custom_message":
+        return entry.get("content", ""), "custom-message (original)", "custom"
+    if kind != "message" or not isinstance(entry.get("message"), dict):
+        return "", "", ""
+    message = entry["message"]
+    role = message.get("role")
+    if role == "bashExecution":
+        return f"{message.get('command', '')}\n{message.get('output', '')}".strip("\n"), "message (original)", role
+    content = message.get("content") or []
+    if role == "toolResult" and message.get("toolName") == "subagent":
+        content = "[nested subagent result omitted]"
+    return content, "message (original)", role if isinstance(role, str) else "unknown"
 
-            print(f"\n  \u2500\u2500 Run #{sub_num}: {agent} \u2500\u2500")
-            print(f"  Status:   {status}")
-            print(f"  Model:    {model}")
-            print(f"  Task:     {truncate(task.replace(chr(10), ' '), 300)}")
-            if skills:
-                print(f"  Skills:   {', '.join(skills)}")
-            print(f"  Cost:     ${cost:.4f}")
-            print(f"  Duration: {format_duration(duration)}")
-            print(
-                f"  Tokens:   {usage.get('input', 0):,} in / {usage.get('output', 0):,} out / {usage.get('cacheRead', 0):,} cached"
-            )
-            print(f"  Tools:    {tool_count} calls in {turns_count} turns")
 
-            # Session & artifact paths
-            if session_file:
-                exists = Path(session_file).exists()
-                marker = "" if exists else " (deleted)"
-                print(f"  Session:  {session_file}{marker}")
-            if artifact_paths.get("jsonlPath"):
-                exists = Path(artifact_paths["jsonlPath"]).exists()
-                marker = "" if exists else " (deleted)"
-                print(f"  JSONL:    {artifact_paths['jsonlPath']}{marker}")
-            if artifact_paths.get("outputPath"):
-                exists = Path(artifact_paths["outputPath"]).exists()
-                marker = "" if exists else " (deleted)"
-                print(f"  Output:   {artifact_paths['outputPath']}{marker}")
+def safe_text(entry, counts):
+    content, source, role = normalized_text(entry)
+    if isinstance(content, str):
+        text = content
+    elif isinstance(content, list):
+        text = "\n".join(item.get("text", "") for item in content if isinstance(item, dict) and item.get("type") == "text")
+    else:
+        text = ""
+    records = re.split(r"[\n\x00]", text)
+    if sum(bool(ENV_RECORD.fullmatch(record)) for record in records) >= 2:
+        text = "[raw environment dump omitted]"
+    return redact(text, counts), source, role
 
-        if len(results) > 1:
-            print(
-                f"\n  Combined: ${total_cost:.4f} | {format_duration(total_duration)}"
-            )
 
-    if not found_any:
-        print("\n  No subagent invocations found in this session.")
+def malformed_diagnostic(lines):
+    if not lines:
+        return None
+    shown = lines[:MAX_DIAGNOSTIC_LINES]
+    return f"malformed-records:{len(lines)};lines:{','.join(map(str, shown))};omitted:{len(lines) - len(shown)}"
+
+
+def resolve(root, path, entries, malformed, leaf, include_cost=False):
+    header, active = validate_and_path(entries, leaf)
+    context, diagnostics = context_path(active)
+    counts, items = {}, []
+    for entry in context:
+        text, source, role = safe_text(entry, counts)
+        if source and text:
+            items.append({"entryId": entry["id"], "provenance": f"session:{header['id']}#entry:{entry['id']}", "source": source, "role": role, "text": text})
+    malformed_note = malformed_diagnostic(malformed)
+    if malformed_note:
+        diagnostics.append(malformed_note)
+    document = {
+        "status": "partial-with-diagnostics" if diagnostics else "complete",
+        "contractProfile": "pi-0.84.4-runtime",
+        "selection": {"path": path.relative_to(root).as_posix(), "sessionId": header["id"], "leafId": leaf},
+        "activeEntryIds": [entry["id"] for entry in active],
+        "contextEntryIds": [entry["id"] for entry in context],
+        "items": items,
+        "diagnostics": diagnostics,
+        "redactions": counts,
+    }
+    if include_cost:
+        total = 0.0
+        for entry in active:
+            total += entry_cost(entry)
+            if not math.isfinite(total):
+                raise ContractError("cost-overflow")
+        document["cost"] = total
+    return document
+
+
+def bounded_json(document):
+    document, omitted = dict(document), 0
+    document["items"] = list(document.get("items", []))
+    while True:
+        document["omittedItems"] = omitted
+        encoded = (json.dumps(document, ensure_ascii=True, sort_keys=True, allow_nan=False) + "\n").encode("utf-8")
+        if len(encoded) <= MAX_OUTPUT_BYTES:
+            return encoded
+        if not document["items"]:
+            return (json.dumps({"status": document.get("status", "error"), "omittedItems": omitted, "truncated": True}, sort_keys=True, allow_nan=False) + "\n").encode()
+        document["items"].pop()
+        omitted += 1
+        document["truncated"] = True
+
+
+def emit_error(code):
+    sys.stdout.buffer.write(bounded_json({"status": code, "items": []}))
+    return 2
 
 
 def main():
-    args = parse_args()
-
-    path = Path(args.session_path).expanduser()
-    if not path.exists():
-        print(f"Error: Session file not found: {path}", file=sys.stderr)
-        sys.exit(1)
-
-    metadata, events, messages = parse_session(str(path))
-    turns = extract_turns(messages)
-
-    if args.mode == "overview":
-        print_overview(metadata, events, turns, args)
-    elif args.mode == "conversation":
-        print_conversation(turns, args)
-    elif args.mode == "full":
-        print_full(turns, args)
-    elif args.mode == "tools":
-        print_tools(turns, args)
-    elif args.mode == "costs":
-        print_costs(turns, args)
-    elif args.mode == "subagents":
-        print_subagents(turns, messages, args)
+    try:
+        args = arguments()
+        root, path = selected_file(args.session_path, args.sessions_root)
+        entries, malformed = parse_file(path)
+        document = resolve(root, path, entries, malformed, args.leaf, args.mode == "costs")
+        if args.mode == "costs":
+            document = {"status": document["status"], "cost": document["cost"], "diagnostics": document["diagnostics"]}
+        sys.stdout.buffer.write(bounded_json(document))
+        return 0
+    except ContractError as error:
+        return emit_error(str(error))
+    except OSError:
+        return emit_error("session-io-error")
+    except Exception:
+        return emit_error("invalid-supported-shape")
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

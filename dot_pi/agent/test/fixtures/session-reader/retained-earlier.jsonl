@@ -1,0 +1,5 @@
+{"type":"session","version":3,"id":"matrix"}
+{"type":"message","id":"root","parentId":null,"message":{"role":"user","content":"start"}}
+{"type":"compaction","id":"c1","parentId":"root","summary":"no","firstKeptEntryId":"root","retainedTail":[{"type":"message","message":{"role":"toolResult","content":"MUST NOT RENDER"}}]}
+{"type":"compaction","id":"c2","parentId":"c1","summary":"later","firstKeptEntryId":"c1"}
+{"type":"message","id":"leaf","parentId":"c2","message":{"role":"user","content":"end"}}

@@ -1,0 +1,9 @@
+{"type":"session","version":3,"id":"s"}
+{"type":"message","id":"u","parentId":null,"message":{"role":"user","content":"redis://:user-password@host"}}
+{"type":"message","id":"t","parentId":"u","message":{"role":"toolResult","toolName":"x","content":"DATABASE_URL=ssh://:tool-password@host"}}
+{"type":"message","id":"b","parentId":"t","message":{"role":"bashExecution","command":"use postgres://:bash-password@host","output":""}}
+{"type":"custom_message","id":"c","parentId":"b","content":"mysql://:custom-password@host"}
+{"type":"branch_summary","id":"bs","parentId":"c","summary":"amqp://:branch-password@host"}
+{"type":"compaction","id":"co","parentId":"bs","firstKeptEntryId":"u","summary":"redis://:compact-password@host"}
+{"type":"message","id":"e","parentId":"co","message":{"role":"user","content":"home=/synthetic/lower\nuser=alice"}}
+{"type":"message","id":"leaf","parentId":"e","message":{"role":"user","content":"path=/synthetic/mixed\u0000shell=/bin/zsh"}}

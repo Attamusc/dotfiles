@@ -1,0 +1,4 @@
+{"type":"session","version":3,"id":"matrix"}
+{"type":"message","id":"root","parentId":null,"message":{"role":"user","content":null}}
+{"type":"future_metadata","payload":"ignored"}
+{"type":"message","id":"leaf","parentId":"root","message":{"role":"assistant"}}

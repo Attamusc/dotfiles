@@ -1,0 +1,2 @@
+{"type":"session","version":3,"id":"synthetic-session","timestamp":"2026-01-01T00:00:00Z","cwd":"/synthetic"}
+{"type":"message","id":"leaf","parentId":"leaf","timestamp":"2026-01-01T00:00:00Z","message":{"role":"user","content":[{"type":"text","text":"a"}]}}

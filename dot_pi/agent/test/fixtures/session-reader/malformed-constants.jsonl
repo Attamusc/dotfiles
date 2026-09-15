@@ -1,0 +1,6 @@
+{"type":"session","version":3,"id":"constants"}
+{"type":"message","id":"root","parentId":null,"message":{"role":"user","content":"root"}}
+{"type":"message","id":"nan","parentId":"root","message":{"role":"assistant","content":"MUST NOT RENDER NAN","usage":{"cost":{"total":NaN}}}}
+{"type":"message","id":"inf","parentId":"nan","message":{"role":"assistant","content":"MUST NOT RENDER INF","usage":{"cost":{"total":Infinity}}}}
+{"type":"message","id":"negative","parentId":"inf","message":{"role":"assistant","content":"MUST NOT RENDER NEGATIVE INF","usage":{"cost":{"total":-Infinity}}}}
+{"type":"message","id":"leaf","parentId":"root","message":{"role":"assistant","content":"leaf","usage":{"cost":{"total":2}}}}

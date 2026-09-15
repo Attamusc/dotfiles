@@ -1,0 +1,2 @@
+{"type":"session","version":3,"id":"s"}
+{"type":"message","id":"leaf","parentId":null,"message":{"role":"user","content":"before\ud800after"}}

@@ -1,0 +1,8 @@
+{"type":"session","version":3,"id":"matrix"}
+{"type":"message","id":"m","parentId":null,"message":{"role":"user","content":"OPENAI_API_KEY=message-secret"}}
+{"type":"message","id":"b","parentId":"m","message":{"role":"bashExecution","command":"echo AWS_SECRET_ACCESS_KEY=bash-secret","output":"ok"}}
+{"type":"message","id":"t","parentId":"b","message":{"role":"toolResult","toolName":"read","content":"DATABASE_PASSWORD=tool-secret"}}
+{"type":"custom_message","id":"x","parentId":"t","content":"TOKEN=custom-secret"}
+{"type":"branch_summary","id":"bs","parentId":"x","summary":"Bearer branchsummarysecret","usage":{"cost":{"total":2}}}
+{"type":"compaction","id":"c","parentId":"bs","summary":"OPENAI_API_KEY=compact-secret","firstKeptEntryId":"m","usage":{"cost":3}}
+{"type":"message","id":"leaf","parentId":"c","message":{"role":"assistant","content":"LANG=en_US.UTF-8\nPWD=/synthetic/private","usage":{"cost":{"total":4}}}}

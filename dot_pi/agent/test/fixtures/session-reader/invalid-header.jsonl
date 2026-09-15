@@ -1,0 +1,2 @@
+{"type":"session","version":2,"id":"x"}
+{"type":"message","id":"leaf","parentId":null,"message":{"role":"user","content":"x"}}

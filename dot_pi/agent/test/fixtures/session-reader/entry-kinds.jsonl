@@ -1,0 +1,8 @@
+{"type":"session","version":3,"id":"synthetic-session","timestamp":"2026-01-01T00:00:00Z","cwd":"/synthetic"}
+{"type":"message","id":"u1","parentId":null,"timestamp":"2026-01-01T00:00:00Z","message":{"role":"user","content":[{"type":"text","text":"visible"}]}}
+{"type":"custom","id":"state","parentId":"u1","customType":"state","data":"hidden"}
+{"type":"custom_message","id":"cm","parentId":"state","customType":"note","content":"custom visible"}
+{"type":"label","id":"label","parentId":"cm","label":"hidden"}
+{"type":"session_info","id":"info","parentId":"label","name":"hidden"}
+{"type":"unknown","id":"unknown","parentId":"info","payload":"hidden"}
+{"type":"message","id":"leaf","parentId":"unknown","timestamp":"2026-01-01T00:00:00Z","message":{"role":"assistant","content":[{"type":"text","text":"done"}]}}

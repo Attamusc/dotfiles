@@ -1,0 +1,7 @@
+{"type":"session","version":3,"id":"synthetic-session","timestamp":"2026-01-01T00:00:00Z","cwd":"/synthetic"}
+{"type":"message","id":"u1","parentId":null,"timestamp":"2026-01-01T00:00:00Z","message":{"role":"user","content":[{"type":"text","text":"goal"}]}}
+{"type":"message","id":"a1","parentId":"u1","timestamp":"2026-01-01T00:00:00Z","message":{"role":"assistant","content":[{"type":"text","text":"answer"}],"provider":"test","model":"test","usage":{"input":1,"output":2,"cost":{"total":0.25}}}}
+{"type":"message","id":"t1","parentId":"a1","timestamp":"2026-01-01T00:00:00Z","message":{"role":"toolResult","content":[{"type":"text","text":"tool output"}],"toolName":"read"}}
+{"type":"model_change","id":"m1","parentId":"t1","provider":"x","modelId":"y"}
+{"type":"thinking_level_change","id":"th1","parentId":"m1","thinkingLevel":"low"}
+{"type":"message","id":"b1","parentId":"th1","timestamp":"2026-01-01T00:00:00Z","message":{"role":"bashExecution","command":"printf ok","output":"ok","exitCode":0}}

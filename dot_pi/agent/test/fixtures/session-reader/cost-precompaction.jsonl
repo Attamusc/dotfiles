@@ -1,0 +1,4 @@
+{"type":"session","version":3,"id":"cost-precompaction"}
+{"type":"message","id":"old","parentId":null,"message":{"role":"assistant","content":"old","usage":{"cost":{"total":5}}}}
+{"type":"compaction","id":"c","parentId":"old","summary":"summary","firstKeptEntryId":"missing","usage":{"cost":2}}
+{"type":"message","id":"leaf","parentId":"c","message":{"role":"assistant","content":"new","usage":{"cost":{"total":4}}}}

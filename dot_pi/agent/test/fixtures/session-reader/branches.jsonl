@@ -1,0 +1,6 @@
+{"type":"session","version":3,"id":"synthetic-session","timestamp":"2026-01-01T00:00:00Z","cwd":"/synthetic"}
+{"type":"message","id":"u1","parentId":null,"timestamp":"2026-01-01T00:00:00Z","message":{"role":"user","content":[{"type":"text","text":"root"}]}}
+{"type":"message","id":"left","parentId":"u1","timestamp":"2026-01-01T00:00:00Z","message":{"role":"assistant","content":[{"type":"text","text":"LEFT SECRET SIBLING"}]}}
+{"type":"message","id":"right","parentId":"u1","timestamp":"2026-01-01T00:00:00Z","message":{"role":"assistant","content":[{"type":"text","text":"chosen"}]}}
+{"type":"branch_summary","id":"bs","parentId":"right","fromId":"left","summary":"abandoned approach summary","usage":{"cost":0.1}}
+{"type":"message","id":"leaf","parentId":"bs","timestamp":"2026-01-01T00:00:00Z","message":{"role":"user","content":[{"type":"text","text":"continue"}]}}

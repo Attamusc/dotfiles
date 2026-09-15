@@ -1,0 +1,8 @@
+{"type":"session","version":3,"id":"matrix"}
+{"type":"message","id":"invalid-bool","parentId":"root","message":{"role":"assistant","content":"bool","usage":{"cost":{"total":true}}}}
+{"type":"message","id":"invalid-number","parentId":"invalid-bool","message":{"role":"assistant","content":"nonfinite","usage":{"cost":{"total":"NaN"}}}}
+{"type":"message","id":"root","parentId":null,"message":{"role":"assistant","content":"root","usage":{"cost":{"total":1},"subagent":{"cost":999}}}}
+{"type":"branch_summary","id":"bs","parentId":"invalid-number","summary":"summary","usage":{"cost":2}}
+{"type":"compaction","id":"c","parentId":"bs","summary":"compact","firstKeptEntryId":"root","usage":{"cost":3}}
+{"type":"message","id":"leaf","parentId":"c","message":{"role":"assistant","content":"leaf","usage":{"cost":{"total":4}}}}
+{"type":"message","id":"sibling","parentId":"root","message":{"role":"assistant","content":"sibling","usage":{"cost":{"total":999}}}}

@@ -1,0 +1,9 @@
+{"type":"session","version":3,"id":"privacy-shell"}
+{"type":"message","id":"u","parentId":null,"message":{"role":"user","content":"PASSWORD=plain-secret PASSWORD=escaped\\ word\\ secret"}}
+{"type":"message","id":"a","parentId":"u","message":{"role":"assistant","content":"PASSWORD=\"double word secret\" PASSWORD='single word secret'"}}
+{"type":"message","id":"t","parentId":"a","message":{"role":"toolResult","toolName":"read","content":"postgres://alice:standalone-password@db.internal/app"}}
+{"type":"message","id":"b","parentId":"t","message":{"role":"bashExecution","command":"DATABASE_URL=postgres://bob:command-password@db.internal/app","output":"PASSWORD=\"output word secret\""}}
+{"type":"custom_message","id":"x","parentId":"b","content":"PASSWORD='custom word secret'"}
+{"type":"branch_summary","id":"bs","parentId":"x","summary":"PASSWORD=branch\\ word\\ secret"}
+{"type":"compaction","id":"c","parentId":"bs","summary":"DATABASE_URL=postgres://carol:summary-password@db.internal/app","firstKeptEntryId":"u"}
+{"type":"message","id":"leaf","parentId":"c","message":{"role":"assistant","content":"done"}}
