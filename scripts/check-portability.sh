@@ -1785,6 +1785,19 @@ render_platform() {
     grep -Fq '## Local deviations' "$rendered/.agents/skills/$skill/UPSTREAM.md" || \
       fail "$platform Phase 1 verification skill lost its deviations: $skill"
   done
+  [[ -f "$rendered/.agents/skills/why/SKILL.md" ]] || \
+    fail "$platform render is missing repository rationale skill: why/SKILL.md"
+  [[ -f "$rendered/.agents/skills/why/UPSTREAM.md" ]] || \
+    fail "$platform render is missing why provenance"
+  [[ -f "$rendered/.agents/skills/why/scripts/analyze-why.mjs" ]] || \
+    fail "$platform render is missing why repository analyzer"
+  [[ -f "$rendered/.agents/skills/why/scripts/validate-why.mjs" ]] || \
+    fail "$platform render is missing why report validator"
+  [[ -f "$rendered/.agents/skills/why/scripts/why-core.mjs" ]] || \
+    fail "$platform render is missing why shared runtime"
+  grep -Fq 'Commit: `889ec4b68fa5aab0e867dad71ec3fdf386ae48f3`' \
+    "$rendered/.agents/skills/why/UPSTREAM.md" || \
+    fail "$platform why skill lost its pinned provenance"
   if [[ "$platform" == darwin ]]; then
     for skill in dd-apm dd-audit dd-docs dd-pup; do
       [[ -f "$rendered/.agents/skills/$skill/SKILL.md" ]] || \
