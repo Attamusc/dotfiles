@@ -1108,7 +1108,7 @@ opencode=json.loads(pathlib.Path(sys.argv[3]).read_text())
 expected_packages=[
     "git:github.com/nicobailon/pi-mcp-adapter",
     "git:github.com/HazAT/glimpse",
-    "git:github.com/Attamusc/pi-interactive-subagents@fa7600194341071e722692da20f5e1f8d087c26d",
+    "git:github.com/Attamusc/pi-interactive-subagents@7a9a37a0df9fb80931290587e3a5ad5ffa9d1a41",
     "git:github.com/HazAT/pi-autoresearch",
     "git:github.com/carderne/pi-nvim",
     "git:github.com/Attamusc/pi-television@c3826bc268e05a1045e1d2339fc5a0cd3fd17a7e",
