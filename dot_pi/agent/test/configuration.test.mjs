@@ -22,12 +22,31 @@ const agentFiles = readdirSync(agentDir)
   .map((name) => name.replace(/\.tmpl$/, ""))
   .sort();
 
+function renderManagedFile(sourceRoot, targetPath, execute = execFileSync) {
+  return execute("chezmoi", ["--source", sourceRoot, "cat", targetPath], {
+    cwd: sourceRoot,
+    encoding: "utf8",
+  });
+}
+
+test("source-mode managed rendering explicitly selects this source tree", () => {
+  const calls = [];
+  const output = renderManagedFile("/archive/source", "/isolated/home/.pi/agent/settings.json", (...args) => {
+    calls.push(args);
+    return "archive configuration";
+  });
+
+  assert.equal(output, "archive configuration");
+  assert.deepEqual(calls, [[
+    "chezmoi",
+    ["--source", "/archive/source", "cat", "/isolated/home/.pi/agent/settings.json"],
+    { cwd: "/archive/source", encoding: "utf8" },
+  ]]);
+});
+
 function readManagedPiFile(relativePath) {
   if (runningFromSource) {
-    return execFileSync("chezmoi", ["cat", join(homedir(), ".pi", "agent", relativePath)], {
-      cwd: sourceTreeRoot,
-      encoding: "utf8",
-    });
+    return renderManagedFile(sourceTreeRoot, join(homedir(), ".pi", "agent", relativePath));
   }
   return readFileSync(join(testDir, "..", relativePath), "utf8");
 }
@@ -149,7 +168,7 @@ test("restricted agents receive every tool required by their instructions", () =
 });
 
 test("planner remains interactive and finalizes through the subagent handshake", () => {
-  const source = readFileSync(join(agentDir, "planner.md"), "utf8");
+  const source = readManagedPiFile(join("agents", "planner.md"));
   const phaseTen = source.slice(source.indexOf("## Phase 10: Summarize & Exit"));
 
   assert.match(source, /one phase per message/i);
@@ -193,10 +212,7 @@ test("OpenCode and Copilot prefer GPT with a Claude advisor boundary", () => {
     ? join(sourceTreeRoot, "dot_config", "opencode")
     : join(homedir(), ".config", "opencode");
   const openCodeSettingsSource = runningFromSource
-    ? execFileSync("chezmoi", ["cat", join(homedir(), ".config", "opencode", "opencode.jsonc")], {
-        cwd: sourceTreeRoot,
-        encoding: "utf8",
-      })
+    ? renderManagedFile(sourceTreeRoot, join(homedir(), ".config", "opencode", "opencode.jsonc"))
     : readFileSync(join(openCodeRoot, "opencode.jsonc"), "utf8");
   const openCodeSettings = JSON.parse(openCodeSettingsSource);
   assert.equal(openCodeSettings.model, "github-copilot/gpt-6-sol");
