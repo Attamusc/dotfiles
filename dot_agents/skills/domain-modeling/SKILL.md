@@ -72,3 +72,7 @@ Only offer to create an ADR when all three are true:
 3. **The result of a real trade-off** — there were genuine alternatives and you picked one for specific reasons
 
 If any of the three is missing, skip the ADR. Use the format in [ADR-FORMAT.md](./ADR-FORMAT.md).
+
+## Exact promotion handoff
+
+When session-pickup supplies an approved promotion tuple, accept only the unchanged tuple for this owner. Immediately before mutation, revalidate that `CONTEXT.md` payload is glossary-only, or that an ADR meets all three eligibility rules and names the exact absent next numbered path. Revalidate the complete approved tuple, perform a descriptor-safe no-follow ADR scan when applicable, and reopen an existing destination through descriptor-relative no-follow traversal; require a regular file with exactly one link and its SHA-256 to equal the approved base. Create an absent destination exclusively through its parent descriptor. Apply only the exact approved append or new-file bytes. After the write, do not rerun ADR numbering or semantic eligibility; read back and compare only the actual bytes and SHA-256 with the approved expected result. Only then return an owner-scoped response containing owner, canonical target, exact resulting bytes, and resulting SHA-256. Session-pickup may call that direct response verified; protocol JSON cannot. Reject stale bases, changed pre-write numbering, multiple links, invalid tuples, and post-write mismatches without claiming success.

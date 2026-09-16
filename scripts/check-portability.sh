@@ -1785,6 +1785,14 @@ render_platform() {
     grep -Fq '## Local deviations' "$rendered/.agents/skills/$skill/UPSTREAM.md" || \
       fail "$platform Phase 1 verification skill lost its deviations: $skill"
   done
+  [[ -f "$rendered/.pi/agent/skills/session-reader/SKILL.md" ]] || \
+    fail "$platform render is missing canonical session reader"
+  [[ -f "$rendered/.pi/agent/skills/session-pickup/SKILL.md" ]] || \
+    fail "$platform render is missing session pickup skill"
+  [[ -f "$rendered/.pi/agent/skills/session-pickup/scripts/pickup.py" ]] || \
+    fail "$platform render is missing session pickup renderer"
+  ! grep -RqE 'agent/sessions|find .*session|glob' "$rendered/.pi/agent/skills/session-pickup/scripts" || \
+    fail "$platform session pickup renderer contains session discovery logic"
   [[ -f "$rendered/.agents/skills/why/SKILL.md" ]] || \
     fail "$platform render is missing repository rationale skill: why/SKILL.md"
   [[ -f "$rendered/.agents/skills/why/UPSTREAM.md" ]] || \

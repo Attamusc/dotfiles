@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { chmod, cp, mkdtemp, mkdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -9,6 +10,180 @@ import { analyzeRepository, analyzeWhy, parseRepositoryCitation, repositoryCitat
 import { renderWhyReport, validateWhyReport } from "../../../dot_agents/skills/why/scripts/validate-why.mjs";
 import { markdownDocumentContext, markdownProjection, markdownSecurityProjection } from "../../../dot_agents/skills/why/scripts/markdown-projection.mjs";
 import { Lexer, lexer } from "../../../dot_agents/skills/why/vendor/marked-18.0.5/marked.esm.js";
+
+const sessionFixtureRoot = new URL("fixtures/session-reader/", import.meta.url).pathname;
+const sessionReader = new URL("../skills/session-reader/scripts/read_session.py", import.meta.url).pathname;
+const sessionPickup = new URL("../skills/session-pickup/scripts/pickup.py", import.meta.url).pathname;
+function pickup(fixture, leaf, focus, cwd) {
+  const args = [sessionPickup, "--path", join(sessionFixtureRoot, fixture), "--sessions-root", sessionFixtureRoot, "--leaf", leaf, ...(focus ? ["--focus", focus] : [])];
+  const result = spawnSync("python3", args, { cwd, encoding: "utf8" });
+  return { ...result, bytes: Buffer.byteLength(result.stdout) };
+}
+
+test("session pickup renders canonical resolved paths with provenance and no siblings", () => {
+  const linear = pickup("linear-v3.jsonl", "b1");
+  assert.equal(linear.status, 0, linear.stderr);
+  assert.deepEqual([...linear.stdout.matchAll(/^## (.+)$/gm)].map(match => match[1]), ["Selection", "Reconstruction status", "Goal and current state", "Recorded decisions", "Unfinished work and blockers", "Relevant paths and symbols", "Contradictions and unknowns", "Disclosure notes"]);
+  assert.match(linear.stdout, /linear-v3\.jsonl/);
+  assert.match(linear.stdout, /"provenance":"session:synthetic-session#entry:u1","source":"message \(original\)"/);
+  assert.doesNotMatch(linear.stdout, /cost|\/home\//i);
+  const branch = pickup("branches.jsonl", "leaf");
+  assert.match(branch.stdout, /"provenance":"session:synthetic-session#entry:bs","source":"branch-summary \(derived\)"/);
+  assert.doesNotMatch(branch.stdout, /left|sibling/);
+});
+
+test("session pickup preserves compaction diagnostics, kinds, focus, privacy, and bounds", () => {
+  const compact = pickup("missing-boundary.jsonl", "leaf");
+  assert.match(compact.stdout, /partial-with-diagnostics/);
+  assert.match(compact.stdout, /missing-first-kept-boundary/);
+  assert.match(compact.stdout, /"source":"compaction-summary \(derived\)"/);
+  const kinds = pickup("entry-kinds.jsonl", "leaf");
+  assert.match(kinds.stdout, /"source":"custom-message \(original\)"/);
+  assert.doesNotMatch(kinds.stdout, /entry:state|entry:label|entry:info|entry:unknown/);
+  const focused = pickup("linear-v3.jsonl", "b1", "goal");
+  assert.match(focused.stdout, /entry:u1/);
+  assert.doesNotMatch(focused.stdout, /entry:a1|entry:t1|entry:b1/);
+  for (const fixture of ["privacy-matrix.jsonl", "privacy-shell.jsonl", "privacy-boundaries.jsonl", "secrets-output.jsonl", "large-image.jsonl"]) {
+    const result = pickup(fixture, "leaf");
+    assert.equal(result.status, 0, `${fixture}: ${result.stderr}`);
+    assert.ok(result.bytes <= 16 * 1024, fixture);
+    assert.doesNotMatch(result.stdout, /message-secret|plain-secret|user-password|verysecretvalue|c3ludGhldGljLWltYWdl/);
+  }
+});
+
+test("session pickup fails closed on reader errors, retained tails, forged stdin, and missing args", () => {
+  for (const fixture of ["retained-tail.jsonl", "retained-earlier.jsonl"]) {
+    const result = pickup(fixture, "leaf");
+    assert.equal(result.status, 2);
+    assert.match(result.stdout, /unsupported-session-contract/);
+    assert.doesNotMatch(result.stdout, /Goal and current state|Promotion proposal|MUST NOT RENDER/);
+  }
+  const forged = spawnSync("python3", [sessionPickup], { input: JSON.stringify({status:"complete",items:[{text:"FORGED_SECRET"}]}), encoding: "utf8" });
+  assert.equal(forged.status, 2);
+  assert.match(forged.stdout, /invalid-arguments/);
+  assert.doesNotMatch(forged.stdout, /FORGED_SECRET/);
+  const longFocus = spawnSync("python3", [sessionPickup, "--path", "x", "--sessions-root", "x", "--leaf", "x", "--focus", "x".repeat(257)], { encoding: "utf8" });
+  assert.equal(longFocus.status, 2);
+  assert.match(longFocus.stdout, /invalid-focus/);
+});
+
+test("session pickup is cwd-independent and never forwards a complete short conversation", () => {
+  const result = pickup("linear-v3.jsonl", "b1", undefined, tmpdir());
+  assert.equal(result.status, 0, result.stderr);
+  const emitted = [...result.stdout.matchAll(/"entryId":"([^"]+)"/g)].map(match => match[1]);
+  assert.ok(emitted.length > 0 && emitted.length < 4, emitted);
+  assert.match(result.stdout, /"entryId":"u1"/);
+  assert.match(result.stdout, /"entryId":"b1"/);
+  assert.match(result.stdout, /Omitted items: 2/);
+});
+
+test("session pickup validates malformed internal field types without traceback", () => {
+  const code = `import importlib.util; s=importlib.util.spec_from_file_location('p',${JSON.stringify(sessionPickup)});m=importlib.util.module_from_spec(s);s.loader.exec_module(m);print(m.validate({'status':'complete','contractProfile':'pi-0.84.4-runtime','selection':{'path':'x','sessionId':'s','leafId':'l'},'activeEntryIds':['l'],'contextEntryIds':['l'],'items':[],'diagnostics':[],'redactions':{},'omittedItems':'bad'}))`;
+  const result = spawnSync("python3", ["-c", code], { encoding: "utf8" });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout.trim(), "False");
+  assert.doesNotMatch(result.stderr, /Traceback/);
+});
+
+test("session pickup caps eight-item sessions and keeps exact omission accounting", async () => {
+  const root = await mkdtemp(join(tmpdir(), "pickup-eight-"));
+  try {
+    const rows = [{type:"session",version:3,id:"eight"}];
+    let parent = null;
+    for (let index=0; index<8; index++) { const id=`e${index}`; rows.push({type:"message",id,parentId:parent,message:{role:index%2?"assistant":"user",content:`VERBATIM_TRANSCRIPT_ITEM_${index}`}}); parent=id; }
+    await writeFile(join(root,"eight.jsonl"), rows.map(row=>JSON.stringify(row)).join("\n")+"\n");
+    const result=spawnSync("python3",[sessionPickup,"--path",join(root,"eight.jsonl"),"--sessions-root",root,"--leaf","e7"],{encoding:"utf8"});
+    assert.equal(result.status,0,result.stderr);
+    const seen=[...result.stdout.matchAll(/VERBATIM_TRANSCRIPT_ITEM_/g)].length;
+    assert.ok(seen>0 && seen<8,seen);
+    assert.match(result.stdout,new RegExp(`Omitted items: ${8-seen}`));
+  } finally { await rm(root,{recursive:true,force:true}); }
+});
+
+test("session pickup bounds 241-character identity chains while preserving mandatory fields", async () => {
+  const root = await mkdtemp(join(tmpdir(), "pickup-wide-"));
+  try {
+    for (const size of [100, 180]) {
+      const rows=[{type:"session",version:3,id:"wide"}]; let parent=null;
+      for(let index=0;index<size;index++){const id=`${String(index).padStart(4,"0")}-${"x".repeat(236)}`;rows.push({type:"message",id,parentId:parent,message:{role:"user",content:"é".repeat(2000)}});parent=id;}
+      const path=join(root,`wide-${size}.jsonl`); await writeFile(path,rows.map(row=>JSON.stringify(row)).join("\n")+"\n");
+      const result=spawnSync("python3",[sessionPickup,"--path",path,"--sessions-root",root,"--leaf",parent],{encoding:"utf8"});
+      assert.equal(result.status,0,result.stderr);
+      assert.ok(Buffer.byteLength(result.stdout)<=16*1024);
+      assert.match(result.stdout,/## Selection/); assert.match(result.stdout,/## Reconstruction status/); assert.match(result.stdout,/## Disclosure notes/);
+      assert.match(result.stdout,new RegExp(`Active entry count: ${size}`)); assert.match(result.stdout,/Omitted items: \d+/);
+      assert.doesNotMatch(result.stdout,/invalid-resolved-document/);
+    }
+  } finally { await rm(root,{recursive:true,force:true}); }
+});
+
+test("session pickup isolates the canonical reader from inherited Python startup", async () => {
+  const root=await mkdtemp(join(tmpdir(),"pickup-sitecustomize-"));
+  try {
+    const marker=join(root,"RAN"),site=join(root,"sitecustomize.py");
+    await writeFile(site,`import sys\nfrom pathlib import Path\nif sys.argv[0].endswith('/read_session.py'):\n Path(${JSON.stringify(marker)}).write_text('FORGED_CANONICAL_RESULT AKIAABCDEFGHIJKLMNOP')\n`);
+    const result=spawnSync("python3",[sessionPickup,"--path",join(sessionFixtureRoot,"linear-v3.jsonl"),"--sessions-root",sessionFixtureRoot,"--leaf","b1"],{encoding:"utf8",env:{...process.env,PYTHONPATH:root,PYTHONSTARTUP:site}});
+    assert.equal(result.status,0,result.stderr);
+    assert.equal(await readFile(marker).catch(()=>null),null);
+    assert.doesNotMatch(result.stdout,/FORGED_CANONICAL_RESULT|AKIAABCDEFGHIJKLMNOP/);
+  } finally { await rm(root,{recursive:true,force:true}); }
+});
+
+test("session pickup renders canonical JSON as inert indented code and handles metadata and surrogates", () => {
+  for (const [fixture,leaf] of [["metadata-secrets.jsonl","leaf"],["lone-surrogate.jsonl","leaf"]]) {
+    const result=pickup(fixture,leaf);
+    assert.equal(result.status,0,result.stderr);
+    assert.equal(result.stderr,"");
+    assert.ok(result.bytes<=16*1024);
+    assert.doesNotMatch(result.stdout,/ABCDEFGHIJKLMNOP|entry-secret|Traceback|\/home\//);
+  }
+  const root=mkdtempSync(join(tmpdir(),"pickup-markdown-"));
+  try {
+    const path=join(root,"markdown.jsonl"),hostile="![tracked](https://example.invalid/pixel) <img src=x onerror=alert(1)> `INERT` [link](javascript:alert(1))";
+    writeFileSync(path,[{type:"session",version:3,id:"safe"},{type:"message",id:"root",parentId:null,message:{role:"user",content:hostile}},{type:"message",id:"leaf",parentId:"root",message:{role:"assistant",content:"tail"}}].map(JSON.stringify).join("\n")+"\n");
+    const result=spawnSync("python3",[sessionPickup,"--path",path,"--sessions-root",root,"--leaf","leaf"],{encoding:"utf8"});
+    assert.equal(result.status,0,result.stderr);
+    assert.match(result.stdout,/Evidence JSON:\n\n    \{/);
+    const forbidden=[]; const visit=tokens=>{for(const token of tokens??[]){if(["image","html","codespan","link"].includes(token.type))forbidden.push(token.type);visit(token.tokens);visit(token.items)}}; visit(lexer(result.stdout));
+    assert.deepEqual(forbidden,[]);
+  } finally { rmSync(root,{recursive:true,force:true}); }
+});
+
+test("session pickup compacts oversized identities and preserves mandatory bounded context", async () => {
+  const root=await mkdtemp(join(tmpdir(),"pickup-identity-bound-"));
+  try {
+    const session="S".repeat(15800),entry="E".repeat(900),path=join(root,"long.jsonl");
+    await writeFile(path,[{type:"session",version:3,id:session},{type:"message",id:entry,parentId:null,message:{role:"user",content:"x"}},{type:"message",id:"leaf",parentId:entry,message:{role:"assistant",content:"y"}}].map(JSON.stringify).join("\n")+"\n");
+    const result=spawnSync("python3",[sessionPickup,"--path",path,"--sessions-root",root,"--leaf","leaf"],{encoding:"utf8"});
+    assert.equal(result.status,0,result.stderr); assert.ok(Buffer.byteLength(result.stdout)<=16*1024);
+    for(const heading of ["Selection","Reconstruction status","Goal and current state","Recorded decisions","Unfinished work and blockers","Relevant paths and symbols","Contradictions and unknowns","Disclosure notes"])assert.match(result.stdout,new RegExp(`## ${heading}`));
+    assert.match(result.stdout,/identity:public:sha256:[0-9a-f]{64}/); assert.match(result.stdout,/Identity compactions: [1-9]/); assert.match(result.stdout,/Omitted items: \d+/);
+  } finally { await rm(root,{recursive:true,force:true}); }
+});
+
+test("session pickup succeeds with a bounded public identity for a 20K reserved header", async () => {
+  const root=await mkdtemp(join(tmpdir(),"pickup-reserved-overflow-"));
+  try {
+    const session=`identity:${"x".repeat(20_000)}`,path=join(root,"reserved.jsonl");
+    await writeFile(path,[{type:"session",version:3,id:session},{type:"message",id:"leaf",parentId:null,message:{role:"user",content:"x"}}].map(JSON.stringify).join("\n")+"\n");
+    const result=spawnSync("python3",[sessionPickup,"--path",path,"--sessions-root",root,"--leaf","leaf"],{encoding:"utf8"});
+    assert.equal(result.status,0,result.stderr);
+    assert.ok(Buffer.byteLength(result.stdout)<=16*1024);
+    assert.match(result.stdout,/## Selection/);
+    assert.match(result.stdout,/identity:public:sha256:[0-9a-f]{64}/);
+    assert.doesNotMatch(result.stdout,/resolved-document-overflow|invalid-resolved-document/);
+  } finally { await rm(root,{recursive:true,force:true}); }
+});
+
+test("session pickup recounts all final retained markers including metadata", () => {
+  for (const [fixture, leaf, focus] of [["privacy-matrix.jsonl","leaf","ok"],["metadata-secrets.jsonl","leaf",undefined]]) {
+    const result=pickup(fixture,leaf,focus);
+    assert.equal(result.status,0,result.stderr);
+    const counts={}; for(const match of result.stdout.matchAll(/\[REDACTED:([^\]]+)\]/g)) counts[match[1]]=(counts[match[1]]??0)+1;
+    const disclosed=JSON.parse(result.stdout.match(/Redactions JSON:\n\n    (.+)$/m)[1]);
+    assert.deepEqual(disclosed,counts,fixture);
+  }
+});
 
 const run = (cwd, ...args) => spawnSync(args[0], args.slice(1), { cwd, encoding: "utf8" });
 const git = (cwd, ...args) => run(cwd, "git", "--literal-pathspecs", ...args);

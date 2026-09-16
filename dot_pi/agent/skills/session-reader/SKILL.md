@@ -18,7 +18,7 @@ Require all three values before reading content:
 Do not accept “latest,” project/session prefixes, globs, or directories. Resolve script and reference paths relative to this skill directory.
 
 ```bash
-python3 scripts/read_session.py <exact.jsonl> \
+python3 -B scripts/read_session.py <exact.jsonl> \
   --sessions-root <managed-root> --leaf <entry-id> --mode resolve
 ```
 

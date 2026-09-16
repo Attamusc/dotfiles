@@ -46,3 +46,7 @@ under today's date header (create it if it doesn't exist).
 - Append to existing files rather than overwriting.
 - Keep entries concise. Each entry should be 1-5 lines.
 - If the user asks you to record something, confirm what you wrote.
+
+## Exact promotion handoff
+
+When session-pickup supplies an approved promotion tuple, accept only the unchanged tuple for this owner and one canonical path listed above. Immediately before mutation, revalidate the complete approved tuple and reopen the destination through descriptor-relative no-follow traversal; require a regular file with exactly one link and its SHA-256 to equal an existing approved base, or create an approved absent destination exclusively through its parent descriptor. Append the exact approved payload bytes; never overwrite, broaden, or edit them. Read the result back, compare its exact bytes and SHA-256 with the approved expected result, and only then return an owner-scoped response containing owner, canonical target, exact resulting bytes, and resulting SHA-256. Session-pickup may call that direct response verified; protocol JSON cannot. Reject stale bases, multiple links, invalid tuples, and post-write mismatches without claiming success.

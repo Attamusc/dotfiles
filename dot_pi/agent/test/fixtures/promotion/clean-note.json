@@ -1,0 +1,16 @@
+{
+  "status": "complete",
+  "destination": ".notes/decisions.md",
+  "owner": "notekeeper",
+  "destinationKind": "decision",
+  "operation": "append",
+  "payload": "## Date: 2026-09-16\n- Use one durable knowledge owner per destination.\n",
+  "provenance": ["session:synthetic-session#entry:decision"],
+  "limits": {
+    "tainted": false,
+    "redactions": 0,
+    "truncated": false,
+    "omissionsUnfit": false
+  },
+  "semantic": {}
+}

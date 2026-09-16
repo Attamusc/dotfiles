@@ -2,11 +2,17 @@
 """Canonical, bounded reader for one explicitly selected Pi session file."""
 
 import argparse
+import base64
+import hashlib
 import json
 import math
 import re
 import sys
+sys.dont_write_bytecode = True
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+from shared.privacy import redact as shared_redact
 
 MAX_OUTPUT_BYTES = 16 * 1024
 MAX_DIAGNOSTIC_LINES = 20
@@ -173,12 +179,28 @@ def entry_cost(entry):
 
 
 def redact(text, counts):
-    for kind, pattern in SECRET_PATTERNS:
-        def replacement(_match, redaction_kind=kind):
-            counts[redaction_kind] = counts.get(redaction_kind, 0) + 1
-            return f"[REDACTED:{redaction_kind}]"
-        text = pattern.sub(replacement, text)
-    return text
+    return shared_redact(text, counts)
+
+
+IDENTITY_PREFIX = "identity:"
+
+
+def display_metadata(value, counts, compactions, private_identities):
+    raw = value.encode("utf-8", "surrogatepass")
+    local_counts = {}
+    projected = redact(value, local_counts)
+    if local_counts:
+        compactions[0] += 1
+        ordinal = private_identities.setdefault(value, len(private_identities) + 1)
+        markers = "".join(f"[REDACTED:{name}]" * count for name, count in sorted(local_counts.items()))
+        return f"identity:private-{ordinal}{markers}"
+    if len(raw) > 256:
+        compactions[0] += 1
+        return f"identity:public:sha256:{hashlib.sha256(raw).hexdigest()}"
+    if value.startswith(IDENTITY_PREFIX):
+        escaped = base64.urlsafe_b64encode(raw).decode("ascii").rstrip("=")
+        return f"identity:literal:{escaped}"
+    return projected
 
 
 def normalized_text(entry):
@@ -223,23 +245,34 @@ def malformed_diagnostic(lines):
 def resolve(root, path, entries, malformed, leaf, include_cost=False):
     header, active = validate_and_path(entries, leaf)
     context, diagnostics = context_path(active)
-    counts, items = {}, []
+    counts, compactions, items, private_identities = {}, [0], [], {}
+    session_id = display_metadata(header["id"], counts, compactions, private_identities)
+    displayed_ids = {entry["id"]: display_metadata(entry["id"], counts, compactions, private_identities) for entry in active}
     for entry in context:
         text, source, role = safe_text(entry, counts)
         if source and text:
-            items.append({"entryId": entry["id"], "provenance": f"session:{header['id']}#entry:{entry['id']}", "source": source, "role": role, "text": text})
+            entry_id = displayed_ids[entry["id"]]
+            items.append({"entryId": entry_id, "provenance": f"session:{session_id}#entry:{entry_id}", "source": source, "role": role, "text": text})
     malformed_note = malformed_diagnostic(malformed)
     if malformed_note:
         diagnostics.append(malformed_note)
+    displayed_diagnostics = [display_metadata(note, counts, compactions, private_identities) for note in diagnostics]
     document = {
         "status": "partial-with-diagnostics" if diagnostics else "complete",
         "contractProfile": "pi-0.84.4-runtime",
-        "selection": {"path": path.relative_to(root).as_posix(), "sessionId": header["id"], "leafId": leaf},
-        "activeEntryIds": [entry["id"] for entry in active],
-        "contextEntryIds": [entry["id"] for entry in context],
+        "selection": {
+            "path": display_metadata(path.relative_to(root).as_posix(), counts, compactions, private_identities),
+            "sessionId": session_id,
+            "leafId": display_metadata(leaf, counts, compactions, private_identities),
+        },
+        "activeEntryIds": [displayed_ids[entry["id"]] for entry in active],
+        "contextEntryIds": [displayed_ids[entry["id"]] for entry in context],
+        "totalActiveEntries": len(active),
+        "totalContextEntries": len(context),
         "items": items,
-        "diagnostics": diagnostics,
+        "diagnostics": displayed_diagnostics,
         "redactions": counts,
+        "identityCompactions": compactions[0],
     }
     if include_cost:
         total = 0.0
@@ -251,18 +284,37 @@ def resolve(root, path, entries, malformed, leaf, include_cost=False):
     return document
 
 
+def marker_counts(document):
+    retained = {key: value for key, value in document.items() if key != "redactions"}
+    counts = {}
+    for kind in re.findall(r"\[REDACTED:([^\]]+)\]", json.dumps(retained, ensure_ascii=True)):
+        counts[kind] = counts.get(kind, 0) + 1
+    return counts
+
+
 def bounded_json(document):
-    document, omitted = dict(document), 0
+    document = dict(document)
     document["items"] = list(document.get("items", []))
+    document["activeEntryIds"] = list(document.get("activeEntryIds", []))
+    document["contextEntryIds"] = list(document.get("contextEntryIds", []))
+    original = {key: len(document[key]) for key in ("items", "activeEntryIds", "contextEntryIds")}
+    document.update({"omittedItems": 0, "omittedActiveEntryIds": 0, "omittedContextEntryIds": 0, "truncated": False})
     while True:
-        document["omittedItems"] = omitted
+        document["redactions"] = marker_counts(document)
         encoded = (json.dumps(document, ensure_ascii=True, sort_keys=True, allow_nan=False) + "\n").encode("utf-8")
         if len(encoded) <= MAX_OUTPUT_BYTES:
             return encoded
-        if not document["items"]:
-            return (json.dumps({"status": document.get("status", "error"), "omittedItems": omitted, "truncated": True}, sort_keys=True, allow_nan=False) + "\n").encode()
-        document["items"].pop()
-        omitted += 1
+        if document["items"]:
+            document["items"].pop()
+            document["omittedItems"] = original["items"] - len(document["items"])
+        elif len(document["contextEntryIds"]) > 1:
+            document["contextEntryIds"].pop(0)
+            document["omittedContextEntryIds"] = original["contextEntryIds"] - len(document["contextEntryIds"])
+        elif len(document["activeEntryIds"]) > 1:
+            document["activeEntryIds"].pop(0)
+            document["omittedActiveEntryIds"] = original["activeEntryIds"] - len(document["activeEntryIds"])
+        else:
+            raise ContractError("resolved-document-overflow")
         document["truncated"] = True
 
 

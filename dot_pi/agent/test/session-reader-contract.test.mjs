@@ -154,6 +154,94 @@ test("privacy pipeline covers every display source and shell credential form", (
   assert.equal(boundaries.stdout.includes("[raw environment dump omitted]"), true);
 });
 
+test("metadata privacy uses stable opaque ordinals across selection IDs and provenance", () => {
+  const { stdout, json } = invoke("metadata-secrets.jsonl", "leaf");
+  assert.equal(json.status, "complete");
+  assert.doesNotMatch(stdout, /ABCDEFGHIJKLMNOP|entry-secret/);
+  assert.doesNotMatch(stdout, new RegExp(awaitDigest(`AKIA${"A".repeat(16)}`)));
+  assert.match(json.selection.sessionId, /^identity:private-1\[REDACTED:token\]$/);
+  assert.match(json.activeEntryIds[0], /^identity:private-2\[REDACTED:environment-secret\]$/);
+  assert.equal(json.items[0].entryId, json.contextEntryIds[0]);
+  assert.equal(json.items[0].provenance, `session:${json.selection.sessionId}#entry:${json.items[0].entryId}`);
+  assert.ok(json.redactions.token > 1);
+  assert.ok(json.redactions["environment-secret"] > 1);
+});
+
+test("metadata identity projection is injective across private and reserved public namespaces", () => {
+  const temp = mkdtempSync(join(tmpdir(), "session-reader-identities-"));
+  const first = `AKIA${"A".repeat(12)}`, leaf = `AKIA${"B".repeat(12)}`;
+  const oversized = "x".repeat(257);
+  const alias = `identity:public:sha256:${awaitDigest(oversized)}`;
+  for (const [name, ids] of [["private", [first, leaf]], ["reserved", [oversized, alias]]]) {
+    const path = join(temp, `${name}.jsonl`);
+    writeFileSync(path, [{type:"session",version:3,id:"safe"},{type:"message",id:ids[0],parentId:null,message:{role:"user",content:"first"}},{type:"message",id:ids[1],parentId:ids[0],message:{role:"assistant",content:"second"}}].map(JSON.stringify).join("\n")+"\n");
+    const result = spawnSync("python3", [reader,path,"--sessions-root",temp,"--leaf",ids[1],"--mode","resolve"], {encoding:"utf8"});
+    assert.equal(result.status, 0, result.stderr);
+    const document = JSON.parse(result.stdout);
+    assert.equal(new Set(document.activeEntryIds).size, 2);
+    assert.equal(new Set(document.items.map(item => item.provenance)).size, 2);
+    assert.doesNotMatch(result.stdout, /AKIA[A-Z0-9]{12}/);
+  }
+});
+
+function awaitDigest(value) {
+  return execFileSync("python3", ["-c", "import hashlib,sys;print(hashlib.sha256(sys.argv[1].encode()).hexdigest())", value], {encoding:"utf8"}).trim();
+}
+
+test("private metadata ordinals are stable for repeats, unique for distinct secrets, and exactly recounted", () => {
+  const temp = mkdtempSync(join(tmpdir(), "session-reader-private-ordinals-"));
+  const first = `AKIA${"C".repeat(12)}`, second = `AKIA${"D".repeat(12)}`;
+  const path = join(temp, "private.jsonl");
+  writeFileSync(path, [{type:"session",version:3,id:first},{type:"message",id:second,parentId:null,message:{role:"user",content:"first"}},{type:"message",id:first,parentId:second,message:{role:"assistant",content:"second"}}].map(JSON.stringify).join("\n")+"\n");
+  const result = spawnSync("python3", [reader,path,"--sessions-root",temp,"--leaf",first,"--mode","resolve"], {encoding:"utf8"});
+  assert.equal(result.status, 0, result.stderr);
+  const document = JSON.parse(result.stdout);
+  assert.equal(document.selection.sessionId, document.selection.leafId);
+  assert.equal(document.selection.sessionId, document.activeEntryIds[1]);
+  assert.notEqual(document.activeEntryIds[0], document.activeEntryIds[1]);
+  for (const secret of [first, second]) {
+    assert.equal(result.stdout.includes(secret), false);
+    assert.equal(result.stdout.includes(awaitDigest(secret)), false);
+  }
+  const withoutDisclosure = {...document}; delete withoutDisclosure.redactions;
+  const counts = {}; for (const match of JSON.stringify(withoutDisclosure).matchAll(/\[REDACTED:([^\]]+)\]/g)) counts[match[1]]=(counts[match[1]]??0)+1;
+  assert.deepEqual(document.redactions, counts);
+});
+
+test("oversized reserved identities compact before short reserved literals escape", () => {
+  const temp = mkdtempSync(join(tmpdir(), "session-reader-reserved-overflow-"));
+  const huge = `identity:${"x".repeat(20_000)}`, literal = "identity:public:sha256:literal";
+  const path = join(temp, "reserved.jsonl");
+  writeFileSync(path, [{type:"session",version:3,id:huge},{type:"message",id:literal,parentId:null,message:{role:"user",content:"x"}},{type:"message",id:"leaf",parentId:literal,message:{role:"assistant",content:"y"}}].map(JSON.stringify).join("\n")+"\n");
+  const result = spawnSync("python3", [reader,path,"--sessions-root",temp,"--leaf","leaf","--mode","resolve"], {encoding:"utf8"});
+  assert.equal(result.status, 0, result.stderr);
+  assert.ok(Buffer.byteLength(result.stdout) <= 16 * 1024);
+  const document = JSON.parse(result.stdout);
+  assert.match(document.selection.sessionId, /^identity:public:sha256:[0-9a-f]{64}$/);
+  assert.match(document.activeEntryIds[0], /^identity:literal:/);
+  assert.notEqual(document.selection.sessionId, document.activeEntryIds[0]);
+});
+
+test("reader recounts final metadata markers and preserves bounded resolve schema", () => {
+  const metadata = invoke("metadata-secrets.jsonl", "leaf");
+  const withoutDisclosure = {...metadata.json}; delete withoutDisclosure.redactions;
+  const counts = {}; for (const match of JSON.stringify(withoutDisclosure).matchAll(/\[REDACTED:([^\]]+)\]/g)) counts[match[1]]=(counts[match[1]]??0)+1;
+  assert.deepEqual(metadata.json.redactions, counts);
+
+  const temp = mkdtempSync(join(tmpdir(), "session-reader-bounds-"));
+  for (const size of [100, 180]) {
+    const rows=[{type:"session",version:3,id:"bounded"}]; let parent=null;
+    for(let index=0;index<size;index++){const id=`${String(index).padStart(4,"0")}-${"x".repeat(236)}`;rows.push({type:"message",id,parentId:parent,message:{role:"user",content:`item ${index}`}});parent=id;}
+    const path=join(temp,`${size}.jsonl`); writeFileSync(path,rows.map(JSON.stringify).join("\n")+"\n");
+    const result=spawnSync("python3",[reader,path,"--sessions-root",temp,"--leaf",parent,"--mode","resolve"],{encoding:"utf8"});
+    assert.equal(result.status,0,result.stderr); assert.ok(Buffer.byteLength(result.stdout)<=16*1024);
+    const document=JSON.parse(result.stdout);
+    for(const key of ["status","contractProfile","selection","diagnostics","redactions","activeEntryIds","contextEntryIds","items","totalActiveEntries","totalContextEntries","omittedActiveEntryIds","omittedContextEntryIds","omittedItems","truncated"]) assert.ok(key in document,key);
+    assert.equal(document.totalActiveEntries,size); assert.equal(document.totalContextEntries,size);
+    assert.ok(document.activeEntryIds.includes(document.selection.leafId));
+  }
+});
+
 test("newline, NUL, and mixed raw environment dumps are suppressed", () => {
   const temp = mkdtempSync(join(tmpdir(), "session-reader-env-"));
   for (const [name, content] of [["nul", "LANG=C\0PWD=/synthetic/nul\0USER=alice"], ["mixed", "LANG=C\nPWD=/synthetic/mixed\0USER=alice"]]) {
