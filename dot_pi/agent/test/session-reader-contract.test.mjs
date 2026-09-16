@@ -69,6 +69,64 @@ test("installed buildSessionContext projection matches roles and content", async
   }
 });
 
+test("installed 0.84.4 public API and CLI exports ignore retainedTail exactly", async (t) => {
+  const sdkRoot = process.env.PI_SDK_ROOT;
+  if (!sdkRoot) return t.skip("PI_SDK_ROOT is required for the installed differential replay");
+  assert.equal(JSON.parse(readFileSync(join(sdkRoot, "package.json"), "utf8")).version, "0.84.4");
+
+  const timestamp = "2026-01-01T00:00:00.000Z";
+  const header = { type: "session", version: 3, id: "synthetic", timestamp, cwd: "/synthetic" };
+  const message = (id, parentId, role, content) => ({ type: "message", id, parentId, timestamp, message: { role, content } });
+  const compaction = (id, parentId, summary, firstKeptEntryId, retainedTail) => ({
+    type: "compaction", id, parentId, timestamp, summary, firstKeptEntryId, tokensBefore: 10, retainedTail,
+  });
+  const tail = [
+    { role: "user", content: "TAIL-USER" },
+    { role: "assistant", content: "TAIL-ASSISTANT" },
+    { role: "toolResult", content: "TAIL-TOOL" },
+    { role: "custom", content: "TAIL-CUSTOM" },
+  ];
+  const cases = [
+    {
+      name: "first-kept",
+      records: [header, message("old", null, "user", "OLD"), message("keep", "old", "assistant", "KEEP"), compaction("c", "keep", "SUMMARY", "keep", tail), message("leaf", "c", "user", "POST")],
+      ids: ["c", "keep", "leaf"],
+      messages: [["compactionSummary", "SUMMARY"], ["assistant", "KEEP"], ["user", "POST"]],
+    },
+    {
+      name: "no-first-kept",
+      records: [header, message("old", null, "user", "OLD"), compaction("c", "old", "SUMMARY", undefined, tail), message("leaf", "c", "user", "POST")],
+      ids: ["c", "leaf"],
+      messages: [["compactionSummary", "SUMMARY"], ["user", "POST"]],
+    },
+    {
+      name: "repeated-compaction",
+      records: [header, message("keep", null, "user", "KEEP"), compaction("c1", "keep", "ONE", "keep", tail), compaction("c2", "c1", "TWO", "c1", tail), message("leaf", "c2", "user", "POST")],
+      ids: ["c2", "c1", "leaf"],
+      messages: [["compactionSummary", "TWO"], ["compactionSummary", "ONE"], ["user", "POST"]],
+    },
+    {
+      name: "missing-boundary",
+      records: [header, message("old", null, "user", "OLD"), compaction("c", "old", "SUMMARY", "absent", tail), message("leaf", "c", "user", "POST")],
+      ids: ["c", "leaf"],
+      messages: [["compactionSummary", "SUMMARY"], ["user", "POST"]],
+    },
+  ];
+
+  // The bundle's embedded, unexported *2 ordered-path subsystem is not the public
+  // JSONL API or CLI export exercised here; source presence is not API behavior.
+  for (const [exportName, exportPath] of [["public API", "dist/index.js"], ["CLI bundle", "dist/bundle/index.js"]]) {
+    const runtime = await import(pathToFileURL(join(sdkRoot, exportPath)));
+    for (const row of cases) {
+      const parsed = runtime.parseSessionEntries(row.records.map(JSON.stringify).join("\n"));
+      assert.deepEqual(runtime.buildContextEntries(parsed, "leaf").map(({ id }) => id), row.ids, `${exportName}: ${row.name} IDs`);
+      const actual = runtime.buildSessionContext(parsed, "leaf").messages.map(({ role, content, summary }) => [role, content ?? summary]);
+      assert.deepEqual(actual, row.messages, `${exportName}: ${row.name} messages`);
+      assert.equal(JSON.stringify(actual).includes("TAIL-"), false, `${exportName}: ${row.name} ignores retainedTail`);
+    }
+  }
+});
+
 test("oversized selected-parent integers retain the chain and ignore non-finite cost", () => {
   const temp = mkdtempSync(join(tmpdir(), "session-reader-numbers-"));
   const path = join(temp, "oversized.jsonl");
