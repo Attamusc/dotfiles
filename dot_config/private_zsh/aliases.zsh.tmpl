@@ -20,6 +20,8 @@ alias o="open"
 alias oo="open ."
 alias zoom-fix="sudo killall VDCAssistant"
 {{ else if and (eq .chezmoi.os "linux") (eq .chezmoi.osRelease.id "fedora") (eq .chezmoi.osRelease.versionID "44") -}}
+# Fedora's which alias ignores zsh functions.
+unalias which 2>/dev/null
 alias copy="wl-copy"
 alias o="xdg-open"
 alias oo="xdg-open ."

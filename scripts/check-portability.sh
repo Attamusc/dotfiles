@@ -1001,12 +1001,15 @@ EOF
     ZDOTDIR="$home" \
     PATH=/usr/bin:/bin \
     "$zsh_bin" -dfc '
+      alias which="alias | /usr/bin/which --tty-only --read-alias --show-tilde --show-dot"
       source "$ZDOTDIR/.zshrc"
       [[ $PORTABILITY_LOCALRC == loaded ]]
       [[ ${aliases[copy]} == wl-copy ]]
       [[ ${aliases[o]} == xdg-open ]]
       [[ ${aliases[v]} == nvim ]]
       (( $+functions[sg] ))
+      [[ -z ${aliases[which]+x} ]] || exit 1
+      [[ $(eval "which sg") == "sg () {"* ]] || exit 1
       [[ $path[1] == "$HOME/.local/share/bob/nvim-bin" ]]
       [[ $(command -v nvim) == "$HOME/.local/share/bob/nvim-bin/nvim" ]]
       [[ $(command -v pi-hunk-review-core) == "$HOME/.local/bin/pi-hunk-review-core" ]]
