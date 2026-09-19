@@ -8,6 +8,7 @@ import type {
 } from "@earendil-works/pi-coding-agent";
 import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 import {
+  composeFooterRuntime,
   findJjWorkspace,
   formatCost,
   formatTokenCount,
@@ -250,24 +251,24 @@ export default function statusFooter(pi: ExtensionAPI) {
             [`${provider ? `${provider}/` : ""}${model}`, thinking].filter(Boolean).join(" · "),
           );
 
-          const runtimeParts = [
-            formatContext(theme, ctx),
-            theme.fg("muted", formatCost(cost, isSubscription(ctx))),
-          ];
+          const subscription = isSubscription(ctx);
           const speed = liveTokensPerSecond();
-          if (speed !== null) {
-            runtimeParts.push(theme.fg("muted", `${Math.round(speed)} tok/s`));
-          }
+          const runtime = composeFooterRuntime({
+            context: formatContext(theme, ctx),
+            cost: theme.fg("muted", formatCost(cost, subscription)),
+            ...(speed === null
+              ? {}
+              : { speed: theme.fg("muted", `${Math.round(speed)} tok/s`) }),
+            subscription,
+            statuses: footerData.getExtensionStatuses(),
+          });
 
           const lines = [
             columns(leftTop, rightTop, width),
-            columns(runtimeParts.join(theme.fg("dim", " · ")), formatVcs(theme, vcs), width),
+            columns(runtime.items.join(theme.fg("dim", " · ")), formatVcs(theme, vcs), width),
           ];
 
-          const statuses = Array.from(footerData.getExtensionStatuses().entries())
-            .sort(([left], [right]) => left.localeCompare(right))
-            .flatMap(([, text]) => text.split("\n"));
-          for (const status of statuses) {
+          for (const status of runtime.overflowStatuses) {
             lines.push(truncateToWidth(sanitizeStatusLine(status), width, theme.fg("dim", "...")));
           }
 

@@ -95,6 +95,31 @@ export function formatCost(cost: number, subscription: boolean): string {
   return subscription ? `${value} (sub)` : value;
 }
 
+export function composeFooterRuntime(input: {
+  context: string;
+  cost: string;
+  speed?: string;
+  subscription: boolean;
+  statuses: ReadonlyMap<string, string>;
+}): { items: string[]; overflowStatuses: string[] } {
+  const items = [input.context];
+  const subscriptionUsage = input.statuses.get("subscription-usage");
+
+  if (input.subscription) {
+    if (subscriptionUsage) items.push(subscriptionUsage);
+  } else {
+    items.push(input.cost);
+  }
+  if (input.speed) items.push(input.speed);
+
+  const overflowStatuses = Array.from(input.statuses.entries())
+    .filter(([id]) => !input.subscription || id !== "subscription-usage")
+    .sort(([left], [right]) => left.localeCompare(right))
+    .flatMap(([, text]) => text.split("\n"));
+
+  return { items, overflowStatuses };
+}
+
 export function sanitizeLabel(text: string): string {
   return text
     .replace(/\x1b\[[0-9;]*m/g, "")

@@ -139,24 +139,27 @@ export default function subscriptionUsage(pi: ExtensionAPI) {
       const error = errors.get(providerId);
       ctx.ui.setStatus(
         STATUS_ID,
-        error ? ctx.ui.theme.fg("warning", `${providerName(providerId)} usage unavailable`) : undefined,
+        error ? ctx.ui.theme.fg("warning", "usage unavailable") : undefined,
       );
       return;
     }
 
     const modelId = ctx.model?.id ?? "";
     const status = formatFooterStatus(snapshot, modelId);
-    if (snapshot.footerStatus && status) {
-      ctx.ui.setStatus(STATUS_ID, ctx.ui.theme.fg(snapshot.footerStatus.level, status));
-      return;
-    }
-
-    const tightest = selectFooterWindows(snapshot, modelId)[0];
-    if (!status || !tightest) {
+    const closest = selectFooterWindows(snapshot, modelId)[0];
+    if (!status) {
       ctx.ui.setStatus(STATUS_ID, undefined);
       return;
     }
-    const remaining = 100 - tightest.usedPercent;
+    if (!closest) {
+      ctx.ui.setStatus(
+        STATUS_ID,
+        ctx.ui.theme.fg(snapshot.footerStatus?.level ?? "warning", status),
+      );
+      return;
+    }
+
+    const remaining = 100 - closest.usedPercent;
     const color = remaining <= 10 ? "error" : remaining <= 25 ? "warning" : "success";
     ctx.ui.setStatus(STATUS_ID, ctx.ui.theme.fg(color, status));
   }

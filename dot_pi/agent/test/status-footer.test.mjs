@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { test } from "node:test";
 import {
+  composeFooterRuntime,
   findJjWorkspace,
   formatCost,
   formatTokenCount,
@@ -89,4 +90,19 @@ test("footer values use compact formatting and preserve styled extension statuse
   assert.equal(formatCost(0.1234, false), "$0.123");
   assert.equal(sanitizeLabel("hello\nworld\x1b[31m"), "hello world");
   assert.equal(sanitizeStatusLine("\x1b[31mMCP\x1b[0m\nready"), "\x1b[31mMCP\x1b[0m ready");
+});
+
+test("subscription quota replaces synthetic cost without adding a footer line", () => {
+  const result = composeFooterRuntime({
+    context: "ctx 42.0%/200k",
+    cost: "$0 (sub)",
+    speed: "63 tok/s",
+    subscription: true,
+    statuses: new Map([["subscription-usage", "7d 8%"]]),
+  });
+
+  assert.deepEqual(result, {
+    items: ["ctx 42.0%/200k", "7d 8%", "63 tok/s"],
+    overflowStatuses: [],
+  });
 });

@@ -182,30 +182,19 @@ export function selectFooterWindows(
   return snapshot.windows
     .filter((window) => !window.modelId || normalizedModelId.includes(window.modelId))
     .sort((left, right) => right.usedPercent - left.usedPercent)
-    .slice(0, 2);
+    .slice(0, 1);
 }
 
 export function formatFooterStatus(
   snapshot: UsageSnapshot,
   activeModelId: string,
-  timeZone?: string,
 ): string | undefined {
-  if (snapshot.footerStatus) return `${snapshot.providerName} ${snapshot.footerStatus.text}`;
+  const closest = selectFooterWindows(snapshot, activeModelId)[0];
+  if (!closest) return snapshot.footerStatus?.text;
 
-  const applicable = selectFooterWindows(snapshot, activeModelId);
-  if (applicable.length === 0) return undefined;
-
-  return applicable
-    .map((window, index) => {
-      const remaining = Math.round(100 - window.usedPercent);
-      const scope = window.scope ? `${shortScope(window.scope)} ` : "";
-      const provider = index === 0 ? `${snapshot.providerName} ` : "";
-      const reset = index === 0 && window.resetsAt
-        ? ` ↺ ${formatResetTime(window.resetsAt, timeZone)}`
-        : "";
-      return `${provider}${scope}${window.label} ${remaining}% left${reset}`;
-    })
-    .join(" · ");
+  const remaining = Math.round(100 - closest.usedPercent);
+  const scope = closest.scope ? `${shortScope(closest.scope)} ` : "";
+  return `${scope}${closest.label} ${remaining}%`;
 }
 
 export function parseAnthropicUsage(data: any): UsageSnapshot {

@@ -355,10 +355,10 @@ test("Claude reports when third-party extra usage is disabled", () => {
   });
   assert.deepEqual(snapshot.details, ["⚠ Extra usage disabled for third-party apps"]);
   assert.ok(formatDashboardLines([snapshot]).includes("  ⚠ Extra usage disabled for third-party apps"));
-  assert.equal(formatFooterStatus(snapshot, "claude-sonnet-5"), "Claude extra usage disabled");
+  assert.equal(formatFooterStatus(snapshot, "claude-sonnet-5"), "5h 100%");
 });
 
-test("footer shows the two tightest limits relevant to the active model", () => {
+test("footer shows only the closest limit relevant to the active model", () => {
   const snapshot = parseCodexUsage({
     rate_limit: {
       primary_window: {
@@ -388,14 +388,8 @@ test("footer shows the two tightest limits relevant to the active model", () => 
     ],
   });
 
-  assert.equal(
-    formatFooterStatus(snapshot, "gpt-5.3-codex-spark", "UTC"),
-    "Codex 7d 65% left ↺ Sep 11, 1:06 PM · Spark 7d 80% left",
-  );
-  assert.equal(
-    formatFooterStatus(snapshot, "gpt-5.6-sol", "UTC"),
-    "Codex 7d 65% left ↺ Sep 11, 1:06 PM",
-  );
+  assert.equal(formatFooterStatus(snapshot, "gpt-5.3-codex-spark"), "7d 65%");
+  assert.equal(formatFooterStatus(snapshot, "gpt-5.6-sol"), "7d 65%");
 });
 
 test("dashboard presents remaining headroom and reset times consistently", () => {
