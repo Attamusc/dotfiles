@@ -248,6 +248,21 @@ parallel_subagents({
 
 **Delegate when work spans two or more subsystems or has at least two independent workstreams; otherwise keep it in-session unless one of the risks above applies.**
 
+#### Manual Advisor Checkpoints
+
+Advisor consultation is opt-in and user-invoked only. It is read-only and bounded to the current session; use the existing `reviewer`, `adversarial-reviewer`, or `validator` seat that matches the question. Aim for no more than roughly four consultations per task, at these checkpoints: before a major decision, after two genuine failed attempts, before completing nontrivial work, or when the user explicitly requests advice.
+
+Give the advisor one fixed, bounded evidence briefing:
+
+- the decision or claim to assess;
+- the user goal and applicable constraints;
+- at most five relevant file paths or contract references;
+- at most three bounded evidence excerpts or command results;
+- attempts already made and their observed outcomes;
+- the specific recommendation or falsification requested.
+
+Record the recommendation and the caller's decision in the active conversation only. Never forward transcript bodies, create automatic triggers, hooks, nudges, extensions, or advisor state, write a persistent log, or let Advisor manage panes/processes or emit lifecycle status. Durable writes require a separate explicit user request and the normal owning workflow.
+
 ### Skill Triggers
 
 Skills provide specialized instructions for specific tasks. Load them when the context matches.

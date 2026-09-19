@@ -1788,6 +1788,45 @@ render_platform() {
     grep -Fq '## Local deviations' "$rendered/.agents/skills/$skill/UPSTREAM.md" || \
       fail "$platform Phase 1 verification skill lost its deviations: $skill"
   done
+  for required in LICENSE SKILL.md UPSTREAM.md UPSTREAM-SKILL.md references/review-document.md scripts/review-document.mjs scripts/glimpse-adapter.mjs; do
+    [[ -f "$rendered/.agents/skills/pr-review-canvas/$required" ]] || \
+      fail "$platform render is missing PR review canvas file: $required"
+  done
+  grep -Fq 'Commit: `889ec4b68fa5aab0e867dad71ec3fdf386ae48f3`' \
+    "$rendered/.agents/skills/pr-review-canvas/UPSTREAM.md" || \
+    fail "$platform PR review canvas lost its pinned provenance"
+  grep -Fq 'License: MIT' "$rendered/.agents/skills/pr-review-canvas/UPSTREAM.md" || \
+    fail "$platform PR review canvas lost its MIT license"
+  [[ $(python3 -c 'import hashlib,sys; print(hashlib.sha256(open(sys.argv[1], "rb").read()).hexdigest())' \
+    "$rendered/.agents/skills/pr-review-canvas/UPSTREAM-SKILL.md") == 88a07a2459197acba3c5e06b7d695e35ad618a998442b72d05cdba4efc117ac6 ]] || \
+    fail "$platform PR review canvas upstream skill is not byte-identical"
+  [[ $(python3 -c 'import hashlib,sys; print(hashlib.sha256(open(sys.argv[1], "rb").read()).hexdigest())' \
+    "$rendered/.agents/skills/pr-review-canvas/LICENSE") == 702f5f331b56aff0e33d8c7826df5202559f894145eb70355c6477b55b5bb8a0 ]] || \
+    fail "$platform PR review canvas MIT notice changed"
+  ! grep -Fq -- '--slurp' "$rendered/.agents/skills/pr-review-canvas/SKILL.md" || \
+    fail "$platform PR review canvas collection forwards unbounded slurped pages"
+  [[ $(grep -c -- 'jq -cn --argjson max' "$rendered/.agents/skills/pr-review-canvas/SKILL.md") == 5 ]] || \
+    fail "$platform PR review canvas collection is missing bounded streaming reducers"
+  [[ $(grep -Fc -- '--repo "$REPO"' "$rendered/.agents/skills/pr-review-canvas/SKILL.md") == 2 ]] || \
+    fail "$platform PR review canvas gh commands are not explicitly repository-bound"
+  for feedback_contract in '/issues/$NUMBER/comments' '/pulls/$NUMBER/reviews' 'reviewThreads(first:100' 'comments(first:100){totalCount' 'commentPageInfo:pageInfo' '.comments.commentPageInfo.hasNextPage' 'nestedOmitted' 'gh pr checks "$NUMBER" --repo "$REPO" --json name,state,link,bucket --jq '\''.[]'\''' 'reduce inputs as' '.body // "")[0:8000]' 'originalLine' 'normalizeFeedbackSources' 'PRRC_…' 'CHANGES_REQUESTED' 'one shared 200-item cap'; do
+    grep -Fq "$feedback_contract" "$rendered/.agents/skills/pr-review-canvas/SKILL.md" || \
+      fail "$platform PR review canvas is missing feedback contract: $feedback_contract"
+  done
+  ! grep -Fq 'repos/$REPO/pulls/$NUMBER/comments' "$rendered/.agents/skills/pr-review-canvas/SKILL.md" || \
+    fail "$platform PR review canvas still treats REST inline comments as authoritative"
+  ! grep -Fq 'sha256''sum' "$PUBLIC_SOURCE/scripts/check-portability.sh" || \
+    fail "portability checks require a non-portable digest utility"
+  grep -Fq 'normalizeIterationReport' "$rendered/.agents/skills/pr-review-canvas/scripts/review-document.mjs" || \
+    fail "$platform PR review canvas is missing iterate-pr normalization"
+  for advisor_rule in 'user-invoked only' 'read-only' 'current session' 'roughly four consultations' 'Never forward transcript bodies' 'automatic triggers' 'persistent log' 'Durable writes require a separate explicit user request'; do
+    grep -Fq "$advisor_rule" "$rendered/.pi/agent/AGENTS.md" || \
+      fail "$platform rendered AGENTS.md is missing Advisor constraint: $advisor_rule"
+  done
+  ! grep -RqE 'http\.server|127\.0\.0\.1|8432|playwright|agent/sessions|tmux|wf\.report' \
+    "$rendered/.agents/skills/pr-review-canvas/SKILL.md" \
+    "$rendered/.agents/skills/pr-review-canvas/scripts" || \
+    fail "$platform PR review canvas contains a forbidden server, browser, transcript, or lifecycle integration"
   [[ -f "$rendered/.pi/agent/skills/session-reader/SKILL.md" ]] || \
     fail "$platform render is missing canonical session reader"
   [[ -f "$rendered/.pi/agent/skills/session-pickup/SKILL.md" ]] || \
