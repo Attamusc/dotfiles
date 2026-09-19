@@ -1,5 +1,5 @@
 // @description: Read-only structural review of a diff up to 12 files; at most 13 agents, concurrency 3, and a $6 budget
-// @model-invocation: automatic
+// @model-invocation: explicit
 // @args: [scope]
 import { execFileSync } from "node:child_process";
 import type { SpawnResult, WorkflowContext } from "pi-workflows";
@@ -24,7 +24,7 @@ import type { SpawnResult, WorkflowContext } from "pi-workflows";
  * Usage: /deep-review [scope]   (scope optional; defaults to the current branch vs its base)
  */
 const FANOUT_THRESHOLD = 8;     // changed-file count at/below which we stay single-context
-const MAX_CHANGED_FILES = 12;   // automatic runs reject broader diffs rather than silently sampling
+const MAX_CHANGED_FILES = 12;   // broad diffs are rejected rather than silently sampled
 const FANOUT_CONCURRENCY = 3;   // parallel per-file reviewers above the threshold
 
 function runReadOnly(command: string, args: string[], cwd: string): string | undefined {
@@ -93,7 +93,7 @@ export default async function (wf: WorkflowContext) {
   }
 
   const manifest = files.map((file) => `- ${file}`).join("\n");
-  const RUBRIC = `Load the deep-code-review skill and apply its rubric EXACTLY. This is a second-stage structural pass — assume correctness/security/bugs were already covered. Be ambitious about "code judo" simplifications. Prioritise: (1) structural regressions, (2) missed simplifications, (3) spaghetti/branching growth, (4) boundary/abstraction/type-contract problems, (5) file-size & decomposition, (6) modularity, (7) legibility.`;
+  const RUBRIC = `Apply this complete second-stage structural rubric; do not depend on a skill being loaded. Assume correctness, security, and ordinary bugs were already reviewed. Look for: (1) structural regressions, (2) simpler designs that remove concepts or branches, (3) accumulating conditional/spaghetti growth, (4) shallow abstractions, misplaced boundaries, and weak type contracts, (5) oversized files or responsibilities that should be decomposed, (6) cross-module coupling and poor modularity, and (7) names and control flow that obscure intent. Prefer a few high-conviction findings over style nits. For each finding give the location, structural cost, and a concrete reframing that reduces complexity. Approve when no restructuring is warranted.`;
 
   // ---- Small diff: single-context review (preserves cross-file visibility) ----
   if (files.length <= FANOUT_THRESHOLD) {

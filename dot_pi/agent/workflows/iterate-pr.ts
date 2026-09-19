@@ -1,176 +1,86 @@
-// @description: Explicit PR CI iteration: up to 6 sequential worker passes, then stop with the latest state; $6 budget
+// @description: Explicit approved PR CI iteration: up to 6 sequential worker passes, then stop; $6 budget
 // @model-invocation: explicit
-// @args: [pull-request]
-import type { TaskOutcomeObservation, WorkflowContext } from "pi-workflows";
+// @args: <pull-request-number-or-url>
+import { execFileSync } from "node:child_process";
+import type { WorkflowContext } from "pi-workflows";
 
-/**
- * Iterate-PR pattern (ported from the iterate-pr skill).
- *
- * The feedback → fix → push → wait cycle, with the LOOP lifted out of the agent
- * and into deterministic JavaScript. Each pass spawns a FRESH agent context, which
- * removes the goal drift a single long-running agent accumulates ("I'll just fix
- * the obvious ones"). The loop owns the termination condition; the agent owns one
- * pass of work.
- *
- * Each pass, the agent (loaded with the iterate-pr skill) does exactly one cycle:
- * fetch checks + review feedback, fix root causes, verify locally, commit (commit
- * skill) and push. During the shadow period it reports the same decision twice:
- * first through task_outcome, then through one exact final legacy status line. The
- * legacy line remains authoritative while checkpoints measure agreement.
- *
- *   GREEN   → all checks pass and post-CI feedback is clean → done
- *   FAILING → checks failed; changes pushed → loop again
- *   PENDING → checks still running; nothing to do yet → loop again (agent waits next pass)
- *   BLOCKED → needs human (same failure 2×, ambiguous feedback, rebase needed) → stop
- *   NO_PR   → no PR for the branch → stop
- *
- * The shadow task_outcome mapping is:
- *   succeeded/ci-green, incomplete/fixes-pushed, incomplete/checks-pending,
- *   blocked/human-required, and failed/no-pr.
- *
- * Sequential by nature (each pass depends on the last push). MAX_PASSES caps cost.
- *
- * Usage: /iterate-pr [pr-number]   (defaults to the PR for the current branch)
- */
 const MAX_PASSES = 6;
-const STATUSES = ["GREEN", "FAILING", "PENDING", "BLOCKED", "NO_PR"] as const;
-type Status = (typeof STATUSES)[number];
-type ShadowStatus = Status | "unknown";
-type Agreement = "agree" | "disagree" | "invalid-domain" | "unavailable";
+const MAX_RUN_MS = 2 * 60 * 60 * 1000;
 const STATUS_LINE_PATTERN = /^ITERATE_STATUS:\s*(GREEN|FAILING|PENDING|BLOCKED|NO_PR)$/i;
+const SIGNATURE_LINE_PATTERN = /^ITERATE_FAILURE_SIGNATURE:\s*([a-z0-9][a-z0-9._:/-]{0,119})$/i;
+type Status = "GREEN" | "FAILING" | "PENDING" | "BLOCKED" | "NO_PR";
 
-function parseStatus(output: string): Status | null {
-  const lines = output.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-  const statusLines = lines.filter((line) => STATUS_LINE_PATTERN.test(line));
-  if (statusLines.length !== 1 || statusLines[0] !== lines.at(-1)) return null;
-  const match = statusLines[0].match(STATUS_LINE_PATTERN);
-  return match ? (match[1].toUpperCase() as Status) : null;
+function parseProtocol(output: string): { status: Status; signature?: string } | null {
+  const lines = output.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+  const statusLines = lines.filter(line => STATUS_LINE_PATTERN.test(line));
+  const signatureLines = lines.filter(line => SIGNATURE_LINE_PATTERN.test(line));
+  if (statusLines.length !== 1 || statusLines[0] !== lines.at(-1) || signatureLines.length > 1) return null;
+  const status = statusLines[0].match(STATUS_LINE_PATTERN)?.[1].toUpperCase() as Status;
+  const signature = signatureLines[0]?.match(SIGNATURE_LINE_PATTERN)?.[1].toLowerCase();
+  if (status === "FAILING" && !signature) return null;
+  return { status, signature };
 }
 
-function structuredStatus(observation: TaskOutcomeObservation): Status | null {
-  if (observation.kind !== "reported") return null;
-  const { status, code } = observation.value;
-  if (status === "succeeded" && code === "ci-green") return "GREEN";
-  if (status === "incomplete" && code === "fixes-pushed") return "FAILING";
-  if (status === "incomplete" && code === "checks-pending") return "PENDING";
-  if (status === "blocked" && code === "human-required") return "BLOCKED";
-  if (status === "failed" && code === "no-pr") return "NO_PR";
-  return null;
-}
-
-function agreement(
-  observation: TaskOutcomeObservation,
-  legacyStatus: Status | null,
-  reportedStatus: Status | null,
-): Agreement {
-  if (observation.kind !== "reported" || legacyStatus === null) return "unavailable";
-  if (reportedStatus === null) return "invalid-domain";
-  return reportedStatus === legacyStatus ? "agree" : "disagree";
+function repository(cwd: string): string | null {
+  try {
+    const remote = execFileSync("git", ["--no-optional-locks", "remote", "get-url", "origin"], { cwd, encoding: "utf8", timeout: 10_000, maxBuffer: 16 * 1024, stdio: ["ignore", "pipe", "ignore"] }).trim();
+    const match = remote.match(/(?:github\.com[/:])([^/]+\/[^/]+?)(?:\.git)?$/);
+    return match?.[1] ?? null;
+  } catch { return null; }
 }
 
 export default async function (wf: WorkflowContext) {
-  const prArg = wf.args.trim();
-  wf.budget({ cost: 6.0 });
+  const pr = wf.args.trim();
+  if (!pr) return wf.report({ done: false, reason: "Pass an explicit pull request number or URL; branch inference is not permitted." });
+  const repo = repository(wf.cwd);
+  if (!repo) return wf.report({ done: false, reason: "Cannot identify the GitHub repository from the local origin remote." });
 
-  const passes: Array<{
-    pass: number;
-    status: ShadowStatus;
-    structuredStatus: ShadowStatus;
-    agreement: Agreement;
-    taskOutcomeObservation: TaskOutcomeObservation;
-    ok: boolean;
-    model: string;
-    turns: number;
-    inputTokens: number;
-    outputTokens: number;
-    cacheReadTokens: number;
-    cacheWriteTokens: number;
-    contextTokens: number;
-    cost: number;
-  }> = [];
+  const approval = await wf.ask([
+    `Approve iterate-pr for repository ${repo}, PR ${pr}?`,
+    "This run will use GitHub network access and credentials; inspect CI/review data; edit files; create commits; push to the PR branch; and reply to review threads.",
+    `It stops after ${MAX_PASSES} passes, $6, two hours, an agent failure, BLOCKED, NO_PR, or malformed status. It never resumes after restart.`,
+    "Type APPROVE to begin. Any other response denies the run before worker, network, or mutation effects.",
+  ].join("\n\n"), { default: "DENY" });
+  if (approval.trim() !== "APPROVE") return wf.report({ done: false, reason: "approval denied", repository: repo, pr, passes: 0 });
 
+  wf.budget({ cost: 6 });
+  const started = Date.now();
+  const passes: Array<Record<string, unknown>> = [];
+  let previousFailureSignature: string | undefined;
   for (let pass = 1; pass <= MAX_PASSES; pass++) {
-    wf.log("Iterate-PR pass", { pass, of: MAX_PASSES });
-
+    const remainingMs = MAX_RUN_MS - (Date.now() - started);
+    if (remainingMs <= 0) return wf.report({ done: false, reason: "time limit reached", repository: repo, pr, passes: pass - 1, history: passes, usageTotal: wf.usage() });
     const result = await wf.spawn({
-      agent: "worker",
-      label: `iterate-pr pass ${pass}`,
+      agent: "worker", label: `iterate-pr pass ${pass}`, timeoutMs: Math.min(20 * 60 * 1000, remainingMs),
       task: [
-        `Load the iterate-pr skill and run EXACTLY ONE cycle of it on ${prArg ? `PR #${prArg}` : "the PR for the current branch"}.`,
-        ``,
-        `One cycle means:`,
-        `1. Identify the PR (stop with NO_PR if none exists).`,
-        `2. Fetch CI checks and review feedback (use the skill's bundled scripts).`,
-        `3. Auto-fix high/medium feedback and CI failures at the ROOT CAUSE — read the logs,`,
-        `   don't guess from check names. Fix all instances, not just the mentioned one.`,
-        `4. Verify your fixes LOCALLY (re-run the specific failed test / linter) before pushing.`,
-        `5. Commit using the commit skill and push.`,
-        `6. Reply to inline review threads you actioned (per the skill).`,
-        ``,
-        `Do NOT loop or sleep-poll yourself — this orchestrator owns the loop and will`,
-        `re-invoke you. Do exactly one pass, then STOP.`,
-        ``,
-        `After completing the pass, call task_outcome exactly once with one of these pairs:`,
-        `  succeeded / ci-green       = all checks pass and post-CI feedback is clean`,
-        `  incomplete / fixes-pushed  = checks failed and you pushed verified fixes`,
-        `  incomplete / checks-pending = checks are still running with nothing actionable`,
-        `  blocked / human-required   = ambiguous feedback, repeated failure, or rebase needs a human`,
-        `  failed / no-pr             = no PR exists for this branch`,
-        `Include a concise summary. The observe-mode tool will then ask for the legacy line below.`,
-        ``,
-        `End your output with EXACTLY ONE line in the form ITERATE_STATUS: <STATUS>.`,
-        `Allowed values: GREEN, FAILING, PENDING, BLOCKED, NO_PR.`,
-        `  GREEN   = all checks pass AND post-CI feedback is clean`,
-        `  FAILING = checks failed; you pushed fixes this pass`,
-        `  PENDING = checks still running; nothing actionable yet`,
-        `  BLOCKED = needs a human (same failure twice, ambiguous feedback, rebase needed)`,
-        `  NO_PR   = no PR exists for this branch`,
-      ].join("\n"),
-      timeoutMs: 20 * 60 * 1000,
-      taskOutcome: "observe",
+        `Perform EXACTLY ONE iteration cycle for repository ${repo}, PR ${pr}. Do not loop or sleep-poll.`,
+        "Before doing anything else, verify the commit protocol/skill is available. If unavailable, make no changes and finish BLOCKED.",
+        "1. Fetch bounded CI checks and review feedback using gh and the repository's existing scripts where applicable.",
+        "2. If all checks pass and post-CI feedback is clean, finish GREEN without mutation.",
+        "3. Otherwise fix actionable high/medium feedback and CI failures at their verified root cause. Read logs; do not guess from check names. Fix all instances.",
+        "4. Run the focused local test/linter for every fix. If verification fails or the same failure repeats, finish BLOCKED.",
+        "5. Using the mandatory commit protocol, commit only this pass's verified changes and push to the PR branch.",
+        "6. Reply only to inline review threads actioned in this pass. Do not resolve ambiguous feedback; finish BLOCKED.",
+        "For FAILING, first emit exactly one ITERATE_FAILURE_SIGNATURE: <stable-signature> line. Derive the bounded signature from stable failing check names and normalized root-cause category, not volatile IDs, timestamps, URLs, or prose.",
+        previousFailureSignature ? `The preceding pass failure signature was ${previousFailureSignature}. If the same actionable failure remains, do not mutate or push; finish BLOCKED.` : "There is no preceding failure signature in this run.",
+        "End with exactly one final line: ITERATE_STATUS: GREEN, FAILING, PENDING, BLOCKED, or NO_PR.",
+        "FAILING means verified fixes were pushed; PENDING means checks are running and nothing is actionable and this run must stop; NO_PR means the specified PR does not exist.",
+        "Never invoke another workflow and never claim this run continues after restart.",
+      ].join("\n\n"),
     });
-
-    const status = result.ok ? parseStatus(result.output) : null;
-    const observedStatus = structuredStatus(result.taskOutcomeObservation);
-    const observedAgreement = result.ok
-      ? agreement(result.taskOutcomeObservation, status, observedStatus)
-      : "unavailable";
-    const passRecord = {
-      pass,
-      status: status ?? "unknown",
-      structuredStatus: observedStatus ?? "unknown",
-      agreement: observedAgreement,
-      taskOutcomeObservation: result.taskOutcomeObservation,
-      ok: result.ok,
-      model: result.model ?? "unknown",
-      turns: result.usage.turns,
-      inputTokens: result.usage.input,
-      outputTokens: result.usage.output,
-      cacheReadTokens: result.usage.cacheRead,
-      cacheWriteTokens: result.usage.cacheWrite,
-      contextTokens: result.usage.contextTokens,
-      cost: result.usage.cost,
-    };
-    passes.push(passRecord);
-    wf.checkpoint(`pass-${pass}`, passRecord);
-
-    if (!result.ok) {
-      return wf.report({ done: false, reason: "agent pass failed", pass, detail: result.errorMessage, passes, usageTotal: wf.usage() });
-    }
-    if (status === "GREEN") {
-      return wf.report({ done: true, reason: "CI green", passes: pass, history: passes, usageTotal: wf.usage() });
-    }
-    if (status === "BLOCKED" || status === "NO_PR") {
-      return wf.report({ done: false, reason: status, passes: pass, history: passes, lastOutput: result.output, usageTotal: wf.usage() });
-    }
-    // FAILING / PENDING / unparseable → loop again.
+    const protocol = result.ok ? parseProtocol(result.output) : null;
+    const status = protocol?.status ?? null;
+    const repeatedFailure = status === "FAILING" && protocol?.signature === previousFailureSignature;
+    const record = { pass, status: status ?? "unknown", failureSignature: protocol?.signature, repeatedFailure, ok: result.ok, model: result.model ?? "unknown", stopReason: result.stopReason, error: result.errorMessage, turns: result.usage.turns, inputTokens: result.usage.input, outputTokens: result.usage.output, cacheReadTokens: result.usage.cacheRead, cacheWriteTokens: result.usage.cacheWrite, contextTokens: result.usage.contextTokens, cost: result.usage.cost };
+    passes.push(record);
+    wf.checkpoint(`pass-${pass}`, record);
+    if (!result.ok) return wf.report({ done: false, reason: "agent pass failed", repository: repo, pr, pass, detail: result.errorMessage, history: passes, usageTotal: wf.usage() });
+    if (!status) return wf.report({ done: false, reason: "malformed or missing final status", repository: repo, pr, pass, lastOutput: result.output, history: passes, usageTotal: wf.usage() });
+    if (status === "GREEN") return wf.report({ done: true, reason: "CI green", repository: repo, pr, passes: pass, history: passes, usageTotal: wf.usage() });
+    if (repeatedFailure) return wf.report({ done: false, reason: "BLOCKED: same actionable failure repeated twice", repository: repo, pr, passes: pass, history: passes, lastOutput: result.output, usageTotal: wf.usage() });
+    if (status === "PENDING") return wf.report({ done: false, reason: "PENDING: rerun explicitly after checks settle", repository: repo, pr, passes: pass, history: passes, usageTotal: wf.usage() });
+    if (status === "BLOCKED" || status === "NO_PR") return wf.report({ done: false, reason: status, repository: repo, pr, passes: pass, history: passes, lastOutput: result.output, usageTotal: wf.usage() });
+    previousFailureSignature = protocol?.signature;
   }
-
-  return wf.report({
-    done: false,
-    reason: `Did not go green within ${MAX_PASSES} passes`,
-    passes: MAX_PASSES,
-    history: passes,
-    usageTotal: wf.usage(),
-  });
+  return wf.report({ done: false, reason: `Did not go green within ${MAX_PASSES} passes`, repository: repo, pr, passes: MAX_PASSES, history: passes, usageTotal: wf.usage() });
 }

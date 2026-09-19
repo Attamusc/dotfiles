@@ -205,14 +205,17 @@ not install packages or apply home-directory state. Negative tests run only in
 temporary repositories, and protected ignored state is compared before and
 after mutation-capable phases.
 
-## Pi verification
+## Pi verification and workflows
 
 The managed Phase 1 verification bundle provides five shared actions for scoped
 verification, project check definitions, maintenance, impact analysis, and live
 CLI control. See [Pi verification bundle](docs/pi-verification.md) for action
 selection, evidence semantics, privacy, ownership, unsupported capabilities,
-and provenance. Later roadmap phases and `pi-workflows` integration are not
-part of this installation.
+and provenance.
+
+The exact `pi-workflows` package pin and all ten saved workflow dispositions are
+documented in [Pi workflows](docs/pi-workflows.md). The pin remains unapplied
+until independent gates pass; activation and live smoke are user-only steps.
 
 ## Focused smoke checks
 

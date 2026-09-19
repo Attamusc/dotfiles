@@ -1,6 +1,6 @@
 # Pi verification bundle
 
-Phase 1 of the selective Cursor plugin adoption is installed as five shared skills. It works directly through Pi and existing execution owners; `pi-workflows`, session pickup, Glimpse review, Advisor automation, and the other roadmap phases are not enabled by this bundle.
+Phase 1 of the selective Cursor plugin adoption is installed as five shared skills. It works directly through Pi and existing execution owners, independently of the separately managed `pi-workflows` package. Session pickup, Glimpse review, Advisor automation, and the other roadmap phases are not enabled by this bundle.
 
 ## Choosing a verification action
 
@@ -46,4 +46,4 @@ Every declared mutation in `control-cli` requires procedural human approval. Bef
 
 Each managed skill contains `UPSTREAM-SKILL.md`, preserving its pinned Cursor source, and `UPSTREAM.md`, recording the source path and commit, MIT license, ownership boundaries, local deviations, and re-sync procedure. When updating a skill, fetch the exact upstream revision, keep the preserved source byte-identical, review the adaptation against the shared contracts, update the commit/license/deviation record, and run the agent tests and portability check.
 
-Phase 1 supports direct skill invocation only. The broader roadmap discusses later workflow integration, but no `pi-workflows` package is configured here and no workflow can resume execution across a process or host restart.
+Phase 1 supports direct skill invocation regardless of package availability. The separately managed `pi-workflows` pin and activation status are documented in [Pi workflows](pi-workflows.md); no workflow can resume execution across a process or host restart.

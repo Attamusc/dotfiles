@@ -1069,12 +1069,15 @@ check_agent_contract() {
   local cmux_heading_probe="$WORK/cmux-heading-probe.md"
   local cmux_uppercase_probe="$WORK/cmux-uppercase-probe.md"
   local cmux_pattern='pi-cmux|CMUX_HOME|skills/cmux|(^|[^[:alnum:]_-])cmux([^[:alnum:]_-]|$)'
-  local relative_path runtime_file
+  local relative_path runtime_file update_line herdr_line
 
   [[ -f "$settings" && -f "$mcp" && -f "$PUBLIC_SOURCE/$opencode_template" ]] || \
     fail "missing public agent configuration"
   [[ -f "$PUBLIC_SOURCE/$hook" ]] || fail "missing Pi package reconciliation hook"
   [[ ! -e "$old_hook" ]] || fail "warning-only Pi setup hook remains"
+  [[ ! -e "$PUBLIC_SOURCE/dot_pi/agent/extensions/pi-workflows" \
+    && ! -L "$PUBLIC_SOURCE/dot_pi/agent/extensions/pi-workflows" ]] || \
+    fail "local or symlinked pi-workflows duplicate remains"
 
   [[ ! -e "$PUBLIC_SOURCE/dot_pi/agent/skills/cmux" \
     && ! -L "$PUBLIC_SOURCE/dot_pi/agent/skills/cmux" ]] || \
@@ -1122,6 +1125,7 @@ expected_packages=[
     "git:github.com/Attamusc/pi-television@c3826bc268e05a1045e1d2339fc5a0cd3fd17a7e",
     "git:github.com/Attamusc/pi-hunk-review@v0.1.1",
     "git:github.com/Attamusc/pi-lsp@9496ab5a4fd6309c5647e4f358d1b6a0b0ff8409",
+    "git:github.com/Attamusc/pi-workflows@1614faf29c6ad1d0fcc9fe6db86a770f34e2b129",
 ]
 assert settings["packages"] == expected_packages
 assert settings["extensions"] == ["+extensions/smart-sessions/index.ts"]
@@ -1167,6 +1171,7 @@ EOF
   cat >"$private_settings" <<'EOF'
 {
   "defaultProvider": "openai-codex",
+  "packages": ["git:github.com/example/private-package@0123456789abcdef0123456789abcdef01234567"],
   "extensions": ["-extensions/github-copilot-dynamic/index.ts"]
 }
 EOF
@@ -1216,6 +1221,11 @@ def check(root, gpt_provider, claude_provider, expected_extensions):
     assert settings["defaultProvider"] == gpt_provider
     assert settings["defaultModel"] == "gpt-5.6-sol"
     assert settings["extensions"] == expected_extensions
+    managed = "git:github.com/Attamusc/pi-workflows@1614faf29c6ad1d0fcc9fe6db86a770f34e2b129"
+    assert settings["packages"].count(managed) == 1
+    if root.name == "pi-routing-private":
+        assert settings["packages"][-1] == "git:github.com/example/private-package@0123456789abcdef0123456789abcdef01234567"
+        assert settings["packages"].index(managed) < len(settings["packages"]) - 1
 
 check(
     sys.argv[1],
@@ -1354,6 +1364,14 @@ PY
     fail "Fedora Pi reconciliation can prompt for a GitHub password"
   grep -Fq 'GIT_TERMINAL_PROMPT=0 "$pi_bin" update --extensions' "$darwin_hook" || \
     fail "macOS Pi reconciliation can prompt for a GitHub password"
+  for rendered_hook in "$darwin_hook" "$fedora_hook"; do
+    update_line=$(grep -n 'update --extensions' "$rendered_hook" | cut -d: -f1)
+    herdr_line=$(grep -n 'integration install pi' "$rendered_hook" | cut -d: -f1)
+    [[ -n "$update_line" && -n "$herdr_line" && "$update_line" -lt "$herdr_line" ]] || \
+      fail "Pi packages must reconcile before Herdr integration installation"
+    ! grep -Eiq 'pi-herdr|pi-cmux|tmux|sendStatus|agent_(start|end)|session_(start|shutdown)' "$rendered_hook" || \
+      fail "Pi setup duplicates fallback, lifecycle, or status ownership"
+  done
   ! grep -Eq '"\$pi_bin" install([[:space:]]|$)' "$PUBLIC_SOURCE/$hook" || \
     fail "Pi hook uses install without a package source"
   if grep -Eq '\|\|[[:space:]]*(:|true|echo)|not found.*skipping|Warning:' "$PUBLIC_SOURCE/$hook"; then
@@ -1632,8 +1650,9 @@ check_documentation_contract() {
   local overlays="$PUBLIC_SOURCE/docs/private-overlays.md"
   local smoke="$PUBLIC_SOURCE/docs/fedora-smoke-checks.html"
   local instructions="$PUBLIC_SOURCE/.github/copilot-instructions.md"
+  local workflows="$PUBLIC_SOURCE/docs/pi-workflows.md"
 
-  [[ -f "$readme" && -f "$overlays" && -f "$smoke" && -f "$instructions" ]] || \
+  [[ -f "$readme" && -f "$overlays" && -f "$smoke" && -f "$instructions" && -f "$workflows" ]] || \
     fail "supported-platform documentation is incomplete"
   for required in \
     '## Supported platforms' \
@@ -1669,6 +1688,21 @@ check_documentation_contract() {
   if grep -Fq 'zsh -lic' "$readme" "$smoke"; then
     fail "smoke guidance starts a nested login shell that Fedora clears on exit"
   fi
+  for required in \
+    'git:github.com/Attamusc/pi-workflows@1614faf29c6ad1d0fcc9fe6db86a770f34e2b129' \
+    'trusted in-process' \
+    'Dynamic source alone' \
+    'Node 24' \
+    '`report-validate` is the only automatic' \
+    'Eight saved workflows are retained' \
+    '`diagnose-and-fix` | deferred' \
+    '`portability-phase` | deferred' \
+    'audit and reconstruction' \
+    'fresh terminal'; do
+    grep -Fq "$required" "$workflows" || fail "pi-workflows documentation is missing: $required"
+  done
+  ! grep -Eiq 'saved workflows? (is|are) sandboxed|resume execution' "$workflows" || \
+    fail "pi-workflows documentation overclaims sandboxing or execution resume"
 
   printf 'ok: supported-platform and local-ownership documentation\n'
 }

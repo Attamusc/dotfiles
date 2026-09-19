@@ -1,5 +1,5 @@
 // @description: Read-only investigation for a repository or scope up to 160 files: 4 recon scouts, synthesis, and verification (6 agents, concurrency 4, $5)
-// @model-invocation: automatic
+// @model-invocation: explicit
 // @args: [target]
 import { execFileSync } from "node:child_process";
 import * as fs from "node:fs";

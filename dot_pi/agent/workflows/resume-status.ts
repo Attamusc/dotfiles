@@ -1,5 +1,5 @@
-// @description: Read-only safe-frontier status from a handoff or plan, VCS, todo records, and recorded test state (4 agents, concurrency 3, $1.50)
-// @model-invocation: automatic
+// @description: Read-only, status-only safe frontier from a handoff or plan, VCS, todo records, and recorded test state (4 agents, concurrency 3, $1.50)
+// @model-invocation: explicit
 // @args: [handoff-or-plan-path]
 import { execFileSync } from "node:child_process";
 import * as fs from "node:fs";
@@ -203,7 +203,7 @@ export default async function (wf: WorkflowContext) {
       task: [
         `Reconcile the handoff/plan, VCS, todo, and recorded test evidence below.`,
         `Return: (1) confirmed current state, (2) conflicts or missing evidence, and (3) the next safe action.`,
-        `Do not resume work, run tests, edit files, commit, or invoke another workflow.`,
+        `This is status only. Do not resume work, run tests, edit files, commit, invoke another workflow, or imply execution can continue across a restart.`,
         `--- HANDOFF OR PLAN ---`,
         inputs[0].ok ? inputs[0].output : inputs[0].errorMessage ?? "unavailable",
         `--- TODO RECORDS ---`,

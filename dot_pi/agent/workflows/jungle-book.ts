@@ -1,5 +1,5 @@
 // @description: Read-only recurring-pattern analysis for a repository or scope up to 160 files: up to 5 agents, concurrency 3, $4 budget
-// @model-invocation: automatic
+// @model-invocation: explicit
 // @args: [scope]
 import { execFileSync } from "node:child_process";
 import * as fs from "node:fs";
@@ -22,8 +22,8 @@ import type { SpawnResult, WorkflowContext } from "pi-workflows";
  *                and inbetween entry to a concrete positive migration target, assesses
  *                the codebase grain, and ranks the top 3 migration priorities.
  *
- * Maximum of 3 exploration scouts, per the skill. The classifier loads the
- * jungle-book skill so it uses the exact six-term vocabulary and artifact format.
+ * Maximum of 3 exploration scouts. The classifier prompt contains the complete
+ * six-term vocabulary and artifact format, so execution does not depend on a skill.
  *
  * Usage: /jungle-book [scope]   (scope optional: a module, dir, or feature area)
  */
@@ -173,15 +173,16 @@ export default async function (wf: WorkflowContext) {
     .map((slice, i) => `## Slice ${i + 1}: ${slice}\n${exploration[i].ok ? exploration[i].output.trim() : `(scout failed: ${exploration[i].errorMessage})`}`)
     .join("\n\n");
 
-  // ---- Phase 3: Classify — SEPARATE judge, loads the skill ----
+  // ---- Phase 3: Classify — SEPARATE judge with a self-contained contract ----
   try {
     const classification = await wf.spawn({
     agent: "reviewer",
     label: "classify + migrate",
     tools: ["read"],
     task: [
-      `Load the jungle-book skill and follow its synthesis rules and ARTIFACT-FORMAT exactly.`,
-      `You are the classifier — the scouts only described; you judge. Be blunt and economical.`,
+      `You are the classifier; the scouts only described and you judge. Do not depend on a skill being loaded.`,
+      `Use this vocabulary exactly: Pattern = recurring solution; Friction = recurring cost; Creep = a local exception spreading; Signal = code that makes intent easy to infer; Drift = similar code diverging; Grain = the codebase's natural decomposition and change direction.`,
+      `Be blunt and economical. Classify positive patterns to reinforce, negative patterns to replace, and inbetween patterns that require an explicit project decision.`,
       `Use only this bounded trusted file manifest if you need to inspect source:`,
       `--- TRUSTED FILE MANIFEST ---`,
       manifestText,
@@ -194,7 +195,8 @@ export default async function (wf: WorkflowContext) {
       `4. Assess the codebase GRAIN in 1-2 sentences.`,
       `5. Rank the TOP 3 migration priorities.`,
       `Use only the six glossary terms (Pattern, Friction, Creep, Signal, Drift, Grain).`,
-      `Output the self-contained artifact markdown (do not write files — return it).`,
+      `Return markdown only; do not write files. Use sections: Scope; Grain; Positive (Pattern, evidence, Signal); Negative (Pattern, evidence, Friction/Creep/Drift, positive migration target); Inbetween (Pattern, evidence, decision needed, positive migration target); Top 3 migration priorities.`,
+      `Every entry must cite concrete paths and distinguish observation from judgment. If no positive migration target exists, state that explicitly.`,
       ``,
       `--- SCOUT OBSERVATIONS ---`,
       observations,

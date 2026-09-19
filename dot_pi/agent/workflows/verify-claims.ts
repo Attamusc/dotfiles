@@ -1,5 +1,5 @@
 // @description: Read-only claim check for one document in a repository up to 160 files: verify up to 8 claims (10 agents, concurrency 3, $3)
-// @model-invocation: automatic
+// @model-invocation: explicit
 // @args: <file>
 import { execFileSync } from "node:child_process";
 import * as fs from "node:fs";
@@ -171,8 +171,8 @@ export default async function (wf: WorkflowContext) {
         label: `verify: ${claim.length > 40 ? claim.slice(0, 39) + "…" : claim}`,
         task: [
           `Verify the following claim against the codebase and docs.`,
-          `Load the adversarial-shepardize skill and apply its citation-verification`,
-          `procedure to check whether evidence actually supports or contradicts the claim.`,
+          `Apply this self-contained citation rule: inspect the cited primary source in context; distinguish what it explicitly states from inference; check version/scope qualifiers; and never treat a nearby keyword, search snippet, or uncited assertion as support.`,
+          `Use SUPPORTED only when primary evidence entails the claim, REFUTED when primary evidence contradicts it, and UNVERIFIABLE when evidence is absent, ambiguous, inaccessible, or requires assumptions.`,
           ``,
           `Claim: ${claim}`,
           `Inspect only this bounded trusted file manifest; do not inspect paths outside it:`,
@@ -221,7 +221,7 @@ export default async function (wf: WorkflowContext) {
       label: "grade sources",
       task: [
         `Review these claim verification results for ${docPath}.`,
-        `Load the adversarial-shepardize skill.`,
+        `Do not depend on a skill being loaded. Re-open cited primary sources as needed and check that each verdict follows from the source in context, including version and scope qualifiers. A matching keyword or nearby statement is not support; inference must be labelled, and missing or ambiguous evidence is UNVERIFIABLE.`,
         `Use only this bounded trusted file manifest if you need to inspect source:`,
         `--- TRUSTED FILE MANIFEST ---`,
         manifestText,
