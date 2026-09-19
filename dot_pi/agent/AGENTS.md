@@ -145,6 +145,8 @@ Never claim success without proving it. Before saying "done", "fixed", or "tests
 | "Bug fixed" | Reproduce original issue, show it's gone |
 | "Script works" | Run it, show expected output |
 
+Distinguish command or artifact output from an agent assertion. Agent-reported work is a lead, not measured evidence; if the command or artifact cannot be inspected, label the claim unverifiable rather than upgrading it through confident wording.
+
 ### Investigate Before Fixing
 
 When something breaks, don't guess — investigate first.
@@ -197,7 +199,9 @@ This repository configures and guarantees Herdr as its sole Pi/subagent multiple
 
 The `agent` parameter loads defaults from `~/.pi/agent/agents/<name>.md`. Model, tools, skills, thinking — all inherited. Explicit params override agent defaults.
 
-Before spawning work keyed by `TODO-…`, fetch it with `todo(action: "get", ...)` and include its resolved scope, constraints, references, and acceptance criteria in the task. Never hand a child only an opaque todo ID.
+Every delegation brief must state the target, scope, constraints, expected output, required evidence, and stop condition. Before spawning work keyed by `TODO-…`, fetch it with `todo(action: "get", ...)` and include its resolved scope, constraints, references, and acceptance criteria in the task. Never hand a child only an opaque todo ID.
+
+Child handoffs flow upward as bounded findings, evidence, and blockers. The parent owns synthesis and decisions. Do not forward child transcripts or substitute transcript volume for a focused handoff.
 
 ```typescript
 // Use existing agent definitions — full transparency
@@ -247,6 +251,18 @@ parallel_subagents({
 - Single-file changes with obvious scope
 
 **Delegate when work spans two or more subsystems or has at least two independent workstreams; otherwise keep it in-session unless one of the risks above applies.**
+
+#### Andon Pause
+
+Pause the work on repeated failure, contradictory evidence, unsafe mutation, or missing owner. Preserve the evidence gathered so far and ask the human for a decision instead of retrying indefinitely or silently changing the contract.
+
+#### Workflow Authoring Contracts
+
+When authoring a multi-agent workflow, declare its writable owner and paths, dependencies, fan-out and concurrency, time budget or timeout, and cleanup or rollback. Herdr remains the sole lifecycle owner; a workflow must not add process, pane, status, or session lifecycle machinery.
+
+Separate the producer or synthesizer from the verifier so the producer does not self-certify. Failure handoffs preserve partial evidence and the failure reason instead of collapsing them into a generic status.
+
+After a restart, reconcile by rereading the plan or handoff, VCS state, todo state, and relevant tests. Report conflicts before continuing. Reconciliation reconstructs state; it does not resume execution across restarts.
 
 #### Manual Advisor Checkpoints
 

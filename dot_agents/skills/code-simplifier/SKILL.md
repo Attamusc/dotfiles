@@ -55,7 +55,18 @@ Avoid over-simplification that could:
 
 ### 5. Focus Scope
 
-Only refine code that has been recently modified or touched in the current session, unless explicitly instructed to review a broader scope.
+Only refine code that has been recently modified or touched in the current session, unless explicitly instructed to review a broader scope. Preserve exact behavior and do not mix simplification with unrelated policy, formatting, or cleanup churn.
+
+### 6. Remove Avoidable Clutter
+
+For the code in scope, check for:
+
+- **Speculative surface area:** delete a new helper, option, seam, or abstraction when it has one caller or no demonstrated requirement. Do not preserve flexibility for an imagined future use.
+- **Obsolete compatibility:** delete fallback paths and compatibility shims for removed or deprecated cases. Keep compatibility only where the current task maintains a real library boundary.
+- **Explanatory noise:** remove comments, docstrings, and types that narrate syntax or restate names. Keep text that records rationale, invariants, contracts, or non-obvious safety constraints.
+- **Scope drift:** exclude unrelated policy, formatting, or cleanup churn from the simplification change.
+
+This is a touched-code clutter check. Structural architecture and repository-wide maintainability review remain the responsibility of `deep-code-review`.
 
 ## Refinement Process
 

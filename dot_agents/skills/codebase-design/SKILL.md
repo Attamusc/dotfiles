@@ -94,6 +94,19 @@ Good interfaces make testing natural:
 
 3. **Small surface area.** Fewer methods = fewer tests needed. Fewer params = simpler test setup.
 
+## Command-line interfaces
+
+Treat a CLI as an interface, not a bag of commands. Its complete caller contract states:
+
+- **Invocation and context:** name the stable executable or subcommand, its explicit target and context, and required paths or identifiers. Make no hidden current-working-directory assumptions.
+- **Output and completion:** provide a documented, stable machine-readable output shape. Define what belongs on stdout and stderr and what each exit status means; keep incidental prose off machine-readable stdout.
+- **Bounds:** declare input, output, and time bounds. Define deterministic truncation or failure rather than silently dropping records or running without limit.
+- **Capabilities:** declare prerequisites and unsupported states. Do not invent a fallback when the required capability is absent.
+- **Effects:** classify operations as read-only or mutating. For mutation, state approval, timeout, cleanup, and failure obligations at the interface.
+- **Provenance:** when the CLI wraps an external source, identify its source and version contract and fail clearly on mismatch.
+
+Test these properties through the public CLI seam. Repository examples include the GitHub skill's explicit repository and JSON contracts and the Obsidian CLI skill's running-application prerequisite and no-fallback rule; consult those skills for tool-specific procedures rather than copying them here.
+
 ## Relationships
 
 - A **Module** has exactly one **Interface** (the surface it presents to callers and tests).
