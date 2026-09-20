@@ -337,6 +337,7 @@ bat
 cc
 chezmoi
 chsh
+claude
 curl
 delta
 eza
@@ -346,6 +347,7 @@ fzf
 gh
 git
 git filter-repo
+gpg
 hx
 jq
 mosh
@@ -629,6 +631,12 @@ check_bootstrap_contract() {
   grep -Fq '# Fedora manifest SHA-256:' "$hooks/$fedora_hook" || \
     fail "Fedora package hook is not content-addressed to its manifest"
   grep -Fq 'sudo dnf install -y' "$hooks/$fedora_hook" || fail "Fedora package hook omits DNF install"
+  grep -Fq '31DDDE24DDFAB679F42D7BD2BAA929FF1A7ECACE' "$hooks/$fedora_hook" || \
+    fail "Fedora package hook omits Claude Code signing key verification"
+  grep -Fq 'baseurl=https://downloads.claude.ai/claude-code/rpm/latest' "$hooks/$fedora_hook" || \
+    fail "Fedora package hook omits Claude Code RPM repository"
+  grep -Fq 'gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-claude-code' "$hooks/$fedora_hook" || \
+    fail "Fedora package hook omits the verified signing key"
   if grep -Eq '\|\|[[:space:]]*(:|true)' "$hooks/$mac_hook" "$hooks/$fedora_hook"; then
     fail "native package hook suppresses package-manager failures"
   fi
@@ -1119,7 +1127,7 @@ opencode=json.loads(pathlib.Path(sys.argv[3]).read_text())
 expected_packages=[
     "git:github.com/nicobailon/pi-mcp-adapter",
     "git:github.com/HazAT/glimpse",
-    "git:github.com/Attamusc/pi-interactive-subagents@11b881925481e2a075042f85d2ffe09c93a418e8",
+    "git:github.com/Attamusc/pi-interactive-subagents@7c22027d4c4948d6a63ef0181eb8c14d252f4d4b",
     "git:github.com/HazAT/pi-autoresearch",
     "git:github.com/carderne/pi-nvim",
     "git:github.com/Attamusc/pi-television@c3826bc268e05a1045e1d2339fc5a0cd3fd17a7e",
@@ -1196,13 +1204,13 @@ import sys
 def check(root, gpt_provider, claude_provider, expected_extensions):
     root = pathlib.Path(root)
     expected_models = {
-        "adversarial-reviewer.md": f"{claude_provider}/claude-opus-5",
-        "planner.md": f"{gpt_provider}/gpt-5.6-sol",
+        "adversarial-reviewer.md": f"{claude_provider}/claude-opus-5.5",
+        "planner.md": f"{gpt_provider}/gpt-6-sol",
         "researcher.md": f"{gpt_provider}/gpt-5.6-terra",
         "reviewer.md": f"{claude_provider}/claude-sonnet-5",
-        "scout.md": f"{gpt_provider}/gpt-5.6-luna",
-        "validator.md": f"{claude_provider}/claude-opus-5",
-        "worker.md": f"{gpt_provider}/gpt-5.6-sol",
+        "scout.md": f"{gpt_provider}/gpt-6-luna",
+        "validator.md": f"{claude_provider}/claude-opus-5.5",
+        "worker.md": f"{gpt_provider}/gpt-6-sol",
     }
     for filename, expected in expected_models.items():
         source = (root / filename).read_text()
@@ -1219,7 +1227,7 @@ def check(root, gpt_provider, claude_provider, expected_extensions):
 
     settings = json.loads((root / "settings.json").read_text())
     assert settings["defaultProvider"] == gpt_provider
-    assert settings["defaultModel"] == "gpt-5.6-sol"
+    assert settings["defaultModel"] == "gpt-6-sol"
     assert settings["extensions"] == expected_extensions
     managed = "git:github.com/Attamusc/pi-workflows@1614faf29c6ad1d0fcc9fe6db86a770f34e2b129"
     assert settings["packages"].count(managed) == 1

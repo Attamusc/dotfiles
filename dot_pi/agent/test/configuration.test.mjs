@@ -176,13 +176,19 @@ test("planner remains interactive and finalizes through the subagent handshake",
   assert.doesNotMatch(phaseTen, /Ctrl\+D|exit this session/i);
 });
 
-test("every agent declares its effort explicitly instead of inheriting the default", () => {
+test("Pi agents declare effort while Claude Code seats leave it CLI-owned", () => {
   // Effort inherited from defaultThinkingLevel moves whenever the orchestrator is
   // retuned. That is how scout ended up doing retrieval at `high` without anyone
   // choosing it. Per-seat effort is a measured decision; record it at the seat.
-  const inherited = agentFiles.filter((name) => parseAgent(name).thinking === undefined);
+  const claudeCodeSeats = new Set(["claude-reviewer.md", "claude-validator.md"]);
+  const inherited = agentFiles.filter(
+    (name) => !claudeCodeSeats.has(name) && parseAgent(name).thinking === undefined,
+  );
 
   assert.deepEqual(inherited, []);
+  for (const name of claudeCodeSeats) {
+    assert.equal(parseAgent(name).thinking, undefined, name);
+  }
 });
 
 test("fleet routes GPT producers to independent Claude reviewers", () => {

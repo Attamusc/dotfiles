@@ -181,12 +181,13 @@ Slash commands are the user's to run. You have no way to invoke one; emitting `/
 | `worker` | Implements tasks from todos, makes polished commits. Reports back if a todo is missing examples/references. | GPT-6-sol | low |
 | `reviewer` | Reviews code for quality/security | Claude Sonnet 5 — independent review of GPT-produced work | high |
 | `validator` | Adversarial verification — checks implementation against declared integration contracts | Claude Opus 5.5 — independent contract gate | high |
+| `claude-reviewer` | Read-only Claude Code review via subscription; Pi supplies diff and tests | Sonnet (Claude Code CLI) | CLI-owned |
+| `claude-validator` | Read-only Claude Code contract check via subscription | Opus (Claude Code CLI) | CLI-owned |
 | `researcher` | Deep research — fetches external sources, analyses code and telemetry, synthesises findings | GPT-5.6-terra | high |
 | `adversarial-reviewer` | Adversarial review of changes or research positions — proves the target wrong with tiered, well-cited evidence. Posture is structural, no balanced mode. | Claude Opus 5.5 — independent falsification of GPT-produced work | high |
 
-Every agent declares `thinking:` explicitly; a test fails if one inherits
-`defaultThinkingLevel`. Effort is a per-seat decision — `scout` spent months at `high`
-because nobody chose it. No seat runs `xhigh`: a sixteen-run sweep across three seats found
+Every Pi-backed agent declares `thinking:` explicitly; Claude Code CLI seats must not set it.
+Effort is a per-seat decision — `scout` spent months at `high` because nobody chose it. No seat runs `xhigh`: a sixteen-run sweep across three seats found
 no case where higher effort changed a correctness outcome, while `scout` at `high` cost
 +146% output tokens for identical findings. See
 `.pi/plans/2026-07-25-effort-policy/evaluation-record.md`.
@@ -202,6 +203,12 @@ The `agent` parameter loads defaults from `~/.pi/agent/agents/<name>.md`. Model,
 Every delegation brief must state the target, scope, constraints, expected output, required evidence, and stop condition. Before spawning work keyed by `TODO-…`, fetch it with `todo(action: "get", ...)` and include its resolved scope, constraints, references, and acceptance criteria in the task. Never hand a child only an opaque todo ID.
 
 Child handoffs flow upward as bounded findings, evidence, and blockers. The parent owns synthesis and decisions. Do not forward child transcripts or substitute transcript volume for a focused handoff.
+
+**Claude Code review seats:** `claude-reviewer` and `claude-validator` are separate from the Pi-backed `reviewer` and `validator`. Pi resolves any todo, runs a bounded `git diff` and tests, and supplies changed paths, acceptance criteria or contract references, test argv/status/output, and labeled omissions in the task. For a larger diff, create a bounded evidence artifact inside the child's working directory and give its exact path; keep the task under 60 KiB.
+
+Do not pass secrets, private transcripts, `tools`, `skills`, `thinking`, or `fork` overrides. These seats use only Read, Glob, and Grep; they cannot run tests or git. They are autonomous one-turn reviews, not interactive shells. Give them a reviewable cwd and the usual scope, expected output, evidence, and stop condition.
+
+The result returns Claude's actual `claudeSessionId` after process exit. To follow up, launch the same Claude agent with `subagent({ name: "Review follow-up", agent: "claude-reviewer", task: "...", resumeSessionId: "<returned UUID>", interactive: false })`. `subagent_resume` takes a **Pi session path** and does not resume Claude Code. Treat a failed/unconfirmed child as incomplete; do not infer findings from a closed pane or reuse a session ID you did not receive from the completed run.
 
 ```typescript
 // Use existing agent definitions — full transparency

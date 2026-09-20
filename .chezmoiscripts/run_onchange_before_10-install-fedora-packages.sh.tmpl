@@ -7,6 +7,27 @@ set -euo pipefail
 source /tmp/chezmoi-utils.sh
 printf "${green}[10 - Fedora packages] ${reset}Install DNF manifest\n"
 
+# Verify Anthropic's signing key before enabling its repository or accepting it with dnf -y.
+sudo dnf install -y curl gnupg2
+work=$(mktemp -d)
+trap 'rm -rf -- "$work"' EXIT
+curl -fsSL https://downloads.claude.ai/keys/claude-code.asc -o "$work/claude-code.asc"
+fingerprint=$(gpg --show-keys --with-colons "$work/claude-code.asc" | awk -F: '$1 == "fpr" { print $10; exit }')
+if [[ "$fingerprint" != 31DDDE24DDFAB679F42D7BD2BAA929FF1A7ECACE ]]; then
+  echo "Claude Code signing key fingerprint mismatch: $fingerprint" >&2
+  exit 1
+fi
+sudo install -m 0644 "$work/claude-code.asc" /etc/pki/rpm-gpg/RPM-GPG-KEY-claude-code
+cat >"$work/claude-code.repo" <<'EOF'
+[claude-code]
+name=Claude Code
+baseurl=https://downloads.claude.ai/claude-code/rpm/latest
+enabled=1
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-claude-code
+EOF
+sudo install -m 0644 "$work/claude-code.repo" /etc/yum.repos.d/claude-code.repo
+
 packages=()
 while IFS= read -r package; do
   [[ -n "$package" && "$package" != \#* ]] || continue

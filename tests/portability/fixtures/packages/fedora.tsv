@@ -1,5 +1,6 @@
 bat	bat
 chezmoi	chezmoi
+claude-code	claude
 curl	curl
 eza	eza
 fd-find	fd
@@ -10,6 +11,7 @@ gh	gh
 git	git
 git-delta	delta
 git-filter-repo	git filter-repo
+gnupg2	gpg
 helix	hx
 jq	jq
 mosh	mosh
