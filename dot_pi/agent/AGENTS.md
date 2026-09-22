@@ -174,13 +174,13 @@ Slash commands are the user's to run. You have no way to invoke one; emitting `/
 
 | Agent | Purpose | Model | Effort |
 |-------|---------|-------|--------|
-| `planner` | Interactive planning agent — clarifies WHAT to build and figures out HOW. Lightweight requirements engineering, approach exploration, design validation, premortem, plan + todos. | GPT-5.6-sol | high |
-| `scout` | Fast codebase reconnaissance | GPT-5.6-luna (fast, cheap) | low |
-| `worker` | Implements tasks from todos, makes polished commits. Reports back if a todo is missing examples/references. | GPT-5.6-sol | low |
+| `planner` | Interactive planning agent — clarifies WHAT to build and figures out HOW. Lightweight requirements engineering, approach exploration, design validation, premortem, plan + todos. | GPT-6-sol | high |
+| `scout` | Fast codebase reconnaissance | GPT-6-luna (fast, cheap) | low |
+| `worker` | Implements tasks from todos, makes polished commits. Reports back if a todo is missing examples/references. | GPT-6-sol | low |
 | `reviewer` | Reviews code for quality/security | Claude Sonnet 5 — independent review of GPT-produced work | high |
-| `validator` | Adversarial verification — checks implementation against declared integration contracts | Claude Opus 5 — independent contract gate | high |
+| `validator` | Adversarial verification — checks implementation against declared integration contracts | Claude Opus 5.5 — independent contract gate | high |
 | `researcher` | Deep research — fetches external sources, analyses code and telemetry, synthesises findings | GPT-5.6-terra | high |
-| `adversarial-reviewer` | Adversarial review of changes or research positions — proves the target wrong with tiered, well-cited evidence. Posture is structural, no balanced mode. | Claude Opus 5 — independent falsification of GPT-produced work | high |
+| `adversarial-reviewer` | Adversarial review of changes or research positions — proves the target wrong with tiered, well-cited evidence. Posture is structural, no balanced mode. | Claude Opus 5.5 — independent falsification of GPT-produced work | high |
 
 Every agent declares `thinking:` explicitly; a test fails if one inherits
 `defaultThinkingLevel`. Effort is a per-seat decision — `scout` spent months at `high`

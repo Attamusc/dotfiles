@@ -73,7 +73,7 @@ Example output:
 }`;
 
 const PROVIDER_ID = "github-copilot";
-const EXTRACTION_MODEL_ID = "gpt-5.6-luna";
+const EXTRACTION_MODEL_ID = "gpt-6-luna";
 
 /**
  * Prefer Luna for extraction (fast, cheap), otherwise fall back to the current model.

@@ -6,7 +6,7 @@ const skillPattern = /^\/skill:(\S+)\s*([\s\S]*)/;
 const SUMMARY_PROMPT =
   "Summarize the user's request in 5-10 words max. Output ONLY the summary, nothing else. No quotes, no punctuation at the end.";
 
-const LUNA_MODEL_ID = "gpt-5.6-luna";
+const LUNA_MODEL_ID = "gpt-6-luna";
 const HAIKU_MODEL_ID = "claude-haiku-4-5";
 
 async function pickCheapModel(ctx: {

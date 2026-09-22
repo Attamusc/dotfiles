@@ -40,7 +40,7 @@ test("dynamic Copilot models use their advertised endpoint", () => {
     "openai-responses",
   );
   assert.equal(
-    getApi({ id: "claude-opus-5", supported_endpoints: ["/v1/messages", "/chat/completions"] }),
+    getApi({ id: "claude-opus-5.5", supported_endpoints: ["/v1/messages", "/chat/completions"] }),
     "anthropic-messages",
   );
   assert.equal(
@@ -56,8 +56,8 @@ test("dynamic Copilot models retain protocol fallbacks for older metadata", () =
 });
 
 test("dynamic Copilot models use live adaptive-thinking and effort capabilities", () => {
-  const opus5 = {
-    id: "claude-opus-5",
+  const opus55 = {
+    id: "claude-opus-5.5",
     capabilities: {
       supports: {
         adaptive_thinking: true,
@@ -74,8 +74,8 @@ test("dynamic Copilot models use live adaptive-thinking and effort capabilities"
       },
     },
   };
-  const gpt56 = {
-    id: "gpt-5.6-sol",
+  const gpt6 = {
+    id: "gpt-6-sol",
     capabilities: {
       supports: {
         reasoning_effort: ["none", "low", "medium", "high", "xhigh", "max"],
@@ -83,10 +83,10 @@ test("dynamic Copilot models use live adaptive-thinking and effort capabilities"
     },
   };
 
-  assert.deepEqual(getCompat(opus5), { forceAdaptiveThinking: true });
-  assert.deepEqual(getThinkingLevelMap(opus5), { xhigh: "xhigh" });
+  assert.deepEqual(getCompat(opus55), { forceAdaptiveThinking: true });
+  assert.deepEqual(getThinkingLevelMap(opus55), { xhigh: "xhigh" });
   assert.deepEqual(getThinkingLevelMap(opus46), { xhigh: "max" });
-  assert.deepEqual(getThinkingLevelMap(gpt56), { xhigh: "xhigh" });
+  assert.deepEqual(getThinkingLevelMap(gpt6), { xhigh: "xhigh" });
 });
 
 test("dynamic Copilot models omit xhigh when the provider does not advertise it", () => {
@@ -140,13 +140,13 @@ test("every agent declares its effort explicitly instead of inheriting the defau
 
 test("fleet routes GPT producers to independent Claude reviewers", () => {
   const expectedModels = {
-    "adversarial-reviewer.md": "github-copilot/claude-opus-5",
-    "planner.md": "github-copilot/gpt-5.6-sol",
+    "adversarial-reviewer.md": "github-copilot/claude-opus-5.5",
+    "planner.md": "github-copilot/gpt-6-sol",
     "researcher.md": "github-copilot/gpt-5.6-terra",
     "reviewer.md": "github-copilot/claude-sonnet-5",
-    "scout.md": "github-copilot/gpt-5.6-luna",
-    "validator.md": "github-copilot/claude-opus-5",
-    "worker.md": "github-copilot/gpt-5.6-sol",
+    "scout.md": "github-copilot/gpt-6-luna",
+    "validator.md": "github-copilot/claude-opus-5.5",
+    "worker.md": "github-copilot/gpt-6-sol",
   };
 
   for (const [file, model] of Object.entries(expectedModels)) {
@@ -158,7 +158,7 @@ test("fleet routes GPT producers to independent Claude reviewers", () => {
     : join(testDir, "..", "settings.json");
   const settings = JSON.parse(readFileSync(settingsPath, "utf8"));
   assert.equal(settings.defaultProvider, "github-copilot");
-  assert.equal(settings.defaultModel, "gpt-5.6-sol");
+  assert.equal(settings.defaultModel, "gpt-6-sol");
 });
 
 test("OpenCode and Copilot prefer GPT with a Claude advisor boundary", () => {
@@ -166,12 +166,12 @@ test("OpenCode and Copilot prefer GPT with a Claude advisor boundary", () => {
     ? join(sourceTreeRoot, "dot_config", "opencode")
     : join(homedir(), ".config", "opencode");
   const openCodeSettings = JSON.parse(readFileSync(join(openCodeRoot, "opencode.jsonc"), "utf8"));
-  assert.equal(openCodeSettings.model, "github-copilot/gpt-5.6-sol");
+  assert.equal(openCodeSettings.model, "github-copilot/gpt-6-sol");
 
   const openCodeModels = {
-    "advisor.md": "github-copilot/claude-opus-5",
-    "planner.md": "github-copilot/gpt-5.6-sol",
-    "spec.md": "github-copilot/gpt-5.6-sol",
+    "advisor.md": "github-copilot/claude-opus-5.5",
+    "planner.md": "github-copilot/gpt-6-sol",
+    "spec.md": "github-copilot/gpt-6-sol",
   };
   for (const [file, model] of Object.entries(openCodeModels)) {
     const source = readFileSync(join(openCodeRoot, "agents", file), "utf8");
@@ -182,19 +182,19 @@ test("OpenCode and Copilot prefer GPT with a Claude advisor boundary", () => {
     ? join(sourceTreeRoot, "dot_copilot", "private_settings.json")
     : join(homedir(), ".copilot", "settings.json");
   const copilotSettings = JSON.parse(readFileSync(copilotSettingsPath, "utf8"));
-  assert.equal(copilotSettings.model, "gpt-5.6-sol");
-  assert.equal(copilotSettings.subagents.agents.advisor.model, "claude-opus-5");
-  assert.equal(copilotSettings.subagents.agents.planner.model, "gpt-5.6-sol");
-  assert.equal(copilotSettings.subagents.agents.spec.model, "gpt-5.6-sol");
+  assert.equal(copilotSettings.model, "gpt-6-sol");
+  assert.equal(copilotSettings.subagents.agents.advisor.model, "claude-opus-5.5");
+  assert.equal(copilotSettings.subagents.agents.planner.model, "gpt-6-sol");
+  assert.equal(copilotSettings.subagents.agents.spec.model, "gpt-6-sol");
 });
 
 test("nested utilities and code review preserve their routing boundaries", () => {
   const extensionRoot = join(testDir, "..", "extensions");
   const answerSource = readFileSync(join(extensionRoot, "answer", "index.ts"), "utf8");
-  assert.match(answerSource, /const EXTRACTION_MODEL_ID = "gpt-5\.6-luna";/);
+  assert.match(answerSource, /const EXTRACTION_MODEL_ID = "gpt-6-luna";/);
 
   const smartSessionsSource = readFileSync(join(extensionRoot, "smart-sessions", "index.ts"), "utf8");
-  assert.match(smartSessionsSource, /const LUNA_MODEL_ID = "gpt-5\.6-luna";/);
+  assert.match(smartSessionsSource, /const LUNA_MODEL_ID = "gpt-6-luna";/);
   assert.ok(
     smartSessionsSource.indexOf('find("github-copilot", LUNA_MODEL_ID)') <
       smartSessionsSource.indexOf('find("anthropic", HAIKU_MODEL_ID)'),

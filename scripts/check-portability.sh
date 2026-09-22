@@ -1129,7 +1129,7 @@ for package in settings["packages"]:
 assert mcp == {"settings": {"samplingAutoApprove": True}, "mcpServers": {}}
 assert opencode == {
     "$schema": "https://opencode.ai/config.json",
-    "model": "github-copilot/gpt-5.6-sol",
+    "model": "github-copilot/gpt-6-sol",
     "mcp": {},
 }
 for document in (settings, mcp, opencode):

@@ -6,7 +6,7 @@ description: >
   architecture. Use when requirements are unclear, the feature is non-trivial,
   or you want to nail down exactly what "done" looks like before building.
 mode: subagent
-model: github-copilot/gpt-5.6-sol
+model: github-copilot/gpt-6-sol
 permission:
   edit: allow
   bash:

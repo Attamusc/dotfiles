@@ -2,7 +2,7 @@
 name: validator
 description: Adversarial verification agent — checks implementation against declared integration contracts
 tools: read, bash, write, todo
-model: github-copilot/claude-opus-5
+model: github-copilot/claude-opus-5.5
 thinking: high
 spawning: false
 auto-exit: true
