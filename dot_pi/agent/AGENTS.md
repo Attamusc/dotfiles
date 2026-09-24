@@ -214,7 +214,8 @@ The result returns Claude's actual `claudeSessionId` after process exit. To foll
 // Use existing agent definitions — full transparency
 subagent({ name: "Scout", agent: "scout", interactive: false, task: "Analyze the codebase..." })
 subagent({ name: "Worker", agent: "worker", interactive: false, task: "Implement TODO-xxxx.\n\nResolved task: [paste scope, constraints, references, and acceptance criteria]" })
-subagent({ name: "Reviewer", agent: "reviewer", interactive: false, task: "Review recent changes..." })
+// For read-only reviewers, collect a bounded diff and verification results first.
+subagent({ name: "Reviewer", agent: "reviewer", tools: "read", interactive: false, task: "Evidence-only review: read the prepared diff and test results; report findings inline." })
 subagent({ name: "Researcher", agent: "researcher", interactive: false, task: "Research [topic]..." })
 
 // Planner — clarifies WHAT to build and plans HOW (interactive, user collaborates)
@@ -223,13 +224,9 @@ subagent({ name: "💬 Planner", agent: "planner", interactive: true, task: "Pla
 // Iterate — fork the session for focused work
 subagent({ name: "Iterate", interactive: true, fork: true, task: "Fix the bug where..." })
 
-// Parallel subagents — run concurrently with tiled layout
-parallel_subagents({
-  agents: [
-    { name: "Scout: Auth", agent: "scout", task: "Analyze auth module" },
-    { name: "Scout: DB", agent: "scout", task: "Map database schema" },
-  ]
-})
+// Parallel subagents — start both; the harness delivers results as they finish
+subagent({ name: "Scout: Auth", agent: "scout", task: "Analyze auth module" })
+subagent({ name: "Scout: DB", agent: "scout", task: "Map database schema" })
 ```
 
 **Slash commands:**
@@ -314,19 +311,15 @@ Skills provide specialized instructions for specific tasks. Load them when the c
 | Verifying citations in a document say what the author claims | `adversarial-shepardize` |
 | Adversarial review of a research position or claim | `adversarial-review-research` (invoked by `adversarial-reviewer`) |
 | Adversarial review of a code change or PR | `adversarial-review-change` (invoked by `adversarial-reviewer`) |
-| Turning the current conversation into a spec/PRD (published as a todo) | `to-spec` |
-| Breaking a plan/spec/conversation into tracer-bullet tickets (todos with `Blocked by:` edges) | `to-tickets` |
-| Moving issues/todos through a triage state machine (categorise, verify, brief) | `triage` |
-| Working a spec or todo frontier through to committed code | `implement` |
+| Working a todo frontier through to committed code | `implement` |
 | Two-axis review of a diff (Standards + Spec) via parallel subagents | `code-review` |
-| Planning work too big for one session as a map of investigation todos | `wayfinder` |
 | Auditing or rewriting prose to strip AI tells ("make this sound less like AI") | `avoid-ai-writing` |
 
 **The `commit` skill is mandatory for every single commit.**
 
 For prose going out under Sean's name, `write-like-me` sets the target voice and `avoid-ai-writing` supplies the audit checklist. Where they disagree, `write-like-me` wins.
 
-The `todo`-backed skills (`to-spec`, `to-tickets`, `triage`, `implement`, `code-review`, `wayfinder`) share one adapter reference — `~/.pi/agent/skills/todo-tracker.md` — which maps tracker concepts (issues, labels, states, blocking edges, frontier, claim) onto the file-based `todo` tool. Read it before using any of them.
+The planner and the `implement` and `code-review` skills share `~/.pi/agent/skills/todo-tracker.md` for `todo` statuses, blocking edges, and claims. Read it before creating or working tickets.
 
 ---
 
@@ -341,10 +334,10 @@ The following MCP servers are configured via `mcp.json` and bridged through `pi-
 
 ## Skills Layout
 
-Pi discovers skills on its own and injects the name, description, and path of every one into the system prompt. Don't enumerate them here — a hand-maintained list drifts within weeks, and the harness already has the authoritative copy. The trigger table above is the routing index. This section covers only what discovery doesn't tell you.
+Pi discovers model-invocable skills and injects their names, descriptions, and paths into the system prompt. Skills marked `disable-model-invocation: true` stay hidden until explicitly loaded. Don't maintain a separate inventory here — the harness has the authoritative list. The trigger table above is the routing index. This section covers only what discovery doesn't tell you.
 
 - `~/.agents/skills/` — shared with OpenCode. Directories containing a `SKILL.md`; root-level `.md` files are ignored in this location.
-- `~/.pi/agent/skills/` — pi-only. Same directory rule, plus root-level `.md` files count as skills on their own. `todo-tracker.md` lives there as the tracker→`todo` adapter for the todo-backed skills and sets `disable-model-invocation: true`, so it stays a reference those skills read rather than a skill the model can pick.
+- `~/.pi/agent/skills/` — pi-only. Same directory rule, plus root-level `.md` files count as skills on their own. `todo-tracker.md` lives there as the shared `todo` reference for planner, `implement`, and `code-review`; `disable-model-invocation: true` keeps it out of the skill catalog.
 - Private skills stay out of the public dotfiles repo: sources in `.local-skills/{agents,pi,copilot}/` (gitignored), symlinked into the matching runtime directory by `run_after_40-link-local-skills.sh`.
 - Vendored third-party skills keep `SKILL.md` byte-identical to upstream and put the source URL, pinned commit, and every local deviation in a sibling `UPSTREAM.md`. When a host's discovery model requires an adapted runtime entry point, preserve the original as `UPSTREAM-SKILL.md` and document the mapping in `UPSTREAM.md`; `dd-apm` is the exemplar for that shape. Example of the verbatim shape: `~/.agents/skills/avoid-ai-writing/`.
 

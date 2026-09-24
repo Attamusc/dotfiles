@@ -18,9 +18,9 @@ The spec source is resolved via `../todo-tracker.md` (see step 2 below).
 
 Whatever the user said is the fixed point — a commit SHA, branch name, tag, `main`, `HEAD~5`, etc. If they didn't specify one, ask for it.
 
-Capture the diff command once: `git diff <fixed-point>...HEAD` (three-dot, so the comparison is against the merge-base). Also note the list of commits via `git log <fixed-point>..HEAD --oneline`.
+Confirm the fixed point resolves with `git rev-parse <fixed-point>`, then find the merge base with `git merge-base <fixed-point> HEAD`. Capture `git diff <merge-base>` so the review includes tracked working-tree changes as well as committed ones. Also capture `git status --short` (identify relevant untracked files explicitly) and `git log <merge-base>..HEAD --oneline`.
 
-Before going further, confirm the fixed point resolves (`git rev-parse <fixed-point>`) and the diff is non-empty. A bad ref or empty diff should fail here — not inside two parallel sub-agents.
+Before spawning reviewers, confirm the selected diff or explicitly scoped untracked files contain changes and match the user's request. Save the diff, status, and any relevant untracked file contents as bounded, readable evidence files outside the repository. Split an oversized diff by path rather than silently truncating it. The reviewers receive those exact files; they do not run Git commands.
 
 ### 2. Identify the spec source
 
@@ -61,38 +61,28 @@ Each smell reads *what it is* → *how to fix*; match it against the diff:
 
 ### 4. Spawn both sub-agents in parallel
 
-Launch both reviews concurrently using pi's `parallel_subagents`:
+The orchestrator collects all evidence before delegating. If the spec is a todo, fetch it and include its full body in a readable evidence file. Include the captured diff, relevant untracked files, commit list, standards sources, and any test results in the bundle. Reviewers in this workflow receive **only `read`**, as required by repositories with a read-only reviewer policy. Their task must explicitly say **evidence-only review** so they return findings inline rather than trying to run commands or write reports.
+
+Start two independent `subagent` calls without waiting between them:
 
 ```js
-parallel_subagents({
-  agents: [
-    {
-      name: "Standards Review",
-      agent: "reviewer",
-      task: `<Standards prompt — see below>`
-    },
-    {
-      name: "Spec Review",
-      agent: "reviewer",
-      task: `<Spec prompt — see below>`
-    }
-  ]
+subagent({
+  name: "Standards Review",
+  agent: "reviewer",
+  tools: "read",
+  interactive: false,
+  task: "Evidence-only review. Read the supplied diff, status, validation, and standards files. Read the smell baseline in ~/.pi/agent/skills/code-review/SKILL.md. Report documented-standard violations and possible baseline smells separately, with file/hunk evidence. Return findings inline, under 400 words."
+})
+subagent({
+  name: "Spec Review",
+  agent: "reviewer",
+  tools: "read",
+  interactive: false,
+  task: "Evidence-only review. Read the supplied diff, status, validation, and spec files. Report missing or partial requirements, scope creep, and incorrect implementations. Quote the spec for each finding. Return findings inline, under 400 words."
 })
 ```
 
-**Standards sub-agent prompt** — include:
-
-- The full diff command and commit list.
-- The list of standards-source files you found in step 3, **plus the smell baseline from step 3** pasted in full — the sub-agent has no other access to it.
-- The brief: "Report — per file/hunk where relevant — (a) every place the diff violates a documented standard: cite the standard (file + the rule); and (b) any baseline smell you spot: name it and quote the hunk. Distinguish hard violations from judgement calls — documented-standard breaches can be hard, but baseline smells are always judgement calls, and a documented repo standard overrides the baseline. Skip anything tooling enforces. Under 400 words."
-
-**Spec sub-agent prompt** — include:
-
-- The diff command and commit list.
-- The path or fetched contents of the spec (todo body or file).
-- The brief: "Report: (a) requirements the spec asked for that are missing or partial; (b) behaviour in the diff that wasn't asked for (scope creep); (c) requirements that look implemented but where the implementation looks wrong. Quote the spec line for each finding. Under 400 words."
-
-If the spec is missing, skip the Spec sub-agent and note this in the final report.
+Replace "supplied" with the **absolute paths** to the prepared evidence files in each task; the reviewers cannot access the orchestrator's transcript. If no spec exists, skip the Spec sub-agent and state that the Spec axis was not reviewed. If an evidence file is truncated, narrow or split it before reviewing.
 
 ### 5. Aggregate
 
