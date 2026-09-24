@@ -464,12 +464,16 @@ After writing:
 
 ## Phase 9: Create Todos
 
-**Before writing any todos, load the `write-todos` skill** — it defines the required structure, rules, and checklist.
+Read `~/.pi/agent/skills/todo-tracker.md` for the status vocabulary and `Blocked by:` convention. Break the plan into independently verifiable **vertical slices**: each ticket should deliver a narrow path through the relevant layers, sized for one worker session. Only add a blocker when another ticket genuinely must finish first.
 
-Break the plan into bite-sized todos (2-5 minutes of worker effort each):
+Create all tickets as `draft` without blockers, recording their returned IDs. Then add `Blocked by: TODO-...` lines using those real IDs. Once every edge is wired, set each ticket to `ready-for-agent`; this keeps unfinished tickets off the agent-ready frontier while the graph is being assembled. Tickets without blockers become ready immediately after activation.
 
 ```typescript
-todo({ action: "create", title: "Task 1: [description]", tags: ["<plan-name>"], body: "..." })
+todo({ action: "create", title: "Task 1: [description]", status: "draft", tags: ["<plan-name>"], body: "..." })
+// Once all IDs exist, append each ticket's direct blockers using returned IDs:
+todo({ action: "append", id: "TODO-aabbccdd", body: "\nBlocked by: TODO-11223344" })
+// After all blockers are wired, activate each ticket:
+todo({ action: "update", id: "TODO-aabbccdd", status: "ready-for-agent" })
 ```
 
 ### ⚠️ MANDATORY: every todo references code
@@ -495,7 +499,7 @@ Workers that receive a todo without examples will report it back as incomplete. 
 - Named anti-patterns (*"do NOT use X"*)
 - **Inline acceptance criteria** under an `## Acceptance Criteria` heading. Copy the relevant ISC items verbatim — don't just reference them by ID. Workers shouldn't have to fetch the plan to know what "done" means. Phrase each as a single testable assertion. Use EARS form (When/While/If) when it sharpens the statement; plain form otherwise.
 
-**Sequence todos** so each builds on the last. **Run the `write-todos` checklist before creating.**
+Check that every ticket meets these requirements before creating it. Keep independent tickets unblocked so workers can run them concurrently.
 
 ---
 

@@ -127,6 +127,38 @@ test("planner remains interactive and finalizes through the subagent handshake",
   assert.doesNotMatch(phaseTen, /Ctrl\+D|exit this session/i);
 });
 
+test("todo workflow wires blockers before tickets become agent-ready", () => {
+  const skillsDir = join(testDir, "..", "skills");
+  const planner = readFileSync(join(agentDir, "planner.md"), "utf8");
+  const phaseNine = planner.split("## Phase 9: Create Todos")[1].split("## Phase 10:")[0];
+  const worker = readFileSync(join(agentDir, "worker.md"), "utf8");
+  const tracker = readFileSync(join(skillsDir, "todo-tracker.md"), "utf8");
+  const implementation = readFileSync(join(skillsDir, "implement", "SKILL.md"), "utf8");
+
+  for (const name of ["to-spec", "to-tickets", "triage", "wayfinder"]) {
+    assert.equal(existsSync(join(skillsDir, name)), false, `${name} should be retired`);
+  }
+  assert.doesNotMatch(planner, /write-todos/);
+  assert.match(phaseNine, /create[^\n]*status: "draft"/);
+  assert.match(phaseNine, /append[^\n]*Blocked by: TODO-/);
+  assert.match(phaseNine, /update[^\n]*status: "ready-for-agent"/);
+  assert.ok(phaseNine.indexOf('action: "create"') < phaseNine.indexOf('action: "append"'));
+  assert.ok(phaseNine.indexOf('action: "append"') < phaseNine.indexOf('action: "update"'));
+  const todoTool = readFileSync(join(testDir, "..", "extensions", "todos", "index.ts"), "utf8");
+  const listAction = todoTool.split('case "list": {')[1].split('case "list-all":')[0];
+  assert.doesNotMatch(listAction, /params\.status/, "update the frontier instructions if list gains status filtering");
+  assert.match(listAction, /serializeTodoListForAgent/);
+  assert.match(tracker, /The `list` action does not filter on its optional `status` argument/);
+  assert.match(tracker, /Keep only entries with status: "ready-for-agent"/);
+  assert.match(tracker, /`list` returns only front matter/);
+  assert.match(implementation, /keep only unclaimed entries whose status is `ready-for-agent`/);
+  assert.match(implementation, /fetch each candidate's body; `list` returns only front matter/);
+  assert.doesNotMatch(implementation, /action: "list", status:/);
+  assert.match(worker, /status: "done"/);
+  assert.doesNotMatch(worker, /\/skill:commit/);
+  assert.doesNotMatch(implementation, /`\/(?:tdd|code-review)`/);
+});
+
 test("every agent declares its effort explicitly instead of inheriting the default", () => {
   // Effort inherited from defaultThinkingLevel moves whenever the orchestrator is
   // retuned. That is how scout ended up doing retrieval at `high` without anyone
@@ -165,8 +197,13 @@ test("OpenCode and Copilot prefer GPT with a Claude advisor boundary", () => {
   const openCodeRoot = runningFromSource
     ? join(sourceTreeRoot, "dot_config", "opencode")
     : join(homedir(), ".config", "opencode");
-  const openCodeSettings = JSON.parse(readFileSync(join(openCodeRoot, "opencode.jsonc"), "utf8"));
-  assert.equal(openCodeSettings.model, "github-copilot/gpt-6-sol");
+  if (runningFromSource) {
+    const openCodeTemplate = readFileSync(join(openCodeRoot, "private_opencode.jsonc.tmpl"), "utf8");
+    assert.match(openCodeTemplate, /"model" "github-copilot\/gpt-6-sol"/);
+  } else {
+    const openCodeSettings = JSON.parse(readFileSync(join(openCodeRoot, "opencode.jsonc"), "utf8"));
+    assert.equal(openCodeSettings.model, "github-copilot/gpt-6-sol");
+  }
 
   const openCodeModels = {
     "advisor.md": "github-copilot/claude-opus-5.5",
@@ -203,7 +240,12 @@ test("nested utilities and code review preserve their routing boundaries", () =>
 
   const codeReviewSource = readFileSync(join(testDir, "..", "skills", "code-review", "SKILL.md"), "utf8");
   const reviewAgents = [...codeReviewSource.matchAll(/^\s+agent: "([^"]+)",$/gm)].map((match) => match[1]);
+  const readOnlySpawns = [...codeReviewSource.matchAll(/^\s+tools: "read",$/gm)];
   assert.deepEqual(reviewAgents, ["reviewer", "reviewer"]);
+  assert.equal(readOnlySpawns.length, 2);
+  assert.doesNotMatch(codeReviewSource, /parallel_subagents/);
+  assert.match(readFileSync(join(agentDir, "reviewer.md"), "utf8"), /evidence-only review/);
+  assert.match(readFileSync(join(testDir, "..", "AGENTS.md"), "utf8"), /agent: "reviewer", tools: "read"/);
 });
 
 test("subagent discovery policy blocks unbounded roots and bounds scoped searches", () => {
