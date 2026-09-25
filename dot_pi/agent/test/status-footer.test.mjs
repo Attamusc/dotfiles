@@ -6,6 +6,7 @@ import { test } from "node:test";
 import {
   composeFooterRuntime,
   findJjWorkspace,
+  JJ_TEMPLATE,
   formatCost,
   formatTokenCount,
   parseGitState,
@@ -16,8 +17,8 @@ import {
 
 test("jj state reports the working change, nearest bookmark, distance, and diff", () => {
   const state = parseJjState([
-    "current\tkoslkvwu\t\t0\t11\t11",
-    "base\ttmxlqqun\tmain",
+    "current\tkoslkvwu\t[]\t0\t11\t11",
+    'base\ttmxlqqun\t["main"]',
   ].join("\n"));
 
   assert.deepEqual(state, {
@@ -33,7 +34,7 @@ test("jj state reports the working change, nearest bookmark, distance, and diff"
 });
 
 test("jj state prefers current bookmarks and counts conflicted files", () => {
-  const state = parseJjState("current\tqpvuntsm\tfooter-design\t2\t128\t47\n");
+  const state = parseJjState('current\tqpvuntsm\t["footer-design"]\t2\t128\t47\n');
 
   assert.deepEqual(state, {
     kind: "jj",
@@ -47,12 +48,23 @@ test("jj state prefers current bookmarks and counts conflicted files", () => {
   });
 });
 
+test("jj bookmark fields preserve names containing commas", () => {
+  assert.equal([...JJ_TEMPLATE.matchAll(/json\(local_bookmarks\.map/g)].length, 2);
+  const state = parseJjState([
+    'current\tabcdefgh\t["alpha,beta","feature"]\t0\t0\t0',
+    'base\tijklmnop\t["main,release"]',
+  ].join("\n"));
+  assert.deepEqual(state?.currentBookmarks, ["alpha,beta", "feature"]);
+  assert.equal(state?.nearestBookmark, "main,release");
+  assert.equal(state?.ahead, 1);
+});
+
 test("jj distance counts revisions above the nearest bookmark", () => {
   const state = parseJjState([
-    "current\tabcdefgh\t\t0\t0\t0",
+    "current\tabcdefgh\t[]\t0\t0\t0",
     "step",
     "step",
-    "base\tijklmnop\tmain",
+    'base\tijklmnop\t["main"]',
   ].join("\n"));
 
   assert.equal(state?.nearestBookmark, "main");

@@ -368,6 +368,53 @@ test("destructive command policy blocks subagents and requires fresh main-sessio
   assert.equal(laterCall?.confirm, true);
 });
 
+test("recursive forced removal checks every operand, regardless of ordering", () => {
+  for (const command of [
+    "rm -rf /tmp/scratch-run ~/Documents",
+    "rm -rf ~/Documents /tmp/scratch-run",
+    "rm -rf /tmp/scratch-run -- ~/Documents",
+  ]) {
+    assert.equal(inspectDestructiveCommand(command, { isSubagent: false })?.confirm, true, command);
+    assert.equal(inspectDestructiveCommand(command, { isSubagent: true })?.block, true, command);
+  }
+  assert.equal(inspectDestructiveCommand("rm -rf /tmp/one /tmp/two", { isSubagent: true }), undefined);
+  assert.equal(inspectDestructiveCommand("rm -rf build /tmp/scratch-run", { isSubagent: false }), undefined);
+  assert.equal(inspectDestructiveCommand("rm -rf build /tmp/scratch-run", { isSubagent: true })?.block, true);
+  assert.equal(inspectDestructiveCommand("rm -rf /tmp/scratch-run -- -danger", { isSubagent: true })?.block, true);
+  assert.equal(inspectDestructiveCommand("rm -rf -- -danger", { isSubagent: true })?.block, true);
+  assert.equal(inspectDestructiveCommand("rm -rf -", { isSubagent: true })?.block, true);
+  assert.equal(inspectDestructiveCommand("rm -rf /tmp/scratch-run sub/../../outside", { isSubagent: false })?.confirm, true);
+});
+
+test("recursive forced removal checks later commands, not only the first match", () => {
+  for (const command of [
+    "rm -rf /tmp/scratch-run; rm -rf ~/Documents",
+    "rm -rf /tmp/scratch-run && rm -rf ~/Documents",
+    "rm -f /tmp/lock; rm -rf ~/Documents",
+    "rm -rf /tmp/scratch-run; sudo rm -rf ~/Documents",
+    "rm -rf /tmp/scratch-run; FOO=1 rm -rf ~/Documents",
+    "rm -rf /tmp/scratch-run; # rm -rf /tmp/ignored\nrm -rf ~/Documents",
+  ]) {
+    assert.equal(inspectDestructiveCommand(command, { isSubagent: false })?.confirm, true, command);
+    assert.equal(inspectDestructiveCommand(command, { isSubagent: true })?.block, true, command);
+  }
+});
+
+test("scratch cleanup ignores redirects, comments, options, and quoted command text", () => {
+  for (const command of [
+    "rm -rf /tmp/scratch-run 2>/dev/null",
+    "rm -rf /tmp/scratch-run 2>&1",
+    "rm -rf /tmp/scratch-run # cleanup",
+    "rm -rf /tmp/scratch-run -v",
+    "rm -rf /tmp/scratch-run; # rm -rf ~/Documents",
+    "rm -rf /tmp/scratch-run | grep 'rm -rf ~/Documents'",
+    "rm -rf /tmp/scratch-run; # rm -rf ~/Documents\nrm -rf /tmp/next",
+  ]) {
+    assert.equal(inspectDestructiveCommand(command, { isSubagent: false }), undefined, command);
+    assert.equal(inspectDestructiveCommand(command, { isSubagent: true }), undefined, command);
+  }
+});
+
 test("subagents also block destructive commands that remain recoverable in the main session", () => {
   for (const command of [
     "jj undo",
