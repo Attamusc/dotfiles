@@ -947,6 +947,40 @@ check_shell_contract() {
   printf 'ok: platform-correct shared shell contract\n'
 }
 
+check_darwin_shell_startup() {
+  local home="$WORK/darwin-shell-home"
+  local zsh_bin
+
+  zsh_bin=$(command -v zsh)
+  mkdir -p "$home/.config/zsh/config"
+  cp "$WORK/rendered-darwin/.zshrc" "$home/.zshrc"
+  printf '# isolated shell fixture\n' >"$home/.config/zsh/base.zsh"
+  printf '# isolated shell fixture\n' >"$home/.config/zsh/config/tool.zsh"
+
+  env -i \
+    HOME="$home" \
+    ZDOTDIR="$home" \
+    PATH=/usr/bin:/bin \
+    SSH_AUTH_SOCK="$home/launchd-agent.socket" \
+    "$zsh_bin" -dfc '
+      source "$ZDOTDIR/.zshrc"
+      [[ $SSH_AUTH_SOCK == "$HOME/launchd-agent.socket" ]]
+    ' || fail "macOS shell startup failed or replaced the inherited SSH agent socket"
+
+  printf 'export SSH_AUTH_SOCK="$HOME/localrc-agent.socket"\n' >"$home/.localrc"
+  env -i \
+    HOME="$home" \
+    ZDOTDIR="$home" \
+    PATH=/usr/bin:/bin \
+    SSH_AUTH_SOCK="$home/launchd-agent.socket" \
+    "$zsh_bin" -dfc '
+      source "$ZDOTDIR/.zshrc"
+      [[ $SSH_AUTH_SOCK == "$HOME/localrc-agent.socket" ]]
+    ' || fail "macOS shell startup failed or replaced the localrc SSH agent socket"
+
+  printf 'ok: fresh macOS zsh preserves inherited and localrc SSH agent sockets\n'
+}
+
 check_fedora_shell_startup() {
   local home="$WORK/rendered-linux"
   local zsh_bin
@@ -1007,11 +1041,13 @@ EOF
   env -i \
     HOME="$home" \
     ZDOTDIR="$home" \
+    XDG_RUNTIME_DIR="$home/xdg-runtime" \
     PATH=/usr/bin:/bin \
     "$zsh_bin" -dfc '
       alias which="alias | /usr/bin/which --tty-only --read-alias --show-tilde --show-dot"
       source "$ZDOTDIR/.zshrc"
       [[ $PORTABILITY_LOCALRC == loaded ]]
+      [[ $SSH_AUTH_SOCK == "$HOME/xdg-runtime/ssh-agent.socket" ]]
       [[ ${aliases[copy]} == wl-copy ]]
       [[ ${aliases[o]} == xdg-open ]]
       [[ ${aliases[v]} == nvim ]]
@@ -1971,6 +2007,7 @@ check_merge_json_fixtures
 check_package_manifests
 render_platform darwin arm64 ''
 render_platform linux amd64 fedora
+check_darwin_shell_startup
 check_fedora_shell_startup
 
 printf 'ok: portability checks passed\n'
