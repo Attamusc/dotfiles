@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, symlinkSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import test from "node:test";
@@ -25,6 +25,7 @@ function projection(entries, messages, sessionId) {
     let text;
     let role = message.role;
     let source = entry.type === "custom_message" ? "custom-message (original)" : "message (original)";
+    if (message.role === "bashExecution" && message.excludeFromContext) return [];
     if (message.role === "bashExecution") text = `${message.command ?? ""}\n${message.output ?? ""}`.replace(/^\n|\n$/g, "");
     else if (message.role === "branchSummary") {
       text = message.summary;
@@ -46,6 +47,36 @@ test("linear v3 reconstructs canonical bash and resolve omits cost", () => {
   assert.deepEqual(json.activeEntryIds, ["u1", "a1", "t1", "m1", "th1", "b1"]);
   assert.equal("cost" in json, false);
   assert.deepEqual(json.items.at(-1), { entryId: "b1", provenance: "session:synthetic-session#entry:b1", role: "bashExecution", source: "message (original)", text: "printf ok\nok" });
+});
+
+test("excluded shell output stays out of context; explicit false remains visible", () => {
+  const temp = mkdtempSync(join(tmpdir(), "session-reader-excluded-bash-"));
+  try {
+    for (const [name, excluded, shouldHide] of [
+      ["double-bang", true, true],
+      ["null", null, true],
+      ["zero", 0, true],
+      ["empty-string", "", true],
+      ["off-contract", { unexpected: true }, true],
+      ["explicit-false", false, false],
+    ]) {
+      const path = join(temp, `${name}.jsonl`);
+      writeFileSync(path, [
+        { type: "session", version: 3, id: "synthetic" },
+        { type: "message", id: "bash", parentId: null, message: { role: "bashExecution", command: "echo HIDDEN_COMMAND", output: "HIDDEN_OUTPUT", excludeFromContext: excluded } },
+        { type: "message", id: "leaf", parentId: "bash", message: { role: "user", content: "safe request" } },
+      ].map(JSON.stringify).join("\n") + "\n");
+      const result = spawnSync("python3", [reader, path, "--sessions-root", temp, "--leaf", "leaf", "--mode", "resolve"], { encoding: "utf8" });
+      assert.equal(result.status, 0, result.stderr);
+      const document = JSON.parse(result.stdout);
+      assert.deepEqual(document.activeEntryIds, ["bash", "leaf"]);
+      assert.deepEqual(document.items.map(({ entryId }) => entryId), shouldHide ? ["leaf"] : ["bash", "leaf"]);
+      if (shouldHide) assert.doesNotMatch(result.stdout, /HIDDEN_COMMAND|HIDDEN_OUTPUT/);
+      else assert.match(result.stdout, /HIDDEN_COMMAND.*HIDDEN_OUTPUT/s);
+    }
+  } finally {
+    rmSync(temp, { recursive: true, force: true });
+  }
 });
 
 test("installed buildSessionContext projection matches roles and content", async (t) => {
@@ -384,22 +415,27 @@ for (const [fixture, leaf, expected] of [["duplicate.jsonl", "x", "duplicate-ent
 
 test("path containment requires a canonical directory root and rejects escapes", () => {
   const temp = mkdtempSync(join(tmpdir(), "session-reader-"));
-  const outside = join(temp, "outside.jsonl");
-  writeFileSync(outside, "{}\n");
-  for (const path of [outside, "../outside.jsonl", root, join(root, "not-jsonl.txt"), join(root, "missing.jsonl")]) {
-    const result = spawnSync("python3", [reader, path, "--sessions-root", root, "--leaf", "x"], { encoding: "utf8" });
-    assert.notEqual(result.status, 0);
-  }
-  const rootFile = join(root, "linear-v3.jsonl");
-  assert.equal(JSON.parse(spawnSync("python3", [reader, rootFile, "--sessions-root", rootFile, "--leaf", "b1"], { encoding: "utf8" }).stdout).status, "sessions-root-not-directory");
-  const rootLink = join(temp, "root-link");
-  symlinkSync(root, rootLink);
-  assert.equal(JSON.parse(spawnSync("python3", [reader, "linear-v3.jsonl", "--sessions-root", rootLink, "--leaf", "b1"], { encoding: "utf8" }).stdout).status, "complete");
-  const link = join(root, "escape.jsonl");
   try {
+    const outside = join(temp, "outside.jsonl");
+    writeFileSync(outside, "{}\n");
+    for (const path of [outside, "../outside.jsonl", root, join(root, "not-jsonl.txt"), join(root, "missing.jsonl")]) {
+      const result = spawnSync("python3", [reader, path, "--sessions-root", root, "--leaf", "x"], { encoding: "utf8" });
+      assert.notEqual(result.status, 0);
+    }
+    const rootFile = join(root, "linear-v3.jsonl");
+    assert.equal(JSON.parse(spawnSync("python3", [reader, rootFile, "--sessions-root", rootFile, "--leaf", "b1"], { encoding: "utf8" }).stdout).status, "sessions-root-not-directory");
+    const sessions = join(temp, "sessions");
+    mkdirSync(sessions);
+    copyFileSync(rootFile, join(sessions, "linear-v3.jsonl"));
+    const rootLink = join(temp, "root-link");
+    symlinkSync(sessions, rootLink);
+    assert.equal(JSON.parse(spawnSync("python3", [reader, "linear-v3.jsonl", "--sessions-root", rootLink, "--leaf", "b1"], { encoding: "utf8" }).stdout).status, "complete");
+    const link = join(sessions, "escape.jsonl");
     symlinkSync(outside, link);
-    assert.equal(JSON.parse(spawnSync("python3", [reader, link, "--sessions-root", root, "--leaf", "x"], { encoding: "utf8" }).stdout).status, "session-path-outside-root");
-  } finally { try { execFileSync("rm", [link]); } catch {} }
+    assert.equal(JSON.parse(spawnSync("python3", [reader, link, "--sessions-root", sessions, "--leaf", "x"], { encoding: "utf8" }).stdout).status, "session-path-outside-root");
+  } finally {
+    rmSync(temp, { recursive: true, force: true });
+  }
 });
 
 test("legacy redaction and output fixture remains private and bounded", () => {

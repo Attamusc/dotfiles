@@ -214,6 +214,8 @@ def normalized_text(entry):
     message = entry["message"]
     role = message.get("role")
     if role == "bashExecution":
+        if "excludeFromContext" in message and message["excludeFromContext"] is not False:
+            return "", "", ""
         return f"{message.get('command', '')}\n{message.get('output', '')}".strip("\n"), "message (original)", role
     content = message.get("content") or []
     if role == "toolResult" and message.get("toolName") == "subagent":
