@@ -2,15 +2,16 @@
 
 The managed package source is pinned exactly as
 `git:github.com/Attamusc/pi-workflows@1614faf29c6ad1d0fcc9fe6db86a770f34e2b129`.
-It is active after independent review and integration validation passed.
-Fresh-terminal smoke testing remains user-owned.
+Host package reconciliation and fresh-Pi smoke are separate gates. The pin
+in source does not establish whether a particular host has activated it.
 
 ## Security and runtime boundary
 
 Saved workflow TypeScript is trusted in-process code. Dynamic source alone is
-permission-sandboxed. The managed Node 24 runtime therefore keeps `$workflow`
-unavailable: there is no fallback runtime, and activation must not incidentally
-upgrade Node.
+permission-sandboxed. Node 24 does not by itself disable `$workflow`: the
+extension probes absolute Node 25+ executables on PATH as well as its current
+runtime. A working permission probe is required; there is no unsandboxed
+fallback, and activation must not change the host's Node selection implicitly.
 
 Direct verification skills remain usable without the package. Workflow JSONL
 and checkpoints provide audit and reconstruction evidence; they do not resume
@@ -43,7 +44,7 @@ No retained workflow calls package isolation, integration, or isolation cleanup.
 `iterate-pr` preserves its approval boundary before network, credential, commit,
 push, or reply effects. Denial leaves the invoking tree unchanged.
 
-## Candidate and activation status
+## Candidate checks and host activation
 
 API, dynamic, and package harnesses accept only a real clean detached Git
 worktree whose full `HEAD` equals the exact pin. Every harness requires the
@@ -58,12 +59,13 @@ node scripts/check-pi-workflows-package.mjs \
   --candidate "$TEST_ROOT" --revision "$PIN"
 ```
 
-The setup hook is content-addressed to public and private settings. When the
-user eventually applies the gated change, it reconciles packages with
+The setup hook is content-addressed to public and private settings. If its
+execution is separately approved on a host, it reconciles packages with
 `pi update --extensions` before installing Herdr's managed Pi integration.
 There is no second installer, package symlink, tmux/cmux fallback, lifecycle
 manager, or status reporter.
 
-User-only activation, package listing, Pi reload/startup, `/workflows`, and live
-workflow smoke remain pending until the independent gates pass. The smoke must
-run from a fresh terminal and expect exactly the eight retained workflows.
+Each host needs separately approved reconciliation, followed by a fresh-Pi
+package listing, `/workflows` check, and live workflow smoke. Run that smoke
+from a fresh terminal and expect exactly the eight retained workflows; source
+validation does not substitute for host verification.
