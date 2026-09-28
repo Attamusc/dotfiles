@@ -104,6 +104,35 @@ test("footer values use compact formatting and preserve styled extension statuse
   assert.equal(sanitizeStatusLine("\x1b[31mMCP\x1b[0m\nready"), "\x1b[31mMCP\x1b[0m ready");
 });
 
+test("subscription without a quota status keeps its cost display", () => {
+  const result = composeFooterRuntime({
+    context: "ctx 42.0%/200k",
+    cost: "$0 (sub)",
+    speed: "63 tok/s",
+    subscription: true,
+    statuses: new Map(),
+  });
+
+  assert.deepEqual(result, {
+    items: ["ctx 42.0%/200k", "$0 (sub)", "63 tok/s"],
+    overflowStatuses: [],
+  });
+});
+
+test("non-subscription cost keeps independent extension statuses", () => {
+  const result = composeFooterRuntime({
+    context: "ctx 42.0%/200k",
+    cost: "$0.123",
+    subscription: false,
+    statuses: new Map([["subscription-usage", "usage unavailable"]]),
+  });
+
+  assert.deepEqual(result, {
+    items: ["ctx 42.0%/200k", "$0.123"],
+    overflowStatuses: ["usage unavailable"],
+  });
+});
+
 test("subscription quota replaces synthetic cost without adding a footer line", () => {
   const result = composeFooterRuntime({
     context: "ctx 42.0%/200k",

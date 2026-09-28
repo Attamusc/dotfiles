@@ -107,11 +107,7 @@ export function composeFooterRuntime(input: {
   const items = [input.context];
   const subscriptionUsage = input.statuses.get("subscription-usage");
 
-  if (input.subscription) {
-    if (subscriptionUsage) items.push(subscriptionUsage);
-  } else {
-    items.push(input.cost);
-  }
+  items.push(input.subscription && subscriptionUsage ? subscriptionUsage : input.cost);
   if (input.speed) items.push(input.speed);
 
   const overflowStatuses = Array.from(input.statuses.entries())
