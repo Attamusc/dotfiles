@@ -8,7 +8,6 @@
   "enabledPlugins": {
     "slack-mcp@github-slack-mcp": true
   },
-  "model": "gpt-6-sol",
   "subagents": {
     "agents": {
       "advisor": {
@@ -35,5 +34,6 @@
         "repo": "github/copilot-slack-mcp"
       }
     }
-  }
+  },
+  "model": "gpt-6-sol"
 }
