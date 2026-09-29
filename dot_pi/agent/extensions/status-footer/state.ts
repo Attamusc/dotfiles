@@ -23,11 +23,11 @@ export type VcsState = JjState | GitState | null;
 export const JJ_REVSET = "latest(::@ & bookmarks())::@ | @";
 export const JJ_TEMPLATE = [
   'if(current_working_copy, "current\\t" ++ change_id.shortest(8) ++ "\\t" ++ ',
-  'local_bookmarks.map(|b| b.name()).join(",") ++ "\\t" ++ ',
+  'json(local_bookmarks.map(|b| b.name())) ++ "\\t" ++ ',
   'conflicted_files.len() ++ "\\t" ++ self.diff().stat().total_added() ++ "\\t" ++ ',
   'self.diff().stat().total_removed() ++ "\\n", ',
   'if(local_bookmarks, "base\\t" ++ change_id.shortest(8) ++ "\\t" ++ ',
-  'local_bookmarks.map(|b| b.name()).join(",") ++ "\\n", "step\\n"))',
+  'json(local_bookmarks.map(|b| b.name())) ++ "\\n", "step\\n"))',
 ].join("");
 
 export function findJjWorkspace(start: string): string | null {
@@ -51,8 +51,10 @@ export function parseJjState(output: string): JjState | null {
   if (!changeId) return null;
 
   const base = lines.find((line) => line.startsWith("base\t"));
-  const nearestBookmark = base?.split("\t")[2]?.split(",").filter(Boolean)[0] ?? null;
-  const currentBookmarks = bookmarkText.split(",").filter(Boolean);
+  const nearestBookmark = base
+    ? (JSON.parse(base.split("\t")[2]) as string[])[0] ?? null
+    : null;
+  const currentBookmarks = JSON.parse(bookmarkText) as string[];
   const revisionsAboveBase = lines.filter(
     (line) => line === "step" || line.startsWith("base\t"),
   ).length;
@@ -105,11 +107,7 @@ export function composeFooterRuntime(input: {
   const items = [input.context];
   const subscriptionUsage = input.statuses.get("subscription-usage");
 
-  if (input.subscription) {
-    if (subscriptionUsage) items.push(subscriptionUsage);
-  } else {
-    items.push(input.cost);
-  }
+  items.push(input.subscription && subscriptionUsage ? subscriptionUsage : input.cost);
   if (input.speed) items.push(input.speed);
 
   const overflowStatuses = Array.from(input.statuses.entries())

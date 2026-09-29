@@ -39,25 +39,61 @@ function isScratch(absoluteTarget) {
   });
 }
 
+function inQuotedOrCommentedText(command, index) {
+  let quote = null;
+  let comment = false;
+  for (let i = 0; i < index; i++) {
+    const char = command[i];
+    if (comment) {
+      if (char === "\n") comment = false;
+    } else if (char === "\\" && quote !== "'") {
+      i++;
+    } else if (char === quote) {
+      quote = null;
+    } else if (quote) {
+      continue;
+    } else if (char === "'" || char === '"') {
+      quote = char;
+    } else if (char === "#" && (i === 0 || /[\s;&|]/.test(command[i - 1]))) {
+      comment = true;
+    }
+  }
+  return quote !== null || comment;
+}
+
 function destructiveRm(command, isSubagent) {
-  const match = command.match(/\brm\s+((?:-[^\s]+\s+)+)([^\s;&|]+)/);
-  if (!match) return false;
+  let firstMatch = true;
+  for (const match of command.matchAll(/\brm\s+((?:-[^\s]+\s+)+)([^\n;&|]+)/g)) {
+    // Retain the first lexical match; don't treat later comments/arguments as commands.
+    if (!firstMatch && inQuotedOrCommentedText(command, match.index)) continue;
+    firstMatch = false;
+    const flags = match[1].replaceAll(/[^A-Za-z]/g, "");
+    if (!flags.includes("r") || !flags.includes("f")) continue;
 
-  const flags = match[1].replaceAll(/[^A-Za-z]/g, "");
-  if (!flags.includes("r") || !flags.includes("f")) return false;
+    let endOfOptions = /(?:^|\s)--\s*$/.test(match[1]);
+    for (const operand of match[2].trim().split(/\s+/)) {
+      if (operand === "--") {
+        endOfOptions = true;
+        continue;
+      }
+      if (operand.startsWith("#") || /^\d*[<>]/.test(operand)) break;
+      if (!endOfOptions && operand.length > 1 && operand.startsWith("-")) continue;
 
-  const target = match[2].replace(/^["']|["']$/g, "");
-  const homeRelative = /^(?:~|\$HOME|\$\{HOME\})(?:\/|$)/.test(target);
+      const target = operand.replace(/^["']|["']$/g, "");
+      const homeRelative = /^(?:~|\$HOME|\$\{HOME\})(?:\/|$)/.test(target);
 
-  if (!homeRelative && isScratch(resolve(target))) return false;
-  if (isSubagent) return true;
-  if (homeRelative) return true;
+      if (!homeRelative && isScratch(resolve(target))) continue;
+      if (isSubagent) return true;
+      if (homeRelative) return true;
 
-  const absoluteTarget = resolve(target);
-  const fromWorkspace = relative(process.cwd(), absoluteTarget);
-  return isAbsolute(target) || target.startsWith("..")
-    ? fromWorkspace === ".." || fromWorkspace.startsWith(`..${process.platform === "win32" ? "\\" : "/"}`)
-    : false;
+      const absoluteTarget = resolve(target);
+      const fromWorkspace = relative(process.cwd(), absoluteTarget);
+      if (fromWorkspace === ".." || fromWorkspace.startsWith(`..${process.platform === "win32" ? "\\" : "/"}`)) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 export function inspectDestructiveCommand(command, { isSubagent }) {

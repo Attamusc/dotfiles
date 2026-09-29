@@ -111,13 +111,10 @@ Before marking done:
 
 ### 6. Commit
 
-Load the commit skill and make a polished, descriptive commit:
-```
-/skill:commit
-```
+Read `~/.pi/agent/skills/commit/SKILL.md` and make a polished, descriptive commit.
 
 ### 7. Close the Todo
 
 ```
-todo(action: "update", id: "TODO-xxxx", status: "closed")
+todo(action: "update", id: "TODO-xxxx", status: "done")
 ```

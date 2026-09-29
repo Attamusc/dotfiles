@@ -26,7 +26,9 @@ then
   source ~/.localrc
 fi
 
+{{ if eq .chezmoi.os "linux" -}}
 export SSH_AUTH_SOCK="${XDG_RUNTIME_DIR}/ssh-agent.socket"
+{{ end -}}
 
 {{ if not .headless -}}
 if (( $+commands[starship] )); then
