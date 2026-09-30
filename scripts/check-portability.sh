@@ -350,6 +350,7 @@ git filter-repo
 gpg
 hx
 jq
+just
 mosh
 ps
 rg
@@ -382,6 +383,7 @@ hx
 jj
 jjui
 jq
+just
 lazygit
 mise
 mosh

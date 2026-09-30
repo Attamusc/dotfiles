@@ -68,7 +68,7 @@ responsible stage. Re-running `./install.sh` resumes the idempotent stages.
 The shared workflow includes:
 
 - Shell: `zsh`, Sheldon, Starship, zoxide
-- Core CLI: bat, eza, fd, fzf, ripgrep, jq, tree, curl, wget, Spin
+- Core CLI: bat, eza, fd, fzf, ripgrep, jq, just, tree, curl, wget, Spin
 - Terminal/editor: Herdr, tmux, TPM, Bob-managed Neovim, Helix
 - Version control: Git, gh, jj, delta, tig, ghq, git-filter-repo, lazygit, jjui
 - Agents: Pi, OpenCode, Copilot CLI
@@ -229,7 +229,7 @@ After apply, open a fresh terminal or reconnect over SSH, then run these in that
 new login shell:
 
 ```sh
-command -v herdr nvim hx pi opencode copilot gh jj tv mosh spin go cargo rustc node npm npx
+command -v herdr nvim hx pi opencode copilot gh jj just tv mosh spin go cargo rustc node npm npx
 command -v nvim
 nvim --headless '+qa'
 pi list

@@ -17,6 +17,7 @@ jq
 mosh
 procps-ng
 ripgrep
+rust-just
 tig
 tmux
 tree
