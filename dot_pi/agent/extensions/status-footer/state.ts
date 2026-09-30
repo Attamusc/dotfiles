@@ -97,10 +97,27 @@ export function formatCost(cost: number, subscription: boolean): string {
   return subscription ? `${value} (sub)` : value;
 }
 
+export function formatMcpSummary(
+  tools: readonly { exposure: string; namespace?: { name: string } }[],
+): string {
+  const servers = new Set<string>();
+  let count = 0;
+
+  for (const tool of tools) {
+    const namespace = tool.namespace?.name;
+    if (!namespace?.startsWith("mcp__") || tool.exposure === "hidden") continue;
+    servers.add(namespace);
+    count += 1;
+  }
+
+  return servers.size === 0 ? "MCP 0 tools" : `MCP ${servers.size} srv / ${count} tools`;
+}
+
 export function composeFooterRuntime(input: {
   context: string;
   cost: string;
   speed?: string;
+  mcp?: string;
   subscription: boolean;
   statuses: ReadonlyMap<string, string>;
 }): { items: string[]; overflowStatuses: string[] } {
@@ -109,6 +126,7 @@ export function composeFooterRuntime(input: {
 
   items.push(input.subscription && subscriptionUsage ? subscriptionUsage : input.cost);
   if (input.speed) items.push(input.speed);
+  if (input.mcp) items.push(input.mcp);
 
   const overflowStatuses = Array.from(input.statuses.entries())
     .filter(([id]) => !input.subscription || id !== "subscription-usage")

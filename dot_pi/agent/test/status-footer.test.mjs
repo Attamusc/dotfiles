@@ -8,6 +8,7 @@ import {
   findJjWorkspace,
   JJ_TEMPLATE,
   formatCost,
+  formatMcpSummary,
   formatTokenCount,
   parseGitState,
   parseJjState,
@@ -102,6 +103,45 @@ test("footer values use compact formatting and preserve styled extension statuse
   assert.equal(formatCost(0.1234, false), "$0.123");
   assert.equal(sanitizeLabel("hello\nworld\x1b[31m"), "hello world");
   assert.equal(sanitizeStatusLine("\x1b[31mMCP\x1b[0m\nready"), "\x1b[31mMCP\x1b[0m ready");
+});
+
+test("MCP summary counts namespaces and non-hidden tools across exposures", () => {
+  const tools = [
+    { exposure: "direct", namespace: { name: "mcp__docs" } },
+    { exposure: "codemode", namespace: { name: "mcp__docs" } },
+    { exposure: "deferred", namespace: { name: "mcp__code" } },
+    { exposure: "hidden", namespace: { name: "mcp__code" } },
+    { exposure: "hidden", namespace: { name: "mcp__disabled" } },
+    { exposure: "direct", namespace: { name: "local" } },
+    { exposure: "direct" },
+  ];
+
+  assert.equal(formatMcpSummary(tools), "MCP 2 srv / 3 tools");
+});
+
+test("MCP summary shows zero when no non-hidden MCP tools are registered", () => {
+  assert.equal(formatMcpSummary([]), "MCP 0 tools");
+  assert.equal(formatMcpSummary([
+    { exposure: "direct" },
+    { exposure: "hidden", namespace: { name: "mcp__disabled" } },
+  ]), "MCP 0 tools");
+});
+
+test("MCP summary follows speed inline without adding an overflow line", () => {
+  const mcp = "\x1b[90mMCP 2 srv / 3 tools\x1b[0m";
+  const result = composeFooterRuntime({
+    context: "ctx 42.0%/200k",
+    cost: "$0 (sub)",
+    speed: "63 tok/s",
+    mcp,
+    subscription: true,
+    statuses: new Map([["subscription-usage", "7d 8%"]]),
+  });
+
+  assert.deepEqual(result, {
+    items: ["ctx 42.0%/200k", "7d 8%", "63 tok/s", mcp],
+    overflowStatuses: [],
+  });
 });
 
 test("subscription without a quota status keeps its cost display", () => {

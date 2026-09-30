@@ -11,6 +11,7 @@ import {
   composeFooterRuntime,
   findJjWorkspace,
   formatCost,
+  formatMcpSummary,
   formatTokenCount,
   JJ_REVSET,
   JJ_TEMPLATE,
@@ -259,6 +260,7 @@ export default function statusFooter(pi: ExtensionAPI) {
             ...(speed === null
               ? {}
               : { speed: theme.fg("muted", `${Math.round(speed)} tok/s`) }),
+            mcp: theme.fg("muted", formatMcpSummary(pi.getAllTools())),
             subscription,
             statuses: footerData.getExtensionStatuses(),
           });
