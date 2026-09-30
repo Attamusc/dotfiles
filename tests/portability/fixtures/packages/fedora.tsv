@@ -14,10 +14,10 @@ git-filter-repo	git filter-repo
 gnupg2	gpg
 helix	hx
 jq	jq
+just	just
 mosh	mosh
 procps-ng	ps
 ripgrep	rg
-rust-just	just
 tig	tig
 tmux	tmux
 tree	tree
