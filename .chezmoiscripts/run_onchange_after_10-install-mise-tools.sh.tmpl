@@ -47,9 +47,9 @@ exit 1
 "$mise_bin" --version
 MISE_YES=1 MISE_GLOBAL_CONFIG_FILE="$config" "$mise_bin" install --verbose
 
-commands=(node npm npx go rustc cargo spin)
+commands=(node npm npx pi go rustc cargo spin)
 {{ if and (eq .chezmoi.os "linux") (eq .chezmoi.osRelease.id "fedora") (eq .chezmoi.osRelease.versionID "44") -}}
-commands+=(sheldon starship herdr jj ghq tv lazygit jjui bob opencode pi copilot)
+commands+=(sheldon starship herdr jj ghq tv lazygit jjui bob opencode copilot)
 {{ end -}}
 
 for command_name in "${commands[@]}"; do

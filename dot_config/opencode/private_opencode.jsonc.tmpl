@@ -10,7 +10,7 @@
 {{- $mcp := dict -}}
 {{- range $name, $server := $servers -}}
 {{-   $enabled := true -}}
-{{-   if and (hasKey $server "disabled") (eq (index $server "disabled") true) -}}
+{{-   if and (hasKey $server "enabled") (eq (index $server "enabled") false) -}}
 {{-     $enabled = false -}}
 {{-   end -}}
 {{-   if hasKey $server "url" -}}
@@ -20,25 +20,21 @@
 {{-     end -}}
 {{-     if hasKey $server "oauth" -}}
 {{-       $oauth := index $server "oauth" -}}
-{{-       if kindIs "bool" $oauth -}}
-{{-         $_ := set $entry "oauth" $oauth -}}
-{{-       else -}}
-{{-         $openCodeOAuth := dict -}}
-{{-         range $key := list "clientId" "clientSecret" "scope" "redirectUri" -}}
-{{-           if hasKey $oauth $key -}}
-{{-             $_ := set $openCodeOAuth $key (index $oauth $key) -}}
-{{-           end -}}
+{{-       $openCodeOAuth := dict -}}
+{{-       range $key := list "clientId" "clientSecret" "scope" -}}
+{{-         if hasKey $oauth $key -}}
+{{-           $_ := set $openCodeOAuth $key (index $oauth $key) -}}
 {{-         end -}}
-{{-         $_ := set $entry "oauth" $openCodeOAuth -}}
 {{-       end -}}
-{{-     else if hasKey $server "auth" -}}
-{{-       $auth := index $server "auth" -}}
-{{-       if kindIs "bool" $auth -}}
-{{-         $_ := set $entry "oauth" $auth -}}
+{{-       if hasKey $oauth "callbackUrl" -}}
+{{-         $_ := set $openCodeOAuth "redirectUri" (index $oauth "callbackUrl") -}}
+{{-       else if hasKey $oauth "callbackPort" -}}
+{{-         $_ := set $openCodeOAuth "redirectUri" (printf "http://127.0.0.1:%v/callback" (index $oauth "callbackPort")) -}}
 {{-       end -}}
+{{-       $_ := set $entry "oauth" $openCodeOAuth -}}
 {{-     end -}}
-{{-     if hasKey $server "requestTimeoutMs" -}}
-{{-       $_ := set $entry "timeout" (index $server "requestTimeoutMs") -}}
+{{-     if hasKey $server "timeout" -}}
+{{-       $_ := set $entry "timeout" (mulf (index $server "timeout") 1000) -}}
 {{-     end -}}
 {{-     $_ := set $mcp $name $entry -}}
 {{-   else if hasKey $server "command" -}}
@@ -53,8 +49,8 @@
 {{-     if hasKey $server "env" -}}
 {{-       $_ := set $entry "environment" (deepCopy (index $server "env")) -}}
 {{-     end -}}
-{{-     if hasKey $server "requestTimeoutMs" -}}
-{{-       $_ := set $entry "timeout" (index $server "requestTimeoutMs") -}}
+{{-     if hasKey $server "timeout" -}}
+{{-       $_ := set $entry "timeout" (mulf (index $server "timeout") 1000) -}}
 {{-     end -}}
 {{-     $_ := set $mcp $name $entry -}}
 {{-   else -}}

@@ -59,9 +59,17 @@ node scripts/check-pi-workflows-package.mjs \
   --candidate "$TEST_ROOT" --revision "$PIN"
 ```
 
-The setup hook is content-addressed to public and private settings. If its
-execution is separately approved on a host, it reconciles packages with
-`pi update --extensions` before installing Herdr's managed Pi integration.
+Pi 0.99.1 is pinned through mise's npm backend on both macOS and Fedora;
+Homebrew owns Herdr on macOS, not Pi. Built-in MCP reads the merged
+`mcpServers` configuration without the adapter package. The setup hook is
+content-addressed to public and private settings. If its execution is
+separately approved on a host, it reconciles configured Git pins
+with per-package `pi update --extension` calls before installing Herdr's
+managed Pi integration. Unpinned checkouts are left for a separate update.
+On a fresh host, the first online Pi startup installs missing declared packages;
+that first install can run package lifecycle scripts. Existing unpinned checkouts
+are not refreshed merely by starting Pi. The pinned-package update command also
+installs a missing configured checkout.
 There is no second installer, package symlink, tmux/cmux fallback, lifecycle
 manager, or status reporter.
 

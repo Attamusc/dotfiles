@@ -325,7 +325,7 @@ The planner and the `implement` and `code-review` skills share `~/.pi/agent/skil
 
 ## MCP Servers
 
-The following MCP servers are configured via `mcp.json` and bridged through `pi-mcp-adapter`:
+Built-in Pi MCP reads `~/.pi/agent/mcp.json`; servers use native `mcpServers` entries. Use `pi mcp list` to inspect connections and `/mcp` to manage them. The following servers are configured:
 
 - **Kusto** — Azure Data Explorer queries via `@azure/mcp`
 - **WorkIQ** — Microsoft 365 Copilot integration via `@microsoft/workiq`

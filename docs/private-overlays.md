@@ -61,6 +61,23 @@ complete public server value with the same key. Put machine-local servers in
 Pi's native format and OpenCode's `mcp` format. OpenCode's rendered config is
 mode `0600` because server entries may contain credentials.
 
+Use Pi's built-in MCP schema for this registry: `enabled: false` disables a
+server, `exposure: "direct"` exposes its tools directly, and `timeout` is in
+seconds. OpenCode rendering converts that timeout to milliseconds. HTTP OAuth
+uses `callbackUrl` or `callbackPort`; OpenCode receives the corresponding
+`redirectUri`. For a shared HTTP server, put the explicit port in `callbackUrl`
+when also setting `callbackPort`; the converter does not add a missing URL port.
+It also does not translate Pi's `${NAME}` or `!command` credential interpolation
+into OpenCode's syntax. Keep those Pi-only forms out of the shared registry.
+Adapter-specific fields such as `directTools`, `disabled`, and
+`requestTimeoutMs` are not part of this registry.
+
+Pi loads `builtin:mcp` by default. Do not also configure `pi-mcp-adapter`.
+Built-in server management uses `/mcp` or `pi mcp list`; default tool exposure
+uses codemode, with tool search available for deferred tools. Existing server
+credentials stay in machine-local configuration or the server's own auth store,
+not in the public source.
+
 ```json
 {
   "mcpServers": {

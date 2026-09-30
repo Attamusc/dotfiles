@@ -3,7 +3,6 @@
   "defaultModel": "gpt-6-sol",
   "defaultThinkingLevel": "high",
   "packages": [
-    "git:github.com/nicobailon/pi-mcp-adapter",
     "git:github.com/HazAT/glimpse",
     "git:github.com/Attamusc/pi-interactive-subagents@7c22027d4c4948d6a63ef0181eb8c14d252f4d4b",
     "git:github.com/HazAT/pi-autoresearch",
@@ -19,6 +18,6 @@
   "theme": "catppuccin-macchiato",
   "hideThinkingBlock": false,
   "editorPaddingX": 2,
-  "lastChangelogVersion": "0.85.1",
+  "lastChangelogVersion": "0.99.1",
   "tuiMode": "fullscreen"
 }

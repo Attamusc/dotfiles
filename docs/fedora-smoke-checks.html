@@ -695,9 +695,9 @@ echo "$BOB_CONFIG"
           <p>The filter shows only public package declarations and hides local paths and unrelated private entries.</p>
           <div class="command">
             <div class="command-bar"><span>Fedora terminal</span><button class="copy-button" type="button">Copy</button></div>
-            <pre><code>pi list | grep -E '^  git:github.com/(nicobailon/pi-mcp-adapter|HazAT/(glimpse|pi-autoresearch)|carderne/pi-nvim|Attamusc/(pi-interactive-subagents|pi-herdr|pi-television|pi-hunk-review))'</code></pre>
+            <pre><code>pi list | grep -E '^  git:github.com/(HazAT/(glimpse|pi-autoresearch)|carderne/pi-nvim|Attamusc/(pi-interactive-subagents|pi-television|pi-hunk-review|pi-lsp|pi-workflows))'</code></pre>
           </div>
-          <div class="expectation"><strong>Pass</strong><p>Eight public package lines appear, including <code>git:github.com/Attamusc/pi-hunk-review@v0.1.1</code>, with no package-loading error.</p></div>
+          <div class="expectation"><strong>Pass</strong><p>Eight public package lines appear (built-in MCP is not a package), including <code>git:github.com/Attamusc/pi-hunk-review@v0.1.1</code>, with no package-loading error.</p></div>
           <div class="verdict">
             <button class="state-button pass" data-state="pass" type="button">Pass</button>
             <button class="state-button fail" data-state="fail" type="button">Fail</button>

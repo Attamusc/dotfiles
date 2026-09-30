@@ -83,12 +83,18 @@ The shared workflow includes:
 | Go, Node, and Rust | mise | mise |
 | Spin | mise Go backend | mise Go backend |
 | Fedora package gaps | — | mise/Aqua |
-| Pi | Homebrew | mise npm backend |
+| Pi | mise npm backend | mise npm backend |
 | Copilot CLI | Homebrew cask | mise npm backend |
 | Datadog Pup CLI and product skills | Homebrew + `~/.agents/skills/` | — |
 | Neovim | Bob stable | Bob stable |
 | Neovim parser toolchain | Xcode compiler + Homebrew tree-sitter CLI | DNF GCC + tree-sitter CLI |
 | pi-hunk-review core | Authenticated release archive | Authenticated release archive |
+
+Pi's exact version is pinned in `dot_config/mise/config.toml.tmpl` for both
+platforms. To upgrade Pi, change that pin, preview and apply the managed mise
+config, then run `mise install npm:@earendil-works/pi-coding-agent`. Use mise for
+Pi itself, not `pi update` or a separate global npm install. Pi extension package
+pins are separate and reconcile only through the per-package setup hook.
 
 Bob keeps previously installed Neovim versions as the rollback lane. Removing a
 package from a manifest does not uninstall it from an existing host.

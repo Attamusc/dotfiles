@@ -190,7 +190,8 @@ test("managed package wiring preserves the staged activation boundary", async ()
   const setup = await readFile(join(root, ".chezmoiscripts/run_onchange_after_30-setup-pi.sh.tmpl"), "utf8");
   assert.match(setup, /Public Pi settings SHA-256:/);
   assert.match(setup, /Private Pi settings SHA-256:/);
-  assert.match(setup, /pi update --extensions[\s\S]*herdr integration install pi/);
+  assert.match(setup, /pi update --extension[\s\S]*herdr integration install pi/);
+  assert.doesNotMatch(setup, /pi update --extensions\b/);
   assert.doesNotMatch(setup, new RegExp(`\\|\\|\\s*(?::|true|echo)|tmux|pi-${"herdr"}|pi-${"cm" + "ux"}|herdr\\s+(?:serve|server|daemon|start-server)|sendStatus`));
 
   const docs = await readFile(join(root, "docs/pi-workflows.md"), "utf8");

@@ -386,7 +386,6 @@ lazygit
 mise
 mosh
 opencode
-pi
 pup
 rg
 sheldon
@@ -736,6 +735,7 @@ shared = {
     },
     "node": "24",
     "rust": "1.97",
+    "npm:@earendil-works/pi-coding-agent": "0.99.1",
 }
 assert darwin == shared
 assert fedora == {
@@ -746,7 +746,6 @@ assert fedora == {
     "jj": "0.44.0",
     "jjui": "0.10.9",
     "lazygit": "0.64.0",
-    "npm:@earendil-works/pi-coding-agent": "0.83.0",
     "npm:@github/copilot": "1",
     "opencode": "1",
     "sheldon": "0.8.5",
@@ -773,10 +772,10 @@ PY
   ! grep -Fq 'https://mise.run' "$darwin_hook" || fail "macOS hook bypasses Homebrew mise ownership"
   grep -Fq 'mise_prefix=$("$brew" --prefix mise)' "$darwin_hook" || \
     fail "macOS hook does not resolve mise through Homebrew ownership"
-  grep -Fq 'commands=(node npm npx go rustc cargo spin)' "$darwin_hook" || \
+  grep -Fq 'commands=(node npm npx pi go rustc cargo spin)' "$darwin_hook" || \
     fail "macOS mise command baseline is incomplete"
   ! grep -Fq 'commands+=' "$darwin_hook" || fail "macOS mise config claims Fedora tool ownership"
-  grep -Fq 'commands+=(sheldon starship herdr jj ghq tv lazygit jjui bob opencode pi copilot)' "$fedora_hook" || \
+  grep -Fq 'commands+=(sheldon starship herdr jj ghq tv lazygit jjui bob opencode copilot)' "$fedora_hook" || \
     fail "Fedora mise command baseline is incomplete"
 
   cp "$PUBLIC_SOURCE/$config_template" "$template_backup"
@@ -1161,7 +1160,6 @@ settings=json.loads(pathlib.Path(sys.argv[1]).read_text())
 mcp=json.loads(pathlib.Path(sys.argv[2]).read_text())
 opencode=json.loads(pathlib.Path(sys.argv[3]).read_text())
 expected_packages=[
-    "git:github.com/nicobailon/pi-mcp-adapter",
     "git:github.com/HazAT/glimpse",
     "git:github.com/Attamusc/pi-interactive-subagents@7c22027d4c4948d6a63ef0181eb8c14d252f4d4b",
     "git:github.com/HazAT/pi-autoresearch",
@@ -1182,7 +1180,8 @@ for package in settings["packages"]:
         continue
     if package.startswith("git:github.com/Attamusc/"):
         assert re.search(r"@[0-9a-f]{40}$", package)
-assert mcp == {"settings": {"samplingAutoApprove": True}, "mcpServers": {}}
+assert mcp == {"mcpServers": {}}
+assert settings["lastChangelogVersion"] == "0.99.1"
 assert opencode == {
     "$schema": "https://opencode.ai/config.json",
     "model": "github-copilot/gpt-6-sol",
@@ -1302,12 +1301,12 @@ PY
       "args": ["--flag"],
       "env": {"SYNTHETIC_TOKEN": "placeholder"},
       "cwd": "/synthetic/work",
-      "requestTimeoutMs": 9000
+      "timeout": 9.5
     },
     "synthetic-disabled": {
       "command": "disabled-command",
-      "disabled": true,
-      "directTools": true
+      "enabled": false,
+      "exposure": "direct"
     },
     "synthetic-remote": {
       "url": "https://example.invalid/mcp",
@@ -1316,14 +1315,17 @@ PY
         "clientId": "synthetic-client",
         "clientSecret": "synthetic-secret",
         "scope": "synthetic-scope",
-        "redirectUri": "http://127.0.0.1:19876/mcp/oauth/callback",
-        "clientName": "Pi-only field"
+        "callbackUrl": "http://127.0.0.1:19876/mcp/oauth/callback"
       },
-      "requestTimeoutMs": 12000
+      "timeout": 12
     },
     "synthetic-remote-no-auth": {
       "url": "https://no-auth.example.invalid/mcp",
-      "auth": false
+      "enabled": true
+    },
+    "synthetic-port": {
+      "url": "https://port.example.invalid/mcp",
+      "oauth": {"clientId": "synthetic-client", "callbackPort": 8765}
     }
   }
 }
@@ -1350,7 +1352,7 @@ assert mcp == {
         "environment": {"SYNTHETIC_TOKEN": "placeholder"},
         "cwd": "/synthetic/work",
         "enabled": True,
-        "timeout": 9000,
+        "timeout": 9500,
     },
     "synthetic-disabled": {
         "type": "local",
@@ -1373,7 +1375,12 @@ assert mcp == {
     "synthetic-remote-no-auth": {
         "type": "remote",
         "url": "https://no-auth.example.invalid/mcp",
-        "oauth": False,
+        "enabled": True,
+    },
+    "synthetic-port": {
+        "type": "remote",
+        "url": "https://port.example.invalid/mcp",
+        "oauth": {"clientId": "synthetic-client", "redirectUri": "http://127.0.0.1:8765/callback"},
         "enabled": True,
     },
 }
@@ -1387,16 +1394,20 @@ PY
     fail "Pi hook is not content-addressed to public settings"
   grep -Fq '# Private Pi settings SHA-256:' "$PUBLIC_SOURCE/$hook" || \
     fail "Pi hook is not content-addressed to private settings"
-  grep -Fq '"$pi_bin" update --extensions' "$darwin_hook" || \
-    fail "macOS Pi hook does not reconcile configured extensions"
-  grep -Fq '"$herdr_bin" integration install pi' "$darwin_hook" || \
-    fail "macOS Pi hook does not install Herdr-managed Pi integration"
-  grep -Fq 'brew_prefix=$("$brew" --prefix)' "$darwin_hook" || \
-    fail "macOS Pi ownership is not Homebrew-derived"
+  grep -Fq '"$mise_bin" exec -- pi update --extension "$package"' "$darwin_hook" || \
+    fail "macOS Pi hook does not reconcile pinned packages through mise"
+  grep -Fq '"$mise_bin" exec -- "$herdr_bin" integration install pi' "$darwin_hook" || \
+    fail "macOS Herdr integration does not see the mise-managed Pi environment"
+  grep -Fq 'mise_prefix=$("$brew" --prefix mise)' "$darwin_hook" || \
+    fail "macOS Pi mise ownership is not Homebrew-derived"
   grep -Fq '"$mise_bin" which pi' "$fedora_hook" || fail "Fedora Pi ownership is not mise-derived"
   grep -Fq '"$mise_bin" exec -- pi --version' "$fedora_hook" || \
     fail "Fedora Pi version check does not run inside mise"
-  grep -Fq '"$mise_bin" exec -- pi update --extensions' "$fedora_hook" || \
+  grep -Fq '"$mise_bin" exec -- pi --version' "$darwin_hook" || \
+    fail "macOS Pi version check does not run inside mise"
+  ! grep -Fq 'pi_bin="$brew_prefix/bin/pi"' "$darwin_hook" || \
+    fail "macOS Pi hook still selects Homebrew Pi"
+  grep -Fq '"$mise_bin" exec -- pi update --extension "$package"' "$fedora_hook" || \
     fail "Fedora Pi reconciliation does not run inside mise"
   grep -Fq '"$mise_bin" exec -- herdr integration install pi' "$fedora_hook" || \
     fail "Fedora Pi hook does not install Herdr-managed Pi integration"
@@ -1406,13 +1417,15 @@ PY
     fail "Pi hook does not configure GitHub credentials in the local Git seam"
   grep -Fq 'GIT_TERMINAL_PROMPT=0 MISE_GLOBAL_CONFIG_FILE=' "$fedora_hook" || \
     fail "Fedora Pi reconciliation can prompt for a GitHub password"
-  grep -Fq 'GIT_TERMINAL_PROMPT=0 "$pi_bin" update --extensions' "$darwin_hook" || \
+  grep -Fq 'GIT_TERMINAL_PROMPT=0 MISE_GLOBAL_CONFIG_FILE=' "$darwin_hook" || \
     fail "macOS Pi reconciliation can prompt for a GitHub password"
   for rendered_hook in "$darwin_hook" "$fedora_hook"; do
-    update_line=$(grep -n 'update --extensions' "$rendered_hook" | cut -d: -f1)
+    update_line=$(grep -n 'update --extension "$package"' "$rendered_hook" | cut -d: -f1)
     herdr_line=$(grep -n 'integration install pi' "$rendered_hook" | cut -d: -f1)
     [[ -n "$update_line" && -n "$herdr_line" && "$update_line" -lt "$herdr_line" ]] || \
-      fail "Pi packages must reconcile before Herdr integration installation"
+      fail "Pinned Pi packages must reconcile before Herdr integration installation"
+    ! grep -Fq 'update --extensions' "$rendered_hook" || \
+      fail "Pi setup would update unpinned packages"
     ! grep -Eiq 'pi-herdr|pi-cmux|tmux|sendStatus|agent_(start|end)|session_(start|shutdown)' "$rendered_hook" || \
       fail "Pi setup duplicates fallback, lifecycle, or status ownership"
   done
@@ -1422,8 +1435,11 @@ PY
     fail "Pi package reconciliation suppresses required failures"
   fi
 
-  mkdir -p "$(dirname "$mise_stub")" "$(dirname "$fake_pi")" "$mise_home/.config/mise"
+  mkdir -p "$(dirname "$mise_stub")" "$(dirname "$fake_pi")" "$mise_home/.config/mise" "$mise_home/.pi/agent"
   : >"$mise_home/.config/mise/config.toml"
+  cat >"$mise_home/.pi/agent/settings.json" <<'EOF'
+{"packages":["git:github.com/example/moving","git:github.com/example/empty@","git:github.com/example/pinned@0123456789abcdef0123456789abcdef01234567","git:github.com/example/second@abcdef0123456789abcdef0123456789abcdef01"]}
+EOF
   cat >"$mise_stub" <<'EOF'
 #!/bin/sh
 expected="$HOME/.config/mise/config.toml"
@@ -1434,6 +1450,10 @@ if [ "${1:-}" = which ] && [ "${2:-}" = pi ]; then
   exit 0
 fi
 if [ "${1:-}" = exec ]; then
+  [ "$PWD" = "$HOME" ] || exit 95
+  if [ "${3:-}" = pi ] && [ "${4:-}" = update ]; then
+    [ -z "$(cat)" ] || exit 96
+  fi
   exit 0
 fi
 exit 92
@@ -1462,7 +1482,8 @@ EOF
   cat >"$mise_stub_expected" <<'EOF'
 which pi
 exec -- pi --version
-exec -- pi update --extensions
+exec -- pi update --extension git:github.com/example/pinned@0123456789abcdef0123456789abcdef01234567
+exec -- pi update --extension git:github.com/example/second@abcdef0123456789abcdef0123456789abcdef01
 exec -- herdr integration install pi
 EOF
   diff -u "$mise_stub_expected" "$mise_stub_log" >/dev/null || \
