@@ -733,7 +733,7 @@ shared = {
         "version": "0.0.0-20260315212148-2c0a74c0db03",
         "depends": "go",
     },
-    "node": "24",
+    "node": "25.8.1",
     "rust": "1.97",
     "npm:@earendil-works/pi-coding-agent": "0.99.1",
 }
