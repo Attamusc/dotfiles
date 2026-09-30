@@ -1,5 +1,6 @@
 font-family =
-font-family = MonoLisaCode Minimal
+# font-family = MonoLisaCode Minimal
+font-family = Monaspace Neon NF
 font-style = Light
 font-style-bold = Regular
 font-style-bold-italic = Regular Italic

@@ -1,3 +1,13 @@
+[catalogs]
+searchPriorities = []
+sortOrders = []
+
+    [[catalogs.globalScopes]]
+    catalogIdentifier = 'tuna.commands'
+
+        [catalogs.globalScopes.scope]
+        kind = 'none'
+
 [[comboMode.bindings]]
 iconPath = 'cat'
 key = 'a'

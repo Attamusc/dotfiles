@@ -47,3 +47,6 @@ next_workspace = "cmd+ctrl+j"
 
 # Jump directly to a tab by number, matching cmux's surface selection.
 switch_tab = "ctrl+1..9"
+
+# Let Creator Control focus the corresponding row in Herdr's agent panel.
+focus_agent = "cmd+ctrl+1..9"
