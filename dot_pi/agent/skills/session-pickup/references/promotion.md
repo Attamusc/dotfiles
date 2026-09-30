@@ -1,5 +1,7 @@
 # Exact durable promotion
 
+Durable promotion is not activated. Stop at read-only reconstruction or protocol handoff; do not invoke owner writes or claim verified durable success. Step 4 below specifies a future owner contract, not an available writer; its root-identity, bounded-response, and descriptor-safe-write contracts remain unverified.
+
 Promotion is a second, explicit step after pickup. It consumes one already-produced clean proposal; it never reads a session or repairs redacted evidence.
 
 ## Protocol
