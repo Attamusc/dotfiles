@@ -1,6 +1,6 @@
 ---
 name: control-cli
-description: "Select an existing host capability for bounded CLI execution and require approval, lifecycle ownership, and exit evidence. Use for controlled commands, visible interactive Pi agents, or repeatable saved pipelines."
+description: "Select an existing host capability for bounded CLI execution and require approval, lifecycle ownership, and exit evidence. Use for controlled commands, visible interactive Pi agents, persistent Herdr peers, or repeatable saved pipelines."
 ---
 
 # Control CLI
@@ -34,7 +34,7 @@ Before every launch, declare:
 - cleanup obligation and the host capability that owns it;
 - owner-provided signal that will prove completion and process exit for an ordinary command or Pi child; for a persistent peer, separate turn-settlement evidence from eventual Herdr-owned removal/exit proof.
 
-For a persistent peer, also declare the host-discovered harness/provider/model separately from the task name, exact pane and agent target, native tool/permission/trust policy (including effective plugins, MCP and hooks), focus behavior, one-prompt-at-a-time observation plan, retention window, and separately approved cleanup plan. A tool flag alone does not establish isolation. If the effective capability restrictions or lifecycle owner cannot be established, do not launch; report `unsupported`. Never automatically accept permission or trust prompts.
+For a persistent peer, also declare the host-discovered harness/provider/model separately from the task name, exact pane and agent target, requested native tool/permission/trust restrictions (including plugins, MCP and hooks), focus behavior, single-submitter and one-outstanding-prompt plan, retention window, and separately approved cleanup plan. Before launch, establish that the installed native harness supports the requested restriction boundary and preflight its launch configuration and applicable settings; help text or a flag alone does not prove effective isolation. If the required supported/configured boundary or lifecycle owner cannot be established, do not launch; report `unsupported`. After approved startup, separately observe the actual runtime capabilities at startup or the first turn. A model's self-report is not enforcement evidence. If capabilities are unexpected or cannot be established, stop and retain the peer for human review; do not continue substantive work. Never automatically accept permission or trust prompts.
 
 For every mutating interaction, show the full preflight and obtain explicit user approval before launch. Approval is specific to that command, target, and mutation. Pi `bash` remains subject to `command-safety`; destructive commands must pass its interactive confirmation and are blocked when confirmation is unavailable. Do not treat earlier approval, task assignment, or skill invocation as approval for a mutation.
 
@@ -62,7 +62,7 @@ Do not read, copy, expose, or store the session transcript through this protocol
 
 ### Persistent controlled-agent peer
 
-Use Herdr's native agent surface for a named, retained collaborator, not `pi-interactive-subagents` or an invented process/session/attention owner. Obtain approval for the exact pane/process mutation before starting; do not change focus merely to retrieve output. Record the Herdr identity and one outstanding turn. Submission acknowledgement is only `submitted`: observe post-submission `working` for that identity before calling the turn `settled` or `blocked`. A standalone wait may match preexisting idle; idle alone does not establish turn correlation or answer quality. Read a bounded answer without marking the human-facing seen state, and assess it against the task before claiming a useful result. On timeout, blocked trust/permission, changed identity, or ambiguous output, stop and report the evidence gap; do not auto-replay, replace the process, or accept a prompt.
+Use Herdr's native agent surface for a named, retained collaborator, not `pi-interactive-subagents` or an invented process/session/attention owner. Obtain approval for the exact pane/process mutation before starting; do not change focus merely to retrieve output. Record the Herdr identity; designate exactly one submitter and allow exactly one outstanding prompt for that peer. Submission acknowledgement is only `submitted`: an observed post-submission `working` for that identity permits later settlement and bounded-answer assessment; an immediately observed post-submission `blocked` is valid without prior `working` and always pauses for human input. Do not treat `blocked` as settled or submit another prompt while it remains outstanding. A standalone wait may match preexisting idle; idle alone does not establish turn correlation or answer quality. Read a bounded settled answer without marking the human-facing seen state, and assess it against the task before claiming a useful result. On timeout, blocked trust/permission, changed identity, or ambiguous output, stop and report the evidence gap; do not auto-replay, replace the process, or accept a prompt.
 
 A settled turn leaves the peer process retained for the agreed window. Report the retained pane as an outstanding resource, not as process exit or Pi-child completion. Closing it requires separate approval for the exact identity; Herdr owns removal and must provide removal/exit proof. A close request alone is not proof, and an unrelated or human-created pane must never be closed.
 
@@ -80,6 +80,6 @@ Report:
 - timeout or stopping-condition outcome;
 - cleanup owner;
 - owner-provided process-exit evidence, or for a peer, the retained identity/window and cleanup status;
-- final state: `complete`, `incomplete`, or `unsupported` for commands and Pi children; for peers, turn state (`submitted`, observed `working`, `settled` or `blocked`, bounded answer assessed) and separate process state (`retained` or Herdr-proven removed/exited).
+- final state: `complete`, `incomplete`, or `unsupported` for commands and Pi children; for peers, turn state (`submitted` → observed `working` → `settled` + bounded answer assessed, or `submitted` → observed `blocked` → human pause) and separate process state (`retained` or Herdr-proven removed/exited).
 
 For commands and Pi children, use `complete` only when the selected owner reports the expected result and proves that no process owned by the interaction remains. A peer's assessed settled turn does not imply process cleanup. A request or acknowledgement to cancel, interrupt, close, or terminate is never sufficient process-exit evidence.

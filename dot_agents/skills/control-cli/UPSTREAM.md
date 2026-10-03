@@ -30,7 +30,8 @@ This skill adapts Cursor Team Kit's `control-cli` skill into a capability-select
 - Added explicit approval for every mutating interaction and retained `command-safety` as the destructive-command approval owner.
 - Preserved interactive-subagent run/session correlation and its distinction between interrupting an active turn and requesting hard termination.
 - Retained the Pi-child owner-proven process-exit completion rule; cancellation, interrupt, and termination-request acknowledgements do not establish completion.
-- Added a distinct persistent Herdr peer class: host-discovered harness/provider/model and effective permissions, one outstanding prompt with observed post-submission activity, bounded answer assessment, an agreed retention window, and separately approved Herdr removal/exit proof. Turn settlement is not peer cleanup or Pi-child completion; trust and permission prompts are never auto-accepted.
+- Added a distinct persistent Herdr peer class, exposed in skill discovery: host-discovered harness/provider/model, supported restriction/configuration preflight before approved launch, and separate runtime capability observation at startup or first turn. Neither flags nor model self-report certify isolation; missing preflight support prevents launch, while uncertain runtime behavior stops substantive work and retains the peer for human review.
+- Require exactly one submitter and one outstanding prompt per peer. Post-submission working permits later settlement and bounded answer assessment; immediate blocked activity requires a human pause without prior working. An agreed retention window and separately approved Herdr removal/exit proof keep turn settlement distinct from peer cleanup and Pi-child completion; trust and permission prompts are never auto-accepted.
 - Prohibit exposing or duplicating session transcript contents; reports reference bounded native evidence instead.
 
 ## Re-sync
