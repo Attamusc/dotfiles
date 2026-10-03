@@ -1,0 +1,69 @@
+#!/usr/bin/env python3
+"""Pick a project or chezmoi dotfiles with Television and open it in Herdr."""
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+
+
+def main():
+    if os.environ.get("HERDR_ENV") != "1":
+        raise ValueError("run this command inside Herdr")
+
+    projects = subprocess.check_output(["ghq", "list", "-p"], text=True).splitlines()
+    projects.append(subprocess.check_output(["chezmoi", "source-path"], text=True).rstrip("\n"))
+    projects = "\n".join(dict.fromkeys(projects)) + "\n"
+
+    picked = subprocess.run(
+        ["tv", "--no-preview", "--no-remote", "--input-header", "Projects",
+         "--keybindings", 'tab="select_next_entry";backtab="select_prev_entry"'],
+        input=projects, stdout=subprocess.PIPE, text=True,
+    )
+    if picked.returncode in (130, -2):
+        return
+    picked.check_returncode()
+    if not picked.stdout.rstrip("\n"):
+        return
+    selected = picked.stdout.splitlines()
+    if len(selected) != 1:
+        raise ValueError("select one project")
+    project = Path(selected[0]).resolve(strict=True)
+    if not project.is_dir():
+        raise ValueError(f"not a project directory: {project}")
+
+    snapshot = json.loads(subprocess.check_output(
+        ["herdr", "api", "snapshot"], text=True,
+    ))["result"]["snapshot"]
+    for pane in snapshot["panes"]:
+        if not pane["cwd"]:
+            continue
+        cwd = Path(pane["cwd"]).resolve()
+        if cwd != project:
+            if project not in cwd.parents:
+                continue
+            # A subdirectory belongs to this project, but a nested worktree does not.
+            root = subprocess.check_output(
+                ["git", "-C", str(cwd), "rev-parse", "--show-toplevel"], text=True,
+            )
+            if Path(root.rstrip("\n")).resolve() != project:
+                continue
+        subprocess.run(
+            ["herdr", "workspace", "focus", pane["workspace_id"]], check=True,
+        )
+        return
+
+    subprocess.run(
+        ["herdr", "workspace", "create", "--cwd", str(project),
+         "--label", project.name, "--focus"], check=True,
+    )
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        sys.exit(0)
+    except (OSError, ValueError, KeyError, TypeError, subprocess.CalledProcessError) as error:
+        print(f"herdr-project: {error}", file=sys.stderr)
+        sys.exit(1)

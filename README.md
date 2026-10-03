@@ -75,6 +75,21 @@ The shared workflow includes:
 - Runtime: mise-managed Go, Node, npm, npx, Rust, Cargo, and rustc
 - Remote shell: mosh
 
+### Herdr project launcher
+
+Press **Ctrl+B, then F** to find a local project with Television. The
+`herdr-project` script combines the same `ghq list -p` project list as `cdr`
+with `chezmoi source-path`, so dotfiles are included even outside the project root.
+Duplicate paths appear only once.
+Selecting a project focuses an existing workspace with a pane in that repository,
+including its subdirectories, or creates a workspace rooted there. Esc cancels.
+Projects with the same directory name are matched by path, not label.
+
+Clone projects with `ghq get owner/repo` to include them in the picker. The
+launcher runs inside Herdr and uses its current session, including named sessions.
+The popup runs through `mise exec` so a long-lived server doesn't use stale tool
+paths after an upgrade.
+
 ### Package authority
 
 | Capability | macOS | Fedora 44 |

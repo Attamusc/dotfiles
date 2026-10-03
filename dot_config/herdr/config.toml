@@ -50,3 +50,12 @@ switch_tab = "ctrl+1..9"
 
 # Let Creator Control focus the corresponding row in Herdr's agent panel.
 focus_agent = "cmd+ctrl+1..9"
+
+# Refresh mise's tool paths: the persistent server may predate a tool upgrade.
+# Find a ghq project, then focus or create its workspace.
+[[keys.command]]
+key = "prefix+f"
+type = "popup"
+command = 'mise exec -- "$HOME/.local/bin/herdr-project"'
+width = "80%"
+height = "70%"
