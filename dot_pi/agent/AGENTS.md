@@ -198,6 +198,8 @@ Subagents spawn visible pi sessions in Herdr panes. The user can watch progress 
 
 This repository configures and guarantees Herdr as its sole Pi/subagent multiplexer. External packages may retain other generic backends, but agents must not route through retired backends or treat tmux as a supported fallback. Herdr starts its per-user server automatically; do not add a second lifecycle manager. Herdr's managed Pi integration owns agent status and Session identity; do not add or restore a separate Pi-to-Herdr status reporter.
 
+For a retained controlled-agent collaborator, use the distinct persistent Herdr peer route in `control-cli`, not a Pi-child completion claim. Choose the task name separately from the host-discovered harness/provider/model and verify effective permissions before an approved launch. Track one outstanding turn from submission through observed work, settlement or block, and bounded answer assessment. Retain the peer for the agreed window; separately approve cleanup and require Herdr removal/exit proof. Do not auto-accept trust or permission prompts. If the approved owner is unavailable, report `unsupported`. This route does not change the read-only, autonomous one-turn Claude review seats below.
+
 The `agent` parameter loads defaults from `~/.pi/agent/agents/<name>.md`. Model, tools, skills, thinking — all inherited. Explicit params override agent defaults.
 
 Every delegation brief must state the target, scope, constraints, expected output, required evidence, and stop condition. Before spawning work keyed by `TODO-…`, fetch it with `todo(action: "get", ...)` and include its resolved scope, constraints, references, and acceptance criteria in the task. Never hand a child only an opaque todo ID.

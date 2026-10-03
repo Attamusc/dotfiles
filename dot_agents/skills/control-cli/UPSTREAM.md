@@ -17,6 +17,7 @@ This skill adapts Cursor Team Kit's `control-cli` skill into a capability-select
 - The local skill owns only interaction classification, capability selection, preflight requirements, and completion-evidence rules.
 - Pi `bash` and `command-safety` own ordinary command execution and destructive-command approval.
 - `pi-interactive-subagents` and Herdr own visible interactive Pi-agent surfaces, run/session identity, interruption, termination, status, and process-exit proof.
+- Herdr alone owns persistent controlled-agent peer panes, processes, and attention state; peer turns and eventual cleanup are distinct.
 - `pi-workflows` owns saved pipelines only after its activation gate passes.
 
 ## Local deviations
@@ -28,7 +29,8 @@ This skill adapts Cursor Team Kit's `control-cli` skill into a capability-select
 - Added a mandatory preflight declaring the exact invocation, target, mutation, timeout or stopping condition, capture boundary, cleanup owner, and evidence path.
 - Added explicit approval for every mutating interaction and retained `command-safety` as the destructive-command approval owner.
 - Preserved interactive-subagent run/session correlation and its distinction between interrupting an active turn and requesting hard termination.
-- Require owner-provided process-exit proof. Cancellation, interrupt, and termination-request acknowledgements do not establish completion.
+- Retained the Pi-child owner-proven process-exit completion rule; cancellation, interrupt, and termination-request acknowledgements do not establish completion.
+- Added a distinct persistent Herdr peer class: host-discovered harness/provider/model and effective permissions, one outstanding prompt with observed post-submission activity, bounded answer assessment, an agreed retention window, and separately approved Herdr removal/exit proof. Turn settlement is not peer cleanup or Pi-child completion; trust and permission prompts are never auto-accepted.
 - Prohibit exposing or duplicating session transcript contents; reports reference bounded native evidence instead.
 
 ## Re-sync
