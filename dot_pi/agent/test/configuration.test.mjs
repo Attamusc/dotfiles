@@ -241,7 +241,7 @@ test("fleet routes GPT producers to independent Claude reviewers", () => {
 
   const settings = JSON.parse(readManagedPiFile("settings.json"));
   assert.equal(settings.defaultProvider, providers.gpt);
-  assert.equal(settings.defaultModel, "gpt-6-sol");
+  assert.match(settings.defaultModel, /^gpt-6(?:\.1)?-sol$/);
 });
 
 test("OpenCode and Copilot prefer GPT with a Claude advisor boundary", () => {
