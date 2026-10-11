@@ -1,6 +1,6 @@
 {
   "defaultProvider": "github-copilot",
-  "defaultModel": "gpt-6-sol",
+  "defaultModel": "gpt-6.1-sol",
   "defaultThinkingLevel": "high",
   "packages": [
     "git:github.com/HazAT/glimpse",
@@ -15,9 +15,9 @@
   "extensions": [
     "+extensions/smart-sessions/index.ts"
   ],
-  "theme": "catppuccin-macchiato",
+  "theme": "system",
   "hideThinkingBlock": false,
   "editorPaddingX": 2,
-  "lastChangelogVersion": "0.99.1",
+  "lastChangelogVersion": "0.99.2",
   "tuiMode": "fullscreen"
 }

@@ -10,7 +10,8 @@ window-padding-balance = true
 window-padding-x = 0
 window-padding-y = 0
 
-theme = Catppuccin Macchiato
+# theme = Catppuccin Macchiato
+theme = Rose Pine
 
 cursor-style-blink = false
 window-inherit-working-directory = true

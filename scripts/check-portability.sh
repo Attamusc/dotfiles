@@ -737,7 +737,7 @@ shared = {
     },
     "node": "25.8.1",
     "rust": "1.97",
-    "npm:@earendil-works/pi-coding-agent": "0.99.1",
+    "npm:@earendil-works/pi-coding-agent": "0.99.2",
 }
 assert darwin == shared
 assert fedora == {
@@ -1183,7 +1183,7 @@ for package in settings["packages"]:
     if package.startswith("git:github.com/Attamusc/"):
         assert re.search(r"@[0-9a-f]{40}$", package)
 assert mcp == {"mcpServers": {}}
-assert settings["lastChangelogVersion"] == "0.99.1"
+assert settings["lastChangelogVersion"] == "0.99.2"
 assert opencode == {
     "$schema": "https://opencode.ai/config.json",
     "model": "github-copilot/gpt-6-sol",
@@ -1264,7 +1264,7 @@ def check(root, gpt_provider, claude_provider, expected_extensions):
 
     settings = json.loads((root / "settings.json").read_text())
     assert settings["defaultProvider"] == gpt_provider
-    assert settings["defaultModel"] == "gpt-6-sol"
+    assert settings["defaultModel"] == "gpt-6.1-sol"
     assert settings["extensions"] == expected_extensions
     managed = "git:github.com/Attamusc/pi-workflows@1614faf29c6ad1d0fcc9fe6db86a770f34e2b129"
     assert settings["packages"].count(managed) == 1

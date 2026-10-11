@@ -59,7 +59,7 @@ node scripts/check-pi-workflows-package.mjs \
   --candidate "$TEST_ROOT" --revision "$PIN"
 ```
 
-Pi 0.99.1 is pinned through mise's npm backend on both macOS and Fedora;
+Pi 0.99.2 is pinned through mise's npm backend on both macOS and Fedora;
 Homebrew owns Herdr on macOS, not Pi. Built-in MCP reads the merged
 `mcpServers` configuration without the adapter package. The setup hook is
 content-addressed to public and private settings. If its execution is
