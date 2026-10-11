@@ -94,6 +94,35 @@ not in the public source.
 Do not put real private values in documentation, fixtures, todo records, session
 logs, or commits.
 
+## Optional mise runtimes
+
+Keep optional runtime versions in `~/.config/mise/config.local.toml`, which is
+machine-owned rather than synchronized by chezmoi. Bootstrap runs mise from
+`$HOME` with `MISE_CONFIG_DIR="$HOME/.config/mise"`, so normal global configuration
+loads both the shared `config.toml` and machine-local `config.local.toml`.
+For example, an LSP can require Ruby 4.0.1 while the ordinary Ruby default
+remains latest:
+
+```toml
+[tools]
+ruby = ["latest", "4.0.1"]
+```
+
+All declared versions are installed; the first entry supplies the ordinary
+executable. A `latest` request alone does not retain an older version. Add
+optional Ruby, Python, Bun, or Deno here only when needed; none is part of the
+shared auto-install baseline. This file is not synchronized or backed up by
+the repository.
+
+The shared `[settings.upgrade] auto_prune = false` setting prevents future
+upgrades from scheduling removal of replaced versions. It does not cancel
+removals already recorded by earlier upgrades: mise can process those receipts
+before an ordinary command, including `install` or `settings get`. Declare
+required older versions before restoring them. Inspect pending candidates
+without processing deferred removals using `mise --dry-run ls --prunable`.
+See the [mise upgrade settings](https://mise.jdx.dev/configuration/settings.html#upgrade.auto_prune)
+and [multiple-version rules](https://mise.jdx.dev/dev-tools/versions.html#multiple-versions).
+
 ## Other local seams
 
 - `.local-skills/` links untracked skills into active skill roots.

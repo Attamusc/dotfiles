@@ -12,6 +12,11 @@ config="$HOME/.config/mise/config.toml"
   exit 1
 }
 
+cd "$HOME"
+unset MISE_GLOBAL_CONFIG_FILE
+export MISE_CONFIG_DIR="$HOME/.config/mise"
+export MISE_UPGRADE_AUTO_PRUNE=false
+
 {{ if eq .chezmoi.os "darwin" -}}
 if [ -x /opt/homebrew/bin/brew ]; then
   brew=/opt/homebrew/bin/brew
@@ -45,7 +50,7 @@ exit 1
 {{ end -}}
 
 "$mise_bin" --version
-MISE_YES=1 MISE_GLOBAL_CONFIG_FILE="$config" "$mise_bin" install --verbose
+MISE_YES=1 "$mise_bin" install --verbose
 
 commands=(node npm npx pi go rustc cargo spin)
 {{ if and (eq .chezmoi.os "linux") (eq .chezmoi.osRelease.id "fedora") (eq .chezmoi.osRelease.versionID "44") -}}
@@ -53,15 +58,15 @@ commands+=(sheldon starship herdr jj ghq tv lazygit jjui bob opencode copilot)
 {{ end -}}
 
 for command_name in "${commands[@]}"; do
-  command_path=$(MISE_GLOBAL_CONFIG_FILE="$config" "$mise_bin" which "$command_name")
+  command_path=$("$mise_bin" which "$command_name")
   [[ -x "$command_path" ]] || {
     echo "mise command is missing or not executable: $command_name" >&2
     exit 1
   }
 done
 
-MISE_GLOBAL_CONFIG_FILE="$config" "$mise_bin" exec -- node --version
-MISE_GLOBAL_CONFIG_FILE="$config" "$mise_bin" exec -- go version
-MISE_GLOBAL_CONFIG_FILE="$config" "$mise_bin" exec -- rustc --version
-MISE_GLOBAL_CONFIG_FILE="$config" "$mise_bin" exec -- spin --help >/dev/null
+"$mise_bin" exec -- node --version
+"$mise_bin" exec -- go version
+"$mise_bin" exec -- rustc --version
+"$mise_bin" exec -- spin --help >/dev/null
 printf "${green}[10 - mise tools] ${reset}Configured toolchain installed\n"

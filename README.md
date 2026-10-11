@@ -96,6 +96,15 @@ config, then run `mise install npm:@earendil-works/pi-coding-agent`. Use mise fo
 Pi itself, not `pi update` or a separate global npm install. Pi extension package
 pins are separate and reconcile only through the per-package setup hook.
 
+The shared mise configuration sets `upgrade.auto_prune = false` to disable
+removal scheduling by `mise upgrade`. Machine-local settings or environment
+variables can override that default. Deferred removals created by earlier
+upgrades can still run during ordinary mise commands.
+Declare required older versions in machine-owned `~/.config/mise/config.local.toml`
+before restoring them. Optional runtimes are not part of the shared auto-install
+baseline; see [Machine-local overlays](docs/private-overlays.md) for retention
+and default-selection rules.
+
 Bob keeps previously installed Neovim versions as the rollback lane. Removing a
 package from a manifest does not uninstall it from an existing host.
 

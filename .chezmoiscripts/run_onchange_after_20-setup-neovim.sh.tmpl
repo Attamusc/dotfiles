@@ -2,6 +2,11 @@
 
 set -euo pipefail
 
+cd "$HOME"
+unset MISE_GLOBAL_CONFIG_FILE
+export MISE_CONFIG_DIR="$HOME/.config/mise"
+export MISE_UPGRADE_AUTO_PRUNE=false
+
 channel=stable
 export BOB_CONFIG="$HOME/.config/bob/config.toml"
 [[ -f "$BOB_CONFIG" ]] || {
@@ -27,7 +32,7 @@ config="$HOME/.config/mise/config.toml"
   echo "mise must install Bob before Neovim setup." >&2
   exit 1
 }
-bob_bin=$(MISE_GLOBAL_CONFIG_FILE="$config" "$mise_bin" which bob)
+bob_bin=$("$mise_bin" which bob)
 {{ else -}}
 echo "Unsupported platform reached Neovim setup." >&2
 exit 1

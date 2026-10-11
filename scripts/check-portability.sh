@@ -727,8 +727,13 @@ import pathlib
 import sys
 import tomllib
 
-darwin = tomllib.loads(pathlib.Path(sys.argv[1]).read_text())["tools"]
-fedora = tomllib.loads(pathlib.Path(sys.argv[2]).read_text())["tools"]
+darwin_config = tomllib.loads(pathlib.Path(sys.argv[1]).read_text())
+fedora_config = tomllib.loads(pathlib.Path(sys.argv[2]).read_text())
+for config in (darwin_config, fedora_config):
+    assert config["settings"] == {"upgrade": {"auto_prune": False}}
+    assert set(config) == {"tools", "settings"}
+darwin = darwin_config["tools"]
+fedora = fedora_config["tools"]
 shared = {
     "go": "1.26",
     "go:github.com/attamusc/spin": {
@@ -763,6 +768,16 @@ PY
   grep -Fq '# Rendered mise config SHA-256:' "$PUBLIC_SOURCE/$hook_template" || \
     fail "mise hook is not content-addressed to its rendered configuration"
   grep -Fq 'MISE_YES=1' "$PUBLIC_SOURCE/$hook_template" || fail "mise hook is not noninteractive"
+  python3 - "$darwin_hook" "$fedora_hook" <<'PY'
+import pathlib
+import sys
+
+for hook in sys.argv[1:]:
+    lines = pathlib.Path(hook).read_text().splitlines()
+    exports = [i for i, line in enumerate(lines) if line.strip() == "export MISE_UPGRADE_AUTO_PRUNE=false"]
+    invocations = [i for i, line in enumerate(lines) if '"$mise_bin"' in line and not line.lstrip().startswith('#')]
+    assert len(exports) == 1 and invocations and exports[0] < invocations[0], hook
+PY
   grep -Fq '"$mise_bin" install --verbose' "$PUBLIC_SOURCE/$hook_template" || \
     fail "mise hook does not expose install failures"
   grep -Fq '"$mise_bin" which "$command_name"' "$PUBLIC_SOURCE/$hook_template" || \
@@ -1114,7 +1129,7 @@ check_agent_contract() {
   local cmux_heading_probe="$WORK/cmux-heading-probe.md"
   local cmux_uppercase_probe="$WORK/cmux-uppercase-probe.md"
   local cmux_pattern='pi-cmux|CMUX_HOME|skills/cmux|(^|[^[:alnum:]_-])cmux([^[:alnum:]_-]|$)'
-  local relative_path runtime_file update_line herdr_line
+  local relative_path runtime_file update_line herdr_line platform stage rendered
 
   [[ -f "$settings" && -f "$mcp" && -f "$PUBLIC_SOURCE/$opencode_template" ]] || \
     fail "missing public agent configuration"
@@ -1392,6 +1407,30 @@ PY
   render_source_template linux amd64 fedora 44 "$hook" "$fedora_hook"
   bash -n "$darwin_hook"
   bash -n "$fedora_hook"
+  for platform in darwin fedora; do
+    for stage in 10-install-mise-tools 20-setup-neovim 30-setup-pi; do
+      rendered="$WORK/mise-env-$platform-$stage.sh"
+      if [[ "$platform" == darwin ]]; then
+        render_source_template darwin arm64 '' '' ".chezmoiscripts/run_onchange_after_$stage.sh.tmpl" "$rendered"
+      else
+        render_source_template linux amd64 fedora 44 ".chezmoiscripts/run_onchange_after_$stage.sh.tmpl" "$rendered"
+      fi
+      python3 - "$rendered" <<'PY'
+import pathlib
+import sys
+
+lines = pathlib.Path(sys.argv[1]).read_text().splitlines()
+for required in ('cd "$HOME"', 'unset MISE_GLOBAL_CONFIG_FILE',
+                 'export MISE_CONFIG_DIR="$HOME/.config/mise"',
+                 'export MISE_UPGRADE_AUTO_PRUNE=false'):
+    indices = [i for i, line in enumerate(lines) if line.strip() == required]
+    assert len(indices) == 1, (sys.argv[1], required)
+    mise_uses = [i for i, line in enumerate(lines) if '"$mise_bin"' in line]
+    assert not mise_uses or indices[0] < mise_uses[0], sys.argv[1]
+assert not any('MISE_GLOBAL_CONFIG_FILE=' in line for line in lines), sys.argv[1]
+PY
+    done
+  done
   grep -Fq '# Public Pi settings SHA-256:' "$PUBLIC_SOURCE/$hook" || \
     fail "Pi hook is not content-addressed to public settings"
   grep -Fq '# Private Pi settings SHA-256:' "$PUBLIC_SOURCE/$hook" || \
@@ -1417,9 +1456,9 @@ PY
     fail "Pi hook does not require authenticated private-package access"
   grep -Fq 'GIT_CONFIG_GLOBAL="$local_git_config" gh auth setup-git' "$fedora_hook" || \
     fail "Pi hook does not configure GitHub credentials in the local Git seam"
-  grep -Fq 'GIT_TERMINAL_PROMPT=0 MISE_GLOBAL_CONFIG_FILE=' "$fedora_hook" || \
+  grep -Fq 'GIT_TERMINAL_PROMPT=0 "$mise_bin" exec -- pi update' "$fedora_hook" || \
     fail "Fedora Pi reconciliation can prompt for a GitHub password"
-  grep -Fq 'GIT_TERMINAL_PROMPT=0 MISE_GLOBAL_CONFIG_FILE=' "$darwin_hook" || \
+  grep -Fq 'GIT_TERMINAL_PROMPT=0 "$mise_bin" exec -- pi update' "$darwin_hook" || \
     fail "macOS Pi reconciliation can prompt for a GitHub password"
   for rendered_hook in "$darwin_hook" "$fedora_hook"; do
     update_line=$(grep -n 'update --extension "$package"' "$rendered_hook" | cut -d: -f1)
@@ -1444,8 +1483,10 @@ PY
 EOF
   cat >"$mise_stub" <<'EOF'
 #!/bin/sh
-expected="$HOME/.config/mise/config.toml"
-[ "${MISE_GLOBAL_CONFIG_FILE:-}" = "$expected" ] || exit 91
+[ -z "${MISE_GLOBAL_CONFIG_FILE:-}" ] || exit 91
+[ "${MISE_CONFIG_DIR:-}" = "$HOME/.config/mise" ] || exit 97
+[ "${MISE_UPGRADE_AUTO_PRUNE:-}" = false ] || exit 98
+[ "$PWD" = "$HOME" ] || exit 95
 printf '%s\n' "$*" >>"$MISE_STUB_LOG"
 if [ "${1:-}" = which ] && [ "${2:-}" = pi ]; then
   printf '%s\n' "$HOME/.local/share/mise/pi"
@@ -1477,6 +1518,7 @@ exit 93
 EOF
   chmod +x "$mise_stub" "$gh_stub" "$fake_pi"
   HOME="$mise_home" \
+    MISE_GLOBAL_CONFIG_FILE=/synthetic/ignored \
     MISE_STUB_LOG="$mise_stub_log" \
     GH_STUB_LOG="$gh_stub_log" \
     PATH="$mise_home/.local/bin:/usr/bin:/bin" \

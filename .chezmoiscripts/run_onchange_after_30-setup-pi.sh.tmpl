@@ -40,12 +40,15 @@ exit 1
 
 # Resolve from HOME, not a project-local mise configuration.
 cd "$HOME"
+unset MISE_GLOBAL_CONFIG_FILE
+export MISE_CONFIG_DIR="$HOME/.config/mise"
+export MISE_UPGRADE_AUTO_PRUNE=false
 config="$HOME/.config/mise/config.toml"
 [[ -x "$mise_bin" && -f "$config" ]] || {
   echo "mise must install Pi before package reconciliation." >&2
   exit 1
 }
-pi_bin=$(MISE_GLOBAL_CONFIG_FILE="$config" "$mise_bin" which pi)
+pi_bin=$("$mise_bin" which pi)
 [[ -x "$pi_bin" ]] || {
   echo "Pi executable is missing." >&2
   exit 1
@@ -78,13 +81,13 @@ PY
   exit 1
 }
 
-MISE_GLOBAL_CONFIG_FILE="$config" "$mise_bin" exec -- pi --version
+"$mise_bin" exec -- pi --version
 while IFS= read -r package; do
-  GIT_TERMINAL_PROMPT=0 MISE_GLOBAL_CONFIG_FILE="$config" "$mise_bin" exec -- pi update --extension "$package" </dev/null
+  GIT_TERMINAL_PROMPT=0 "$mise_bin" exec -- pi update --extension "$package" </dev/null
 done <<< "$pinned_git_packages"
 {{ if eq .chezmoi.os "darwin" -}}
-MISE_GLOBAL_CONFIG_FILE="$config" "$mise_bin" exec -- "$herdr_bin" integration install pi
+"$mise_bin" exec -- "$herdr_bin" integration install pi
 {{ else -}}
-MISE_GLOBAL_CONFIG_FILE="$config" "$mise_bin" exec -- herdr integration install pi
+"$mise_bin" exec -- herdr integration install pi
 {{ end -}}
 printf '[30 - Pi integration] Pinned Git packages reconciled; Herdr-managed Pi integration installed\n'
