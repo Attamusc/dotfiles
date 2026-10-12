@@ -742,7 +742,7 @@ shared = {
     },
     "node": "25.8.1",
     "rust": "1.97",
-    "npm:@earendil-works/pi-coding-agent": "0.99.2",
+    "npm:@earendil-works/pi-coding-agent": "1.1.0",
 }
 assert darwin == shared
 assert fedora == {
@@ -1198,7 +1198,7 @@ for package in settings["packages"]:
     if package.startswith("git:github.com/Attamusc/"):
         assert re.search(r"@[0-9a-f]{40}$", package)
 assert mcp == {"mcpServers": {}}
-assert settings["lastChangelogVersion"] == "0.99.2"
+assert settings["lastChangelogVersion"] == "1.1.0"
 assert opencode == {
     "$schema": "https://opencode.ai/config.json",
     "model": "github-copilot/gpt-6-sol",
