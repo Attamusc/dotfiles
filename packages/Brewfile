@@ -1,7 +1,7 @@
 tap "anomalyco/tap"
 tap "datadog-labs/pack"
 
-brew "anomalyco/tap/opencode"
+brew "anomalyco/tap/opencode-v2"
 brew "bat"
 brew "bob"
 brew "chezmoi"

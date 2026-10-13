@@ -58,14 +58,18 @@ source data.
 MCP maps merge by server key. A private key adds a server or replaces the
 complete public server value with the same key. Put machine-local servers in
 `.data-private/pi/agent/mcp.json`; chezmoi renders that shared registry into
-Pi's native format and OpenCode's `mcp` format. OpenCode's rendered config is
-mode `0600` because server entries may contain credentials.
+Pi's native format and OpenCode V2's `mcp.servers` format. OpenCode's rendered config is
+mode `0600` because server entries may contain credentials. The template omits
+the published `$schema` URL because it still describes V1; native settings are
+validated against the V2 loader and release schema instead.
 
 Use Pi's built-in MCP schema for this registry: `enabled: false` disables a
 server, `exposure: "direct"` exposes its tools directly, and `timeout` is in
-seconds. OpenCode rendering converts that timeout to milliseconds. HTTP OAuth
+seconds. OpenCode rendering converts that timeout to milliseconds for both
+`timeout.catalog` and `timeout.execution`. It inverts `enabled` into `disabled`
+and sets `codemode: false` to retain V1's direct MCP tool exposure. HTTP OAuth
 uses `callbackUrl` or `callbackPort`; OpenCode receives the corresponding
-`redirectUri`. For a shared HTTP server, put the explicit port in `callbackUrl`
+`redirect_uri`. For a shared HTTP server, put the explicit port in `callbackUrl`
 when also setting `callbackPort`; the converter does not add a missing URL port.
 It also does not translate Pi's `${NAME}` or `!command` credential interpolation
 into OpenCode's syntax. Keep those Pi-only forms out of the shared registry.

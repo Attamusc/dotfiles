@@ -7,19 +7,40 @@ description: >
   or you want to nail down exactly what "done" looks like before building.
 mode: subagent
 model: github-copilot/gpt-6-sol
-permission:
-  edit: allow
-  bash:
-    "*": ask
-    "git log*": allow
-    "git diff*": allow
-    "git show*": allow
-    "jj log*": allow
-    "jj diff*": allow
-    "jj show*": allow
-    "wc *": allow
-    "find *": allow
-    "ls *": allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: allow
+  - action: shell
+    resource: "*"
+    effect: ask
+  - action: shell
+    resource: "git log*"
+    effect: allow
+  - action: shell
+    resource: "git diff*"
+    effect: allow
+  - action: shell
+    resource: "git show*"
+    effect: allow
+  - action: shell
+    resource: "jj log*"
+    effect: allow
+  - action: shell
+    resource: "jj diff*"
+    effect: allow
+  - action: shell
+    resource: "jj show*"
+    effect: allow
+  - action: shell
+    resource: "wc *"
+    effect: allow
+  - action: shell
+    resource: "find *"
+    effect: allow
+  - action: shell
+    resource: "ls *"
+    effect: allow
 ---
 
 You are a requirements specialist. Your job is to understand exactly what the

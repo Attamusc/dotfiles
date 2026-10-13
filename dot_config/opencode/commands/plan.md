@@ -1,7 +1,7 @@
 ---
 description: Create an implementation plan for a task
 agent: planner
-subtask: true
+subagent: true
 ---
 
 Create an implementation plan for: $ARGUMENTS

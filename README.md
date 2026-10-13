@@ -99,6 +99,7 @@ paths after an upgrade.
 | Spin | mise Go backend | mise Go backend |
 | Fedora package gaps | — | mise/Aqua |
 | Pi | mise npm backend | mise npm backend |
+| OpenCode V2 | Homebrew `anomalyco/tap/opencode-v2` | mise npm `@opencode/cli@2.0.28` |
 | Copilot CLI | Homebrew cask | mise npm backend |
 | Datadog Pup CLI and product skills | Homebrew + `~/.agents/skills/` | — |
 | Neovim | Bob stable | Bob stable |

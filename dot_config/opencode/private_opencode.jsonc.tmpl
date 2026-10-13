@@ -9,32 +9,33 @@
 {{- end -}}
 {{- $mcp := dict -}}
 {{- range $name, $server := $servers -}}
-{{-   $enabled := true -}}
+{{-   $disabled := false -}}
 {{-   if and (hasKey $server "enabled") (eq (index $server "enabled") false) -}}
-{{-     $enabled = false -}}
+{{-     $disabled = true -}}
 {{-   end -}}
 {{-   if hasKey $server "url" -}}
-{{-     $entry := dict "type" "remote" "url" (index $server "url") "enabled" $enabled -}}
+{{-     $entry := dict "type" "remote" "url" (index $server "url") "disabled" $disabled "codemode" false -}}
 {{-     if hasKey $server "headers" -}}
 {{-       $_ := set $entry "headers" (deepCopy (index $server "headers")) -}}
 {{-     end -}}
 {{-     if hasKey $server "oauth" -}}
 {{-       $oauth := index $server "oauth" -}}
 {{-       $openCodeOAuth := dict -}}
-{{-       range $key := list "clientId" "clientSecret" "scope" -}}
-{{-         if hasKey $oauth $key -}}
-{{-           $_ := set $openCodeOAuth $key (index $oauth $key) -}}
+{{-       range $sourceKey, $targetKey := dict "clientId" "client_id" "clientSecret" "client_secret" "scope" "scope" -}}
+{{-         if hasKey $oauth $sourceKey -}}
+{{-           $_ := set $openCodeOAuth $targetKey (index $oauth $sourceKey) -}}
 {{-         end -}}
 {{-       end -}}
 {{-       if hasKey $oauth "callbackUrl" -}}
-{{-         $_ := set $openCodeOAuth "redirectUri" (index $oauth "callbackUrl") -}}
+{{-         $_ := set $openCodeOAuth "redirect_uri" (index $oauth "callbackUrl") -}}
 {{-       else if hasKey $oauth "callbackPort" -}}
-{{-         $_ := set $openCodeOAuth "redirectUri" (printf "http://127.0.0.1:%v/callback" (index $oauth "callbackPort")) -}}
+{{-         $_ := set $openCodeOAuth "redirect_uri" (printf "http://127.0.0.1:%v/callback" (index $oauth "callbackPort")) -}}
 {{-       end -}}
 {{-       $_ := set $entry "oauth" $openCodeOAuth -}}
 {{-     end -}}
 {{-     if hasKey $server "timeout" -}}
-{{-       $_ := set $entry "timeout" (mulf (index $server "timeout") 1000) -}}
+{{-       $timeout := mulf (index $server "timeout") 1000 -}}
+{{-       $_ := set $entry "timeout" (dict "catalog" $timeout "execution" $timeout) -}}
 {{-     end -}}
 {{-     $_ := set $mcp $name $entry -}}
 {{-   else if hasKey $server "command" -}}
@@ -42,7 +43,7 @@
 {{-     if hasKey $server "args" -}}
 {{-       $command = concat $command (index $server "args") -}}
 {{-     end -}}
-{{-     $entry := dict "type" "local" "command" $command "enabled" $enabled -}}
+{{-     $entry := dict "type" "local" "command" $command "disabled" $disabled "codemode" false -}}
 {{-     if hasKey $server "cwd" -}}
 {{-       $_ := set $entry "cwd" (index $server "cwd") -}}
 {{-     end -}}
@@ -50,7 +51,8 @@
 {{-       $_ := set $entry "environment" (deepCopy (index $server "env")) -}}
 {{-     end -}}
 {{-     if hasKey $server "timeout" -}}
-{{-       $_ := set $entry "timeout" (mulf (index $server "timeout") 1000) -}}
+{{-       $timeout := mulf (index $server "timeout") 1000 -}}
+{{-       $_ := set $entry "timeout" (dict "catalog" $timeout "execution" $timeout) -}}
 {{-     end -}}
 {{-     $_ := set $mcp $name $entry -}}
 {{-   else -}}
@@ -58,8 +60,7 @@
 {{-   end -}}
 {{- end -}}
 {{ dict
-  "$schema" "https://opencode.ai/config.json"
   "model" "github-copilot/gpt-6-sol"
-  "mcp" $mcp
+  "mcp" (dict "servers" $mcp)
   | toPrettyJson
 -}}

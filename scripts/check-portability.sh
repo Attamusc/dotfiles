@@ -18,6 +18,7 @@ done
 [[ -f "$BASELINE" ]] || fail "missing user-path baseline: $BASELINE"
 
 WORK=$(mktemp -d "${TMPDIR:-/tmp}/check-portability.XXXXXX")
+WORK=$(cd -P -- "$WORK" && pwd -P)
 cleanup() {
   rm -rf -- "$WORK"
 }
@@ -754,7 +755,7 @@ assert fedora == {
     "jjui": "0.10.9",
     "lazygit": "0.64.0",
     "npm:@github/copilot": "1",
-    "opencode": "1",
+    "npm:@opencode/cli": "2.0.28",
     "sheldon": "0.8.5",
     "starship": "1",
     "television": "0.15.9",
@@ -1167,7 +1168,7 @@ check_agent_contract() {
   render_source_template darwin arm64 '' '' "$opencode_template" "$opencode_public"
   jq empty "$opencode_public" || fail "public OpenCode configuration rendered invalid JSON"
 
-  python3 - "$settings" "$mcp" "$opencode_public" <<'PY'
+  python3 - "$settings" "$mcp" "$opencode_public" "$PUBLIC_SOURCE/dot_config/opencode" <<'PY'
 import json
 import pathlib
 import re
@@ -1200,10 +1201,29 @@ for package in settings["packages"]:
 assert mcp == {"mcpServers": {}}
 assert settings["lastChangelogVersion"] == "1.1.0"
 assert opencode == {
-    "$schema": "https://opencode.ai/config.json",
     "model": "github-copilot/gpt-6-sol",
-    "mcp": {},
+    "mcp": {"servers": {}},
 }
+root = pathlib.Path(sys.argv[4])
+allowed = ["git log*", "git diff*", "git show*", "jj log*", "jj diff*", "jj show*"]
+for name in ("planner", "spec", "advisor"):
+    source = (root / "agents" / f"{name}.md").read_text()
+    frontmatter = source.split("---", 2)[1]
+    assert not re.search(r"^(permission|tools):", frontmatter, re.MULTILINE)
+    rules = re.findall(r'  - action: (\w+)\n    resource: "([^"\n]+)"\n    effect: (\w+)', frontmatter)
+    effect = "deny" if name == "advisor" else "allow"
+    resources = allowed if name == "advisor" else [*allowed, "wc *", "find *", "ls *"]
+    assert rules == [("edit", "*", effect), ("shell", "*", "ask"),
+                     *(("shell", resource, "allow") for resource in resources)], name
+    assert "mode: subagent" in frontmatter
+    model = "claude-opus-5.5" if name == "advisor" else "gpt-6-sol"
+    assert f"model: github-copilot/{model}" in frontmatter
+for name in ("note", "research", "plan"):
+    source = (root / "commands" / f"{name}.md").read_text()
+    frontmatter = source.split("---", 2)[1]
+    assert "subagent: true" in frontmatter and "subtask:" not in frontmatter
+    assert "$ARGUMENTS" in source
+assert "agent: planner" in (root / "commands" / "plan.md").read_text()
 for document in (settings, mcp, opencode):
     encoded=json.dumps(document)
     assert "/Users/" not in encoded and "/home/" not in encoded
@@ -1356,51 +1376,58 @@ import json
 import pathlib
 import sys
 
-mcp=json.loads(pathlib.Path(sys.argv[1]).read_text())["mcp"]
+mcp=json.loads(pathlib.Path(sys.argv[1]).read_text())["mcp"]["servers"]
 assert mcp == {
     "synthetic-public": {
         "type": "local",
         "command": ["public-command"],
-        "enabled": True,
+        "disabled": False,
+        "codemode": False,
     },
     "synthetic-local": {
         "type": "local",
         "command": ["synthetic-command", "--flag"],
         "environment": {"SYNTHETIC_TOKEN": "placeholder"},
         "cwd": "/synthetic/work",
-        "enabled": True,
-        "timeout": 9500,
+        "disabled": False,
+        "codemode": False,
+        "timeout": {"catalog": 9500, "execution": 9500},
     },
     "synthetic-disabled": {
         "type": "local",
         "command": ["disabled-command"],
-        "enabled": False,
+        "disabled": True,
+        "codemode": False,
     },
     "synthetic-remote": {
         "type": "remote",
         "url": "https://example.invalid/mcp",
         "headers": {"Authorization": "Bearer placeholder"},
         "oauth": {
-            "clientId": "synthetic-client",
-            "clientSecret": "synthetic-secret",
+            "client_id": "synthetic-client",
+            "client_secret": "synthetic-secret",
             "scope": "synthetic-scope",
-            "redirectUri": "http://127.0.0.1:19876/mcp/oauth/callback",
+            "redirect_uri": "http://127.0.0.1:19876/mcp/oauth/callback",
         },
-        "enabled": True,
-        "timeout": 12000,
+        "disabled": False,
+        "codemode": False,
+        "timeout": {"catalog": 12000, "execution": 12000},
     },
     "synthetic-remote-no-auth": {
         "type": "remote",
         "url": "https://no-auth.example.invalid/mcp",
-        "enabled": True,
+        "disabled": False,
+        "codemode": False,
     },
     "synthetic-port": {
         "type": "remote",
         "url": "https://port.example.invalid/mcp",
-        "oauth": {"clientId": "synthetic-client", "redirectUri": "http://127.0.0.1:8765/callback"},
-        "enabled": True,
+        "oauth": {"client_id": "synthetic-client", "redirect_uri": "http://127.0.0.1:8765/callback"},
+        "disabled": False,
+        "codemode": False,
     },
 }
+print("ok: native OpenCode V2 configuration and file definitions")
 PY
 
   render_source_template darwin arm64 '' '' "$hook" "$darwin_hook"

@@ -6,18 +6,31 @@ description: >
   help debugging a tricky issue, or want someone to poke holes in your approach.
 mode: subagent
 model: github-copilot/claude-opus-5.5
-tools:
-  write: false
-  edit: false
-permission:
-  bash:
-    "*": ask
-    "git log*": allow
-    "git diff*": allow
-    "git show*": allow
-    "jj log*": allow
-    "jj diff*": allow
-    "jj show*": allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: deny
+  - action: shell
+    resource: "*"
+    effect: ask
+  - action: shell
+    resource: "git log*"
+    effect: allow
+  - action: shell
+    resource: "git diff*"
+    effect: allow
+  - action: shell
+    resource: "git show*"
+    effect: allow
+  - action: shell
+    resource: "jj log*"
+    effect: allow
+  - action: shell
+    resource: "jj diff*"
+    effect: allow
+  - action: shell
+    resource: "jj show*"
+    effect: allow
 ---
 
 You are a senior software architect and debugging specialist.
