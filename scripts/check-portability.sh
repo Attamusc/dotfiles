@@ -1915,7 +1915,7 @@ render_platform() {
   local archive="$WORK/$platform.tar"
   local config="$WORK/config/chezmoi.toml"
   local state="$WORK/state-$platform.boltdb"
-  local override source_only
+  local override source_only mcp_config
 
   override=$(jq -cn \
     --arg os "$platform" \
@@ -2056,9 +2056,11 @@ render_platform() {
         fail "Datadog configuration leaked into $platform render: $datadog_path"
     done
   fi
-  [[ $(python3 -c 'import os,stat,sys; print(f"{stat.S_IMODE(os.stat(sys.argv[1]).st_mode):o}")' \
-      "$rendered/.config/opencode/opencode.jsonc") == 600 ]] || \
-    fail "$platform rendered OpenCode configuration is not mode 0600"
+  for mcp_config in "$rendered/.pi/agent/mcp.json" "$rendered/.config/opencode/opencode.jsonc"; do
+    [[ $(python3 -c 'import os,stat,sys; print(f"{stat.S_IMODE(os.stat(sys.argv[1]).st_mode):o}")' \
+        "$mcp_config") == 600 ]] || \
+      fail "$platform rendered MCP configuration is not mode 0600: $mcp_config"
+  done
   printf 'ok: %s public configuration renders without a private overlay\n' "$platform"
   check_json_files "$rendered" "$platform rendered"
   check_shell_files "$rendered" "$platform"
