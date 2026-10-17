@@ -2,6 +2,13 @@
   "defaultProvider": "github-copilot",
   "defaultModel": "gpt-6.1-sol",
   "defaultThinkingLevel": "high",
+  "compaction": {
+    "modelOverrides": {
+      "github-copilot/gpt-6.1-sol": {
+        "reserveTokens": 65536
+      }
+    }
+  },
   "packages": [
     "git:github.com/HazAT/glimpse",
     "git:github.com/Attamusc/pi-interactive-subagents@d57e498193e9ae25077c8edb0d14cf556808fc63",

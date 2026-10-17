@@ -244,6 +244,15 @@ test("fleet routes GPT producers to independent Claude reviewers", () => {
   assert.match(settings.defaultModel, /^gpt-6(?:\.1)?-sol$/);
 });
 
+test("managed compaction raises the reserve only for GPT-6.1 Sol", () => {
+  const settings = JSON.parse(readManagedPiFile("settings.json"));
+  assert.deepEqual(settings.compaction, {
+    modelOverrides: {
+      "github-copilot/gpt-6.1-sol": { reserveTokens: 65536 },
+    },
+  });
+});
+
 test("OpenCode and Copilot prefer GPT with a Claude advisor boundary", () => {
   const openCodeRoot = runningFromSource
     ? join(sourceTreeRoot, "dot_config", "opencode")
