@@ -1,6 +1,7 @@
 .vscode
 .local-skills/
 .data-private/
+/research/
 
 # Runtime artifacts created by external tools running in this directory.
 # Not chezmoi source.

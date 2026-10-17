@@ -743,7 +743,7 @@ shared = {
     },
     "node": "25.8.1",
     "rust": "1.97",
-    "npm:@earendil-works/pi-coding-agent": "1.1.0",
+    "npm:@earendil-works/pi-coding-agent": "1.3.0",
 }
 assert darwin == shared
 assert fedora == {
@@ -1277,12 +1277,12 @@ def check(root, gpt_provider, claude_provider, expected_extensions):
     root = pathlib.Path(root)
     expected_models = {
         "adversarial-reviewer.md": f"{claude_provider}/claude-opus-5.5",
-        "planner.md": f"{gpt_provider}/gpt-6-sol",
+        "planner.md": f"{gpt_provider}/gpt-6.1-sol",
         "researcher.md": f"{gpt_provider}/gpt-5.6-terra",
         "reviewer.md": f"{claude_provider}/claude-opus-5.5",
         "scout.md": f"{gpt_provider}/gpt-6-luna",
         "validator.md": f"{claude_provider}/claude-opus-5.5",
-        "worker.md": f"{gpt_provider}/gpt-6-sol",
+        "worker.md": f"{gpt_provider}/gpt-6.1-sol",
     }
     for filename, expected in expected_models.items():
         source = (root / filename).read_text()

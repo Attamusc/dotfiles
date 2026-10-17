@@ -176,9 +176,9 @@ Slash commands are the user's to run. You have no way to invoke one; emitting `/
 
 | Agent | Purpose | Model | Effort |
 |-------|---------|-------|--------|
-| `planner` | Interactive planning agent — clarifies WHAT to build and figures out HOW. Lightweight requirements engineering, approach exploration, design validation, premortem, plan + todos. | GPT-6-sol | high |
+| `planner` | Interactive planning agent — clarifies WHAT to build and figures out HOW. Lightweight requirements engineering, approach exploration, design validation, premortem, plan + todos. | GPT-6.1-sol | high |
 | `scout` | Fast codebase reconnaissance | GPT-6-luna (fast, cheap) | low |
-| `worker` | Implements tasks from todos, makes polished commits. Reports back if a todo is missing examples/references. | GPT-6-sol | low |
+| `worker` | Implements tasks from todos, makes polished commits. Reports back if a todo is missing examples/references. | GPT-6.1-sol | low |
 | `reviewer` | Reviews code for quality/security | Claude Opus 5.5 — independent review of GPT-produced work | high |
 | `validator` | Adversarial verification — checks implementation against declared integration contracts | Claude Opus 5.5 — independent contract gate | high |
 | `claude-reviewer` | Read-only Claude Code review via subscription; Pi supplies diff and tests | Sonnet (Claude Code CLI) | CLI-owned |

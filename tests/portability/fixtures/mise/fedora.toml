@@ -6,7 +6,7 @@ go = "1.26"
 "go:github.com/attamusc/spin" = { version = "0.0.0-20260315212148-2c0a74c0db03", depends = "go" }
 node = "25.8.1"
 rust = "1.97"
-"npm:@earendil-works/pi-coding-agent" = "1.1.0"
+"npm:@earendil-works/pi-coding-agent" = "1.3.0"
 bob = "4"
 ghq = "1"
 herdr = "0.9.1"

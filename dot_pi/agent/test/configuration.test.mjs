@@ -166,6 +166,20 @@ test("restricted agents receive every tool required by their instructions", () =
   assert.deepEqual(failures, []);
 });
 
+test("adversarial reviewer declares all bootstrap skills as comma-separated frontmatter", () => {
+  const source = readManagedPiFile(join("agents", "adversarial-reviewer.md"));
+  const frontmatter = source.split("---", 3)[1];
+  const skills = frontmatter.match(/^skills:[ \t]*(.*)$/m)?.[1]
+    .split(",")
+    .map((skill) => skill.trim());
+
+  assert.deepEqual(skills, [
+    "adversarial-review-research",
+    "adversarial-review-change",
+    "adversarial-shepardize",
+  ]);
+});
+
 test("planner remains interactive and finalizes through the subagent handshake", () => {
   const source = readManagedPiFile(join("agents", "planner.md"));
   const phaseTen = source.slice(source.indexOf("## Phase 10: Summarize & Exit"));
@@ -227,12 +241,12 @@ test("fleet routes GPT producers to independent Claude reviewers", () => {
   const providers = modelProviders();
   const expectedModels = {
     "adversarial-reviewer.md": `${providers.claude}/claude-opus-5.5`,
-    "planner.md": `${providers.gpt}/gpt-6-sol`,
+    "planner.md": `${providers.gpt}/gpt-6.1-sol`,
     "researcher.md": `${providers.gpt}/gpt-5.6-terra`,
     "reviewer.md": `${providers.claude}/claude-opus-5.5`,
     "scout.md": `${providers.gpt}/gpt-6-luna`,
     "validator.md": `${providers.claude}/claude-opus-5.5`,
-    "worker.md": `${providers.gpt}/gpt-6-sol`,
+    "worker.md": `${providers.gpt}/gpt-6.1-sol`,
   };
 
   for (const [file, model] of Object.entries(expectedModels)) {
