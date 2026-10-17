@@ -229,7 +229,7 @@ test("fleet routes GPT producers to independent Claude reviewers", () => {
     "adversarial-reviewer.md": `${providers.claude}/claude-opus-5.5`,
     "planner.md": `${providers.gpt}/gpt-6-sol`,
     "researcher.md": `${providers.gpt}/gpt-5.6-terra`,
-    "reviewer.md": `${providers.claude}/claude-sonnet-5`,
+    "reviewer.md": `${providers.claude}/claude-opus-5.5`,
     "scout.md": `${providers.gpt}/gpt-6-luna`,
     "validator.md": `${providers.claude}/claude-opus-5.5`,
     "worker.md": `${providers.gpt}/gpt-6-sol`,

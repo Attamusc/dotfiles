@@ -1279,7 +1279,7 @@ def check(root, gpt_provider, claude_provider, expected_extensions):
         "adversarial-reviewer.md": f"{claude_provider}/claude-opus-5.5",
         "planner.md": f"{gpt_provider}/gpt-6-sol",
         "researcher.md": f"{gpt_provider}/gpt-5.6-terra",
-        "reviewer.md": f"{claude_provider}/claude-sonnet-5",
+        "reviewer.md": f"{claude_provider}/claude-opus-5.5",
         "scout.md": f"{gpt_provider}/gpt-6-luna",
         "validator.md": f"{claude_provider}/claude-opus-5.5",
         "worker.md": f"{gpt_provider}/gpt-6-sol",
