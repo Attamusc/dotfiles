@@ -124,7 +124,7 @@ test("ordinary reader, pickup, and promotion leave a fresh writable managed tree
   const session=join(sessions,"linear-v3.jsonl"); await cp(join(sourceAgent,"test/fixtures/session-reader/linear-v3.jsonl"),session);
   const before=await treeHash(agentRoot),reader=join(agentRoot,"skills/session-reader/scripts/read_session.py"),pickup=join(agentRoot,"skills/session-pickup/scripts/pickup.py"),promote=join(agentRoot,"skills/session-pickup/scripts/promote.py");
   for(const result of [
-    spawnSync("python3",[reader,session,"--sessions-root",sessions,"--leaf","b1","--mode","resolve"],{encoding:"utf8"}),
+    spawnSync("python3",["-B",reader,session,"--mode","overview"],{encoding:"utf8"}),
     spawnSync("python3",[pickup,"--path",session,"--sessions-root",sessions,"--leaf","b1"],{encoding:"utf8"}),
     spawnSync("python3",[promote,"prepare","--project-root",project],{input:JSON.stringify(fixture),encoding:"utf8"}),
   ]) assert.equal(result.status,0,result.stderr||result.stdout);

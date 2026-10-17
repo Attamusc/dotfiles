@@ -1,36 +1,47 @@
-# Pi 0.84.4 Session Contract
+# Pi Session JSONL Format
 
-Pi sessions are JSONL trees. The installed `@earendil-works/pi-coding-agent` 0.84.4 executable—not forward-looking documentation—is authoritative for supported reconstruction.
+Pi stores one JSON object per line. The default root is `~/.pi/agent/sessions/`, with working-directory folders and timestamp/session-ID filenames. Storage can be configured elsewhere.
 
-## Tree
+## Entries and messages
 
-A v3 file has one `session` header. Every other structural entry has a unique `id` and `parentId` (null at the root). Reconstruction requires an explicit leaf and follows only its parents to the root. Unknown leaves, duplicate IDs, orphaned parents, self-parents, and cycles fail closed before invoking behavior that could fall back to the final file entry.
+The `session` header holds the session ID, version, timestamp, and working directory. `model_change` and `thinking_level_change` record configuration changes.
 
-Blank lines are ignored. Malformed JSON is skipped; diagnostics contain bounded line numbers only.
+A `message` entry nests its payload under `entry.message`, not `entry.content`:
 
-## Context-bearing entries
+```json
+{
+  "type": "message",
+  "id": "assistant-entry",
+  "parentId": "user-entry",
+  "timestamp": "2026-10-01T12:00:00.000Z",
+  "message": {
+    "role": "assistant",
+    "content": [{"type": "text", "text": "Response"}],
+    "model": "model-id",
+    "provider": "provider-id",
+    "usage": {"input": 100, "output": 20, "cost": {"total": 0.001}}
+  }
+}
+```
 
-- `message`: user, assistant, and tool-result messages; content is under `message.content`.
-- `bash_execution`: shell execution context unless excluded by its runtime shape.
-- `custom_message`: a context message.
-- `branch_summary`: a derived summary of an abandoned branch. Its underlying sibling entries are not selected.
-- `compaction`: a derived compaction summary.
+Content can be a string or typed blocks: `text`, `toolCall` (name, ID, arguments), `thinking`, and images. Tool results are separate messages with role `toolResult`, `toolName`, `toolCallId`, content, and optional `isError`/`details`. Usage and model metadata belong to the nested assistant message.
 
-Plain `custom`, `label`, `session_info`, model/thinking changes, and unknown entries do not produce rendered context items. Model/thinking changes can remain on the structural path. Thinking blocks, image/base64 blocks, raw environment dumps, and nested subagent transcript details are never rendered.
+## Branches and compaction
 
-## Compaction
+Modern sessions are trees linked by entry `id` and `parentId`. File order contains recorded history across branches. Compaction preserves original entries and adds a `compaction` summary; branch navigation can add `branch_summary`. Neither means earlier recorded messages were deleted.
 
-The latest compaction on the selected path is emitted first. For the 0.84.4 `firstKeptEntryId` contract, it is followed by path entries from that pre-compaction boundary through the entry before the compaction, then all entries after it. If the boundary is missing, 0.84.4 emits the compaction and post-compaction entries; the reader matches that result and adds `missing-first-kept-boundary`.
+General analysis of file-order messages is different from rebuilding the active model context. The analysis script does not apply compaction boundaries, follow a selected leaf, or apply `context_edit` replacements. Label abandoned-branch and pre-compaction evidence when interpreting it.
 
-Although installed documentation describes `retainedTail`, Pi 0.84.4 exports and types do not implement it. A selected path whose latest compaction contains `retainedTail` returns exactly `unsupported-session-contract`, with no excerpts.
+## Subagents
 
-## Disclosure and provenance
+Subagent tool-result metadata lives at `entry.message.details`, separately from content. The supported result shape has `mode` and a `results` array. Each result can include agent, task, model, exit code, usage, progress summary, skills, `sessionFile`, and `artifactPaths`.
 
-Rendered items carry `session:<header-id>#entry:<entry-id>` and one source kind:
+Use recorded `sessionFile` or `artifactPaths.jsonlPath` values to inspect a child session with the same reader. Temporary paths may no longer exist. Parent and child costs are separate in the output; do not sum duplicate copies of the same run across an audit sample.
 
-- `message (original)`
-- `custom-message (original)`
-- `branch-summary (derived)`
-- `compaction-summary (derived)`
+## Reader scope
 
-Recognizable private keys, authorization credentials, token prefixes, URL credentials, and secret-like environment assignments are replaced with `[REDACTED:<kind>]`. Absolute session paths are never emitted; selection uses a sessions-root-relative path. Complete output is at most 16 KiB UTF-8 and records omitted item counts.
+The restored reader handles session headers, model/thinking events, and message entries. Other entry types, including standalone usage records, compaction/branch-summary entries, labels, extension state, and context edits, are not included in its turn/cost views. Image/base64 bodies are not rendered. Inspect raw entries separately when the question depends on those records; do not claim the message-only cost view is complete session accounting.
+
+Read completed files or snapshots: a malformed or partially written JSON line causes a parsing error rather than being skipped. Subagent reports and child cost rows cover the whole file even when other views are paged by user turns.
+
+For the current schema, consult the installed Pi documentation at `docs/session-format.md` and `docs/message-types.md`. The reader is a history-inspection tool, not a version-pinned context-reconstruction implementation.
