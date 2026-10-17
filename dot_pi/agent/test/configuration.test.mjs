@@ -253,6 +253,16 @@ test("managed compaction raises the reserve only for GPT-6.1 Sol", () => {
   });
 });
 
+test("bro restates the last answer without changing its meaning or doing more work", () => {
+  const prompt = readManagedPiFile(join("prompts", "bro.md"));
+  assert.match(prompt, /^description: .+$/m);
+  assert.match(prompt, /Rewrite your last answer/);
+  assert.match(prompt, /Lead with the point/);
+  assert.match(prompt, /caveats and uncertainty/);
+  assert.match(prompt, /without changing what it says/);
+  assert.match(prompt, /Do not investigate further, call tools, or change files/);
+});
+
 test("OpenCode and Copilot prefer GPT with a Claude advisor boundary", () => {
   const openCodeRoot = runningFromSource
     ? join(sourceTreeRoot, "dot_config", "opencode")
