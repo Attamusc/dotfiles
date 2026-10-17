@@ -8,7 +8,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, "fixtures/session-reader");
-const reader = resolve(here, "../skills/session-reader/scripts/read_session.py");
+const reader = resolve(here, "../skills/session-pickup/scripts/resolve_session.py");
 
 function invoke(fixture, leaf, mode = "resolve", extra = []) {
   const result = spawnSync("python3", [reader, join(root, fixture), "--sessions-root", root, "--leaf", leaf, "--mode", mode, ...extra], { encoding: "utf8" });

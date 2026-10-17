@@ -21,8 +21,8 @@ Also obtain the managed sessions root that contains the selected path. Reject se
 
 ## Procedure
 
-1. Locate this skill and sibling `session-reader` from the discovered skills directory. Do not search for sessions.
-2. Invoke the discovered pickup script by absolute path. It locates and invokes the canonical sibling reader itself, passing the literal path, managed root, and exact leaf unchanged:
+1. Locate this skill from the discovered skills directory. Do not search for sessions.
+2. Invoke the discovered pickup script by absolute path. It invokes its own `scripts/resolve_session.py`, passing the literal path, managed root, and exact leaf unchanged:
 
    ```sh
    python3 -B "$session_pickup_skill/scripts/pickup.py" --path "$path" --sessions-root "$sessions_root" --leaf "$leaf" [--focus "$focus"]
@@ -30,6 +30,8 @@ Also obtain the managed sessions root that contains the selected path. Reject se
 
    Construct an argument array directly and include the optional pair only when focus is present; brackets above are notation, not literal shell syntax. This command is independent of the current working directory.
 3. Return its Markdown unchanged. A nonzero exit is a fail-closed result.
+
+The internal resolver's contract is documented in [references/session-format.md](references/session-format.md). General historical analysis belongs to `session-reader`; its discovery and inspection modes are separate from this reconstruction path.
 
 The public pickup command does not accept a resolved envelope on standard input. Its internal renderer consumes only the result captured from its canonical reader invocation. It never parses JSONL, traverses parents, inspects siblings, selects sessions, redacts raw text, or requests cost mode. Do not replace the reader invocation with transcript parsing, filesystem discovery, or an owner skill.
 

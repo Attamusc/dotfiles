@@ -192,7 +192,7 @@ def render(document, focus):
 
 
 def read_document(args):
-    reader = Path(__file__).resolve().parents[2] / "session-reader" / "scripts" / "read_session.py"
+    reader = Path(__file__).resolve().with_name("resolve_session.py")
     command = [sys.executable, "-B", "-I", str(reader), args.path, "--sessions-root", args.sessions_root, "--leaf", args.leaf, "--mode", "resolve"]
     child_env = {"PATH": "/usr/bin:/bin", "LANG": "C.UTF-8", "LC_ALL": "C.UTF-8"}
     try:

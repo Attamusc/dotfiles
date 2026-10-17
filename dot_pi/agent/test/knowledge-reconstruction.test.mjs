@@ -12,7 +12,7 @@ import { markdownDocumentContext, markdownProjection, markdownSecurityProjection
 import { Lexer, lexer } from "../../../dot_agents/skills/why/vendor/marked-18.0.5/marked.esm.js";
 
 const sessionFixtureRoot = new URL("fixtures/session-reader/", import.meta.url).pathname;
-const sessionReader = new URL("../skills/session-reader/scripts/read_session.py", import.meta.url).pathname;
+const sessionReader = new URL("../skills/session-pickup/scripts/resolve_session.py", import.meta.url).pathname;
 const sessionPickup = new URL("../skills/session-pickup/scripts/pickup.py", import.meta.url).pathname;
 function pickup(fixture, leaf, focus, cwd) {
   const args = [sessionPickup, "--path", join(sessionFixtureRoot, fixture), "--sessions-root", sessionFixtureRoot, "--leaf", leaf, ...(focus ? ["--focus", focus] : [])];
@@ -121,7 +121,7 @@ test("session pickup isolates the canonical reader from inherited Python startup
   const root=await mkdtemp(join(tmpdir(),"pickup-sitecustomize-"));
   try {
     const marker=join(root,"RAN"),site=join(root,"sitecustomize.py");
-    await writeFile(site,`import sys\nfrom pathlib import Path\nif sys.argv[0].endswith('/read_session.py'):\n Path(${JSON.stringify(marker)}).write_text('FORGED_CANONICAL_RESULT AKIAABCDEFGHIJKLMNOP')\n`);
+    await writeFile(site,`import sys\nfrom pathlib import Path\nif sys.argv[0].endswith('/resolve_session.py'):\n Path(${JSON.stringify(marker)}).write_text('FORGED_CANONICAL_RESULT AKIAABCDEFGHIJKLMNOP')\n`);
     const result=spawnSync("python3",[sessionPickup,"--path",join(sessionFixtureRoot,"linear-v3.jsonl"),"--sessions-root",sessionFixtureRoot,"--leaf","b1"],{encoding:"utf8",env:{...process.env,PYTHONPATH:root,PYTHONSTARTUP:site}});
     assert.equal(result.status,0,result.stderr);
     assert.equal(await readFile(marker).catch(()=>null),null);
