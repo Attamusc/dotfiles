@@ -1,7 +1,7 @@
 # Agent tooling roadmap
 
 Date: 2026-10-18
-Status: paused at independent verification; first wave started 2026-10-22
+Status: executing next discovery wave; six first-wave todos complete
 Owner: Sean; execution coordinated through Pi's todo tracker
 
 ## Goal and priority
@@ -46,23 +46,28 @@ If an assumption fails, re-triage rather than silently changing scope.
 
 ## Execution checkpoint — 2026-10-22
 
-- Spin discovery TODO-7177c7d1 completed; accepted contract committed locally as
-  `febf392085ce` in the Spin checkout. Candidate implementation TODO-b53c2f69 is
-  uncommitted, with parent-run `make test`, `make test-race`, `make vet` and
-  `make build` all exit 0 on Fedora. Independent verification is not complete.
-- Subagent diagnosis TODO-2c6e541f completed with a synthetic diagnostic-gap
-  reproduction, documented at local commit `3d3b2c6` in its isolated worktree.
-  Candidate TODO-19ac9885 now distinguishes failed output retrieval from genuine
-  empty output. Parent-run focused checks passed 33 tests; `npm test` passed 251.
-  The earlier live scout incidents remain unattributed; no recovery claim is made.
-- The diagnostic child and then the independent Pi validator exited status 1
-  without a graceful completion handshake; the validator produced no review.
-  Preserve evidence and pause rather than retrying that route indefinitely.
-  Both implementation tickets are `needs-info`, awaiting a decision on using the
-  configured read-only Claude CLI validation seat. Product changes are not yet
-  committed, independently accepted, published or activated.
-- Workstation readiness, Go LSP and ACP discovery have not started. Existing
-  runtime/install/live-test gates remain unchanged.
+- **Six of sixteen todos are complete:** the three Spin tickets and the three
+  bounded subagent-diagnostic tickets. Both scoped implementations passed
+  independent Claude CLI validation and are committed locally, not activated.
+- Spin contract: `febf392085ce`; implementation: `a230a1a1c420`, under
+  `~/projects/github.com/attamusc/spin`. Parent-run tests, race checks, vet, build
+  and postcommit verbose CLI fixtures pass on Fedora. A deliberately restored
+  stale-PID deletion failed the manifest test; exact source restoration went green.
+  macOS and installed-binary runtime proof remain outside this completed scope.
+- Subagent diagnosis: `3d3b2c6`; fix: `af61042`, on `roadmap/empty-findings` under
+  `~/projects/pi-interactive-subagents-empty-findings`. Parent postcommit
+  `npm test` passes 255 tests, none skipped. Claude caught a precedence bug in an
+  earlier candidate; corrected fallback now preserves all structured lifecycle
+  errors. Synthetic observer and parent-summary proof does not attribute the
+  earlier live scout failures. Real-Herdr/provider/runtime gates remain intact.
+- Earlier Pi-backed diagnostic/validator failures caused a pause. The user then
+  approved Claude CLI seats and explicitly made `claude-reviewer` and
+  `claude-validator` the default. Managed instruction commit: `9d7be0a0`.
+  No home instructions, packages or installed runtimes were reconciled/applied.
+- Readiness discovery TODO-944d16f9 and Go launch-contract discovery
+  TODO-26d6912f are now claimed and delegated to separate source owners.
+  `gopls` remains absent; no server installation is authorized. ACP discovery
+  remains unstarted. All source commits are local; nothing has been pushed.
 
 ## 1. Spin structured observational status
 
@@ -79,27 +84,27 @@ and PID-file age must not be overstated as application identity or exact uptime.
 The inspected `cmd/status.go` deletes stale `live.pid` records inside the shared
 scan. Inspect `cmd/root.go` callers and config loaders as well: a non-mutating
 flag on one command is insufficient if shared observation still writes.
-Follow `AGENTS.md` and existing isolated Go tests. The preferred new surface is
-`spin status --json`; the discovery ticket settles exact fields and exit policy.
+Follow `AGENTS.md` and existing isolated Go tests. The accepted surface is
+`spin status --format json`, specified in Spin's `docs/status-contract.md`.
 No process/database lifecycle redesign or storage migration is included.
 
 A source-specific planning pass reports `cmd/up.go` is another shared-scan caller;
 reinspect it along with the dashboard and preserve explicit lifecycle cleanup.
-Settle `--json` versus the existing `--format` convention in the initial ticket,
-not by adding two interfaces. An extra `spin agent-skill` feature suggested by that
+The completed discovery chose the existing `--format` convention, not two
+interfaces. An extra `spin agent-skill` feature suggested by that
 pass is outside this project and has not been added to its scope.
 
 ### Tickets and dependencies
 
 1. **TODO-7177c7d1 — Specify structured observational status and regression fixtures.**
-   Ready. Define schema, observation/error states, source ownership, host/path
+   Done. Defined schema, observation/error states, source ownership, host/path
    ambiguity, no-mutation boundary and fixture cases.
 2. **TODO-b53c2f69 — Implement JSON status without observation-side mutations.**
-   Draft; blocked by TODO-7177c7d1. Change only the approved status/shared callers,
-   tests and affected documentation.
+   Done after TODO-7177c7d1. Implemented approved status/shared callers,
+   tests and affected documentation; committed as `a230a1a1c420`.
 3. **TODO-6f70ee74 — Independently prove structured, non-mutating status.**
-   Draft; blocked by TODO-b53c2f69. Parse real CLI output and compare before/after
-   fixture manifests, including stale/invalid/unreadable state.
+   Done after TODO-b53c2f69. Claude CLI validation passed, backed by real CLI
+   fixtures and negative-control sensitivity; platform omissions remain explicit.
 
 Verification baseline: `make test`, `make test-race`, `make vet`, `make build`.
 No `make install`, `tidy`, process cleanup or installed-binary replacement.
@@ -134,14 +139,14 @@ runtime compatibility proof.
 ### Tickets and dependencies
 
 1. **TODO-2c6e541f — Reproduce and localize empty completion findings.**
-   Ready. Separate child/provider/launch behavior from transport/extraction/delivery
-   faults. Produce a causal fixture or an explicitly inconclusive handoff.
+   Done. Reproduced a hidden output-read/parse diagnostic fault with synthetic
+   fixtures; earlier live failures remain unattributed.
 2. **TODO-19ac9885 — Implement the evidence-backed completion fix or diagnostic.**
-   Draft; blocked by TODO-2c6e541f. A product fix is conditional on the diagnosis;
-   expected empty behavior or an external fault may require re-triage instead.
+   Done after TODO-2c6e541f. Committed the narrow diagnostic fix as `af61042`,
+   preserving existing errors, empty-output policy and process facts.
 3. **TODO-154dcbed — Independently validate findings delivery and lifecycle boundaries.**
-   Draft; blocked by TODO-19ac9885. Check the affected completion/failure/interrupt
-   paths and absence of duplicate delivery or lost findings.
+   Done after TODO-19ac9885. Independent Claude CLI validation passed for the
+   declared synthetic observer/consumer contract, not full live recovery.
 
 Verification baseline: `npm test` and inspected deterministic integration tests.
 The opt-in real-Herdr test, provider prompts, host repin and fresh-Pi rollout need
