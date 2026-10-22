@@ -248,6 +248,26 @@ The exact `pi-workflows` package pin and all ten saved workflow dispositions are
 documented in [Pi workflows](docs/pi-workflows.md). The pin remains unapplied
 until independent gates pass; activation and live smoke are user-only steps.
 
+## Observational workstation readiness
+
+From this repository, run the filesystem-only report without installing a helper:
+
+```sh
+python3 -I -S -B scripts/workstation-readiness.py
+python3 -I -S -B scripts/workstation-readiness.py --json
+```
+
+It checks executable candidates and supported-platform metadata without running
+commands, reading private settings, or changing files. Exit 0 means the required
+observations are clear; exit 1 means missing/unsupported; exit 2 means inconclusive
+or an input/internal error. Optional LSP gaps do not fail the baseline.
+
+Presence does not prove compatible versions, configured pins, authentication,
+package activation, server readiness, or working editors/Herdr. Those checks remain
+manual. See [the readiness contract](docs/workstation-readiness-contract.md) for
+privacy boundaries, fixed output fields, and limits. Isolated Python startup
+ignores environment/site hooks; a trusted interpreter remains a prerequisite.
+
 ## Focused smoke checks
 
 After apply, open a fresh terminal or reconnect over SSH, then run these in that

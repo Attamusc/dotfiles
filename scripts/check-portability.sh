@@ -2067,7 +2067,18 @@ render_platform() {
   check_git_config "$rendered" "$platform"
 }
 
+check_workstation_readiness_contract() {
+  mkdir -p "$WORK/readiness-home" "$WORK/readiness-tmp"
+  (
+    cd "$PUBLIC_SOURCE"
+    HOME="$WORK/readiness-home" TMPDIR="$WORK/readiness-tmp" \
+      python3 -I -S -B -m unittest discover -s tests -p 'test_workstation_readiness.py'
+  )
+  printf 'ok: filesystem-only readiness contract fixtures\n'
+}
+
 check_json_files "$PUBLIC_SOURCE" 'public source'
+check_workstation_readiness_contract
 check_user_paths
 "$ROOT/tests/portability/test-protected-local-state.sh" "$ROOT"
 

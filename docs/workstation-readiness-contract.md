@@ -84,7 +84,10 @@ own standard library and this script):
   No directory enumeration or contents read, executable hashing, shebang parsing,
   package cache traversal, settings reads or socket connections.
 * Metadata only: lstat/stat and executable-access checks for exact candidates
-  and their ancestor directories. Follow symlinks for these metadata checks,
+  and their ancestor directories, plus bounded public-anchor metadata for HOME,
+  the repo root and HOME `.config` needed to protect their known aliases.
+  Never enumerate `.config` or inspect its excluded `opencode` child.
+  Follow symlinks for these metadata checks,
   with at most 16 link hops and a 4096-byte path limit per candidate; detect
   loops. Never display link targets. A candidate must resolve to a regular file
   executable by the current user. Never open an executable or FIFO/device.
@@ -142,8 +145,12 @@ No version strings or installed package facts are emitted. Output <=16 KiB.
 Required missing/unsupported => blocked, exit 1. Otherwise required unknown =>
 inconclusive, exit 2. Otherwise clear, exit 0. Optional/manual rows never change
 baseline or exit. Clear means only that these required observations succeeded.
-Invalid arguments/internal failure => exit 2, fixed `readiness: usage-error` or
-`readiness: internal-error` on stderr, no traceback/partial report. Help exits 0.
+Invalid arguments/internal failure before emission => exit 2, fixed
+`readiness: usage-error` or `readiness: internal-error` on stderr, no traceback or
+partial report. Help (`--help` or `-h`) exits 0. Output write/flush failure also exits 2 with the
+fixed internal-error diagnostic on a best-effort basis; failed pipes/devices may
+physically contain partial bytes, and failed stderr cannot guarantee a diagnostic.
+Suppress shutdown retries rather than exposing raw I/O exceptions.
 Normal reports leave stderr empty. New IDs/semantics require schema-version bump;
 changing declared source pins alone does not.
 
