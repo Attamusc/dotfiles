@@ -179,8 +179,8 @@ Slash commands are the user's to run. You have no way to invoke one; emitting `/
 | `planner` | Interactive planning agent — clarifies WHAT to build and figures out HOW. Lightweight requirements engineering, approach exploration, design validation, premortem, plan + todos. | GPT-6.1-sol | high |
 | `scout` | Fast codebase reconnaissance | GPT-6-luna (fast, cheap) | low |
 | `worker` | Implements tasks from todos, makes polished commits. Reports back if a todo is missing examples/references. | GPT-6.1-sol | low |
-| `reviewer` | Reviews code for quality/security | Claude Opus 5.5 — independent review of GPT-produced work | high |
-| `validator` | Adversarial verification — checks implementation against declared integration contracts | Claude Opus 5.5 — independent contract gate | high |
+| `reviewer` | Pi-backed review alternative; only when the user explicitly requests it | Claude Opus 5.5 — independent review of GPT-produced work | high |
+| `validator` | Pi-backed validation alternative; only when the user explicitly requests it | Claude Opus 5.5 — independent contract gate | high |
 | `claude-reviewer` | Read-only Claude Code review via subscription; Pi supplies diff and tests | Sonnet (Claude Code CLI) | CLI-owned |
 | `claude-validator` | Read-only Claude Code contract check via subscription | Opus (Claude Code CLI) | CLI-owned |
 | `researcher` | Deep research — fetches external sources, analyses code and telemetry, synthesises findings | GPT-5.6-terra | high |
@@ -206,6 +206,8 @@ Every delegation brief must state the target, scope, constraints, expected outpu
 
 Child handoffs flow upward as bounded findings, evidence, and blockers. The parent owns synthesis and decisions. Do not forward child transcripts or substitute transcript volume for a focused handoff.
 
+**Default review seats:** Always use `claude-reviewer` for code review and `claude-validator` for integration/contract validation. This preference also applies when a skill, plan, or example names the generic `reviewer` or `validator` role. Do not switch to the Pi-backed versions after a failure without an explicit user request; preserve the evidence and report the blocker.
+
 **Claude Code review seats:** `claude-reviewer` and `claude-validator` are separate from the Pi-backed `reviewer` and `validator`. Pi resolves any todo, runs a bounded `git diff` and tests, and supplies changed paths, acceptance criteria or contract references, test argv/status/output, and labeled omissions in the task. For a larger diff, create a bounded evidence artifact inside the child's working directory and give its exact path; keep the task under 60 KiB.
 
 Do not pass secrets, private transcripts, `tools`, `skills`, `thinking`, or `fork` overrides. These seats use only Read, Glob, and Grep; they cannot run tests or git. They are autonomous one-turn reviews, not interactive shells. Give them a reviewable cwd and the usual scope, expected output, evidence, and stop condition.
@@ -217,7 +219,7 @@ The result returns Claude's actual `claudeSessionId` after process exit. To foll
 subagent({ name: "Scout", agent: "scout", interactive: false, task: "Analyze the codebase..." })
 subagent({ name: "Worker", agent: "worker", interactive: false, task: "Implement TODO-xxxx.\n\nResolved task: [paste scope, constraints, references, and acceptance criteria]" })
 // For read-only reviewers, collect a bounded diff and verification results first.
-subagent({ name: "Reviewer", agent: "reviewer", tools: "read", interactive: false, task: "Evidence-only review: read the prepared diff and test results; report findings inline." })
+subagent({ name: "Reviewer", agent: "claude-reviewer", interactive: false, task: "Evidence-only review: read the prepared diff and test results; report findings inline." })
 subagent({ name: "Researcher", agent: "researcher", interactive: false, task: "Research [topic]..." })
 
 // Planner — clarifies WHAT to build and plans HOW (interactive, user collaborates)
@@ -244,9 +246,9 @@ subagent({ name: "Scout: DB", agent: "scout", task: "Map database schema" })
 - **Complex domain or terminology to resolve first** → Start with `/bbq` to grill, then plan
 - **Todos ready to execute** → Spawn `scout` then `worker` agents
 - **Worker reports missing context** → Provide the missing examples/references, update the todo, re-spawn the worker
-- **Code review needed** → Delegate to `reviewer` (quality/security/maintainability)
+- **Code review needed** → Delegate to `claude-reviewer` (quality/security/maintainability)
 - **Need to prove a claim or change wrong** → Delegate to `adversarial-reviewer` (correctness/evidence/citation integrity). Complementary to `reviewer`, not a replacement.
-- **Irreversible operation, declared integration contract, or security-sensitive change** → Spawn `validator` after worker finishes. The validator confirms the implementation matches its source-of-truth contract and checks the relevant risk boundary. A todo isn't truly done until validator passes.
+- **Irreversible operation, declared integration contract, or security-sensitive change** → Spawn `claude-validator` after worker finishes. The validator confirms the implementation matches its source-of-truth contract and checks the relevant risk boundary. A todo isn't truly done until validator passes.
 - **Need context first** → Start with `scout`
 - **Web research or external info needed** → Delegate to `researcher`
 
@@ -272,7 +274,7 @@ After a restart, reconcile by rereading the plan or handoff, VCS state, todo sta
 
 #### Manual Advisor Checkpoints
 
-Advisor consultation is opt-in and user-invoked only. It is read-only and bounded to the current session; use the existing `reviewer`, `adversarial-reviewer`, or `validator` seat that matches the question. Aim for no more than roughly four consultations per task, at these checkpoints: before a major decision, after two genuine failed attempts, before completing nontrivial work, or when the user explicitly requests advice.
+Advisor consultation is opt-in and user-invoked only. It is read-only and bounded to the current session; use the existing `claude-reviewer`, `adversarial-reviewer`, or `claude-validator` seat that matches the question. Aim for no more than roughly four consultations per task, at these checkpoints: before a major decision, after two genuine failed attempts, before completing nontrivial work, or when the user explicitly requests advice.
 
 Give the advisor one fixed, bounded evidence briefing:
 
