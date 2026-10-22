@@ -1,7 +1,7 @@
 # Agent tooling roadmap
 
 Date: 2026-10-18
-Status: executing next discovery wave; six first-wave todos complete
+Status: nine todos complete; Go and ACP paused for owner decisions
 Owner: Sean; execution coordinated through Pi's todo tracker
 
 ## Goal and priority
@@ -46,9 +46,10 @@ If an assumption fails, re-triage rather than silently changing scope.
 
 ## Execution checkpoint — 2026-10-22
 
-- **Six of sixteen todos are complete:** the three Spin tickets and the three
-  bounded subagent-diagnostic tickets. Both scoped implementations passed
-  independent Claude CLI validation and are committed locally, not activated.
+- **Nine of sixteen todos are complete:** all three tickets for Spin, the bounded
+  subagent-diagnostic slice and workstation readiness. All three scoped
+  implementations passed independent Claude CLI validation and are committed
+  locally. No packages or home configuration were activated.
 - Spin contract: `febf392085ce`; implementation: `a230a1a1c420`, under
   `~/projects/github.com/attamusc/spin`. Parent-run tests, race checks, vet, build
   and postcommit verbose CLI fixtures pass on Fedora. A deliberately restored
@@ -64,10 +65,23 @@ If an assumption fails, re-triage rather than silently changing scope.
   approved Claude CLI seats and explicitly made `claude-reviewer` and
   `claude-validator` the default. Managed instruction commit: `9d7be0a0`.
   No home instructions, packages or installed runtimes were reconciled/applied.
-- Readiness discovery TODO-944d16f9 and Go launch-contract discovery
-  TODO-26d6912f are now claimed and delegated to separate source owners.
-  `gopls` remains absent; no server installation is authorized. ACP discovery
-  remains unstarted. All source commits are local; nothing has been pushed.
+- Readiness contract: `014a5fd68574`; implementation: `5762c00dcd5a`. All three
+  readiness tickets are complete. Parent postcommit tests pass 15 cases, full
+  portability checks pass, and final Claude CLI validation is PASS. Known
+  `.config` aliases are protected before excluded-child metadata. A safe Fedora
+  observation reports `baseline:clear`, `runtime:unverified`; this is not version,
+  pin, auth, activation or health proof. No home helper was installed.
+- Go discovery TODO-26d6912f is `needs-info`. Research is preserved at local
+  pi-lsp commit `4dee150`, not approved implementation. Its historical pair would
+  exclude Spin's Go 1.25.5 module. Official current-tag metadata identifies
+  gopls v0.23.0 as a candidate for this Go 1.26.5 host; compatibility, launch safety
+  and native tracing remain unproven. Server/tracer provisioning needs approval.
+- ACP discovery TODO-4c3782e1 is `needs-info`: the intended production client
+  supplies session-scoped MCP servers, while pi-acp rejects them before startup.
+  Owner must choose scoped MCP integration or a reduced/negative protocol probe,
+  not a false full-compatibility pass. No inspected migration decision justified
+  discarding this work. Detailed private inventory stays in local ignored plans.
+- All source commits are local; nothing has been pushed or activated.
 
 ## 1. Spin structured observational status
 
@@ -165,32 +179,29 @@ alignment must not be described as proof of loaded-package or live Herdr health.
 
 ### Scope
 
-Choose one small source helper under `dot_local/bin/`, focused fixture tests and
-README documentation. The initial ticket settles the command name, exact check
-allowlist, schema, timeout/output bounds and exit semantics. Prefer inert local
-metadata. Even a version probe needs review: arbitrary agent startup, configured
-project commands, Git hooks, auth probes and network requests are not allowed.
-Do not read or print private overlays, credentials, raw environment or arbitrary
-command stderr. No repair, install, reconciliation or server initialization.
+The accepted [readiness contract](workstation-readiness-contract.md) selects
+`python3 -I -S -B scripts/workstation-readiness.py [--json]`, repository-local and
+filesystem-only, not an installed helper. Fixed check IDs, output/exit semantics,
+input limits, privacy exclusions and manual gates are explicit. Isolated startup
+disables Python environment/site hooks; a trusted interpreter is still required.
 
-The source-specific planning pass proposed a smaller alternative:
-`python3 -B scripts/workstation-readiness.py [--json]`, repository-local and using
-filesystem inspection only, with no subprocesses. Evaluate that before an installed
-helper; the initial ticket must settle the path/read allowlist and update the
-implementation drafts consistently. Presence alone is not version or activation
-proof. The Pi setup hook and workflow package harness are mutating, not doctor probes.
+No subprocesses, version/auth probes, arbitrary project commands, Git hooks,
+network/client calls, server startup, installs or repairs. No private overlays,
+credentials, merged settings, session data or raw environment/output dumps.
+Presence alone is not compatible versions, configured pins or activation proof.
+The Pi setup hook and workflow package harness are mutating, not doctor probes.
 
 ### Tickets and dependencies
 
 1. **TODO-944d16f9 — Define offline checks and privacy-safe output.**
-   Ready. Map each check to public source metadata, a safe observation, requiredness
-   and a manual/unknown fallback when observation is unsafe or unavailable.
+   Done. Committed the filesystem-only contract as `014a5fd68574`, including
+   privacy/unknown/manual semantics and isolated Python startup.
 2. **TODO-2d54608b — Implement the observational report and fixture tests.**
-   Draft; blocked by TODO-944d16f9. Source-only changes, synthetic HOME/PATH fixtures,
-   deterministic status output and no host remediation.
+   Done after TODO-944d16f9. Helper/tests, documentation and isolated portability
+   wiring committed as `5762c00dcd5a`; no home installation or apply.
 3. **TODO-da744725 — Independently verify non-mutation, privacy and platform limits.**
-   Draft; blocked by TODO-2d54608b. Sentinel commands and before/after manifests
-   verify the boundary; label Fedora/macOS/interactive omissions explicitly.
+   Done after TODO-2d54608b. Claude CLI validation passed; 15 tests and portability
+   checks pass, with synthetic platform/permission and unknown-alias limits explicit.
 
 Verification baseline: the contract's focused test command plus
 `scripts/check-portability.sh`, with mutation-capable phases isolated and protected
@@ -219,9 +230,9 @@ settled; no bootstrap manifest silently acquires it.
 ### Tickets and dependencies
 
 1. **TODO-26d6912f — Define bounded gopls launch and result contract.**
-   Ready. Establish tested versions, offline/no-source-mutation behavior,
-   `go.mod`/`go.work` trust/root selection, readiness and diagnostic meaning.
-   If server safety cannot be established, stop rather than weaken the boundary.
+   Needs info. Unapproved research is preserved as pi-lsp commit `4dee150`.
+   A current-version audit, operator provisioning and observed native safety proof
+   are required; the historical pair excludes a primary intended consumer.
 2. **TODO-5cf86f0f — Implement approved backend with deterministic fixtures.**
    Draft; blocked by TODO-26d6912f. Preserve existing tool shapes and lifecycle
    ownership, with fake-server error/cancellation/staleness/containment cases.
@@ -256,17 +267,19 @@ The inventory must identify any client filesystem/terminal/MCP requirements rath
 than quietly assuming acp-bench supplies them. Provider/Pi RPC behavior should be
 fake and offline; production protocol mapping should not be fake.
 
-A late planning handoff raised a possible runtime migration as a reason to defer
-ACP. That migration/priority change is not verified or approved in this parent
-conversation. The discovery ticket must check the current target before freezing
-fixtures; it must ask for an owner decision if a migration changes that target.
-The selected five-project scope and four ACP tickets remain unchanged meanwhile.
+The bounded inventory found no migration decision in the inspected sources, so
+migration hearsay does not justify discarding these tickets. Instead, the intended
+production pair has a capability mismatch: the client supplies session MCP servers
+and pi-acp explicitly rejects them before startup. Owner must authorize scoped MCP
+integration or accept only a clearly reduced/negative protocol probe. Do not strip
+MCP or bypass client authority to manufacture a full-compatibility result.
 
 ### Tickets and dependencies
 
 1. **TODO-4c3782e1 — Inventory compatibility and select deterministic scenarios.**
-   Ready. Cite actual capabilities/operations, choose the minimal test seam, exact
-   candidate pairing and golden schema, and refine both worker scopes.
+   Needs info. Source-verified session-MCP incompatibility blocks positive app
+   compatibility. Local private inventory preserves pins, matrix and candidate seams;
+   owner decision on MCP scope precedes downstream implementation.
 2. **TODO-f6bbcd7c — Add provider-free adapter fixtures and compatibility cases.**
    Draft; blocked by TODO-4c3782e1. Owner: pi-acp only. No private Grimoire code or
    data may be copied into the public repository.
