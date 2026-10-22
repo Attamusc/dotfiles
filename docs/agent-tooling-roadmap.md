@@ -1,7 +1,7 @@
 # Agent tooling roadmap
 
 Date: 2026-10-18
-Status: executing; first discovery wave started 2026-10-22
+Status: paused at independent verification; first wave started 2026-10-22
 Owner: Sean; execution coordinated through Pi's todo tracker
 
 ## Goal and priority
@@ -30,14 +30,12 @@ local verification and local commits. Package/runtime installation, publication,
 pushes, workstation reconciliation/activation, live provider calls, real-Herdr
 live tests and hardware changes remain behind their separate approval gates.
 
-There are **16 new todos** tagged `agent-tooling-roadmap`: five initial
-contract/discovery tickets are `ready-for-agent`; eleven downstream tickets are
-`draft` at execution start. Spin discovery and subagent diagnosis are claimed by
-the coordinating session and delegated to separate repository-scoped workers.
-Child todo namespaces differ by cwd; the parent owns authoritative ticket
-transitions and passes resolved scope to each child. Existing unrelated todos
-and claims are unchanged. The tracker is machine-local; this document preserves the readable
-scope/dependency summary but does not replicate full ticket bodies.
+The roadmap contains **16 todos** tagged `agent-tooling-roadmap`. At execution
+start, five discovery tickets were ready and eleven downstream tickets were drafts.
+The parent owns authoritative ticket transitions and passes resolved scope to
+repository-scoped children, whose todo namespaces differ by cwd. Existing
+unrelated todos and claims are unchanged. The tracker is machine-local; this
+document preserves readable scope/dependencies, not the full ticket bodies.
 
 Before execution, fetch the ticket with `todo get`, inspect source freshness and
 repo conventions, then claim it. Blockers are recorded as `Blocked by:` lines in
@@ -45,6 +43,26 @@ the ticket bodies. After a discovery ticket finishes, refine its dependent draft
 with the resulting exact contract, test commands and writable scope before
 promoting them. A closed blocker alone does not promote a draft automatically.
 If an assumption fails, re-triage rather than silently changing scope.
+
+## Execution checkpoint — 2026-10-22
+
+- Spin discovery TODO-7177c7d1 completed; accepted contract committed locally as
+  `febf392085ce` in the Spin checkout. Candidate implementation TODO-b53c2f69 is
+  uncommitted, with parent-run `make test`, `make test-race`, `make vet` and
+  `make build` all exit 0 on Fedora. Independent verification is not complete.
+- Subagent diagnosis TODO-2c6e541f completed with a synthetic diagnostic-gap
+  reproduction, documented at local commit `3d3b2c6` in its isolated worktree.
+  Candidate TODO-19ac9885 now distinguishes failed output retrieval from genuine
+  empty output. Parent-run focused checks passed 33 tests; `npm test` passed 251.
+  The earlier live scout incidents remain unattributed; no recovery claim is made.
+- The diagnostic child and then the independent Pi validator exited status 1
+  without a graceful completion handshake; the validator produced no review.
+  Preserve evidence and pause rather than retrying that route indefinitely.
+  Both implementation tickets are `needs-info`, awaiting a decision on using the
+  configured read-only Claude CLI validation seat. Product changes are not yet
+  committed, independently accepted, published or activated.
+- Workstation readiness, Go LSP and ACP discovery have not started. Existing
+  runtime/install/live-test gates remain unchanged.
 
 ## 1. Spin structured observational status
 
