@@ -176,7 +176,7 @@ Slash commands are the user's to run. You have no way to invoke one; emitting `/
 
 | Agent | Purpose | Model | Effort |
 |-------|---------|-------|--------|
-| `planner` | Interactive planning agent — clarifies WHAT to build and figures out HOW. Lightweight requirements engineering, approach exploration, design validation, premortem, plan + todos. | GPT-6.1-sol | high |
+| `planner` | Interactive planning collaborator when deliberately delegated; investigates facts and drafts a compact proposal and grounded tasks. | GPT-6.1-sol | high |
 | `scout` | Fast codebase reconnaissance | GPT-6-luna (fast, cheap) | low |
 | `worker` | Implements tasks from todos, makes polished commits. Reports back if a todo is missing examples/references. | GPT-6.1-sol | low |
 | `reviewer` | Reviews code for quality/security | Claude Opus 5.5 — independent review of GPT-produced work | high |
@@ -215,13 +215,13 @@ The result returns Claude's actual `claudeSessionId` after process exit. To foll
 ```typescript
 // Use existing agent definitions — full transparency
 subagent({ name: "Scout", agent: "scout", interactive: false, task: "Analyze the codebase..." })
-subagent({ name: "Worker", agent: "worker", interactive: false, task: "Implement TODO-xxxx.\n\nResolved task: [paste scope, constraints, references, and acceptance criteria]" })
+subagent({ name: "Worker", agent: "worker", interactive: false, task: "Implement TODO-xxxx.\n\nResolved task: [paste scope, constraints, references, acceptance criteria, and scope-mismatch-before-writes rule: fetch/claim in authoritative scope; pause/report mismatch before writes; never force/steal/copy tickets]" })
 // For read-only reviewers, collect a bounded diff and verification results first.
 subagent({ name: "Reviewer", agent: "reviewer", tools: "read", interactive: false, task: "Evidence-only review: read the prepared diff and test results; report findings inline." })
 subagent({ name: "Researcher", agent: "researcher", interactive: false, task: "Research [topic]..." })
 
 // Planner — clarifies WHAT to build and plans HOW (interactive, user collaborates)
-subagent({ name: "💬 Planner", agent: "planner", interactive: true, task: "Plan: [description]. Context: [relevant info]" })
+subagent({ name: "💬 Planner", agent: "planner", interactive: true, task: "Plan: [description]. Proposal path: .pi/plans/YYYY-MM-DD-<name>/plan.md. Draft task artifact paths: [assigned paths/IDs]. Context: [resolved scope, constraints, references, checks]. Stop after returning reviewed proposal, draft IDs/status, evidence or blockers, and approval state; do not ask for build approval or activate tasks." })
 
 // Iterate — fork the session for focused work
 subagent({ name: "Iterate", interactive: true, fork: true, task: "Fix the bug where..." })
@@ -232,17 +232,16 @@ subagent({ name: "Scout: DB", agent: "scout", task: "Map database schema" })
 ```
 
 **Slash commands:**
-- `/plan <what to build>` — start the full planning workflow (investigate → scout → planner → execute → review)
-- `/bbq <what to explore>` — start a grill-with-docs session that produces decisions, runs adversarial review on those decisions (Phase 3.5), then flows into `/plan`
+- `/plan <rough idea or concrete request>` — plan in the current conversation: investigate facts, clarify consequential choices, draft one compact proposal and draft tasks, obtain fresh read-only review and one execution approval before activation. No compulsory scout or planner pane; follow the planner's proposal/review/consent contract.
 - `/review [args]` — adversarial review of a change, PR, file, URL, or raw claim. See `~/.pi/agent/prompts/review.md` for full syntax. Output lands in `~/.pi/agent/reviews/`.
 - `/subagent <agent> <task>` — spawn a subagent by name
 - `/iterate [task]` — fork session into interactive subagent for quick fixes
 
 #### When to Delegate
 
-- **New feature or unclear requirements** → Start with `planner` (it handles both WHAT and HOW)
-- **Complex domain or terminology to resolve first** → Start with `/bbq` to grill, then plan
-- **Todos ready to execute** → Spawn `scout` then `worker` agents
+- **Rough idea, new feature, or unclear requirements** → Plan in the current conversation. Investigate source facts yourself; ask focused questions with recommendations only for consequential unknown goals/trade-offs. Deliberately delegated planning uses interactive `planner`, not a mandatory pane.
+- **Explicit request to grill** → Use `grill-me` or `grill-with-docs`; never load an interrogation script automatically for ordinary planning.
+- **Reviewed todos approved for execution** → Verify scope, dependencies, and that the task is unclaimed and eligible, then delegate without claiming on the worker's behalf. The implementation worker fetches and claims in the authoritative task scope before writes. Cross-workspace or scoped-store mismatches pause before writes and are reported to the coordinator; never steal claims or silently copy tickets. Scouts are optional for useful factual gaps.
 - **Worker reports missing context** → Provide the missing examples/references, update the todo, re-spawn the worker
 - **Code review needed** → Delegate to `reviewer` (quality/security/maintainability)
 - **Need to prove a claim or change wrong** → Delegate to `adversarial-reviewer` (correctness/evidence/citation integrity). Complementary to `reviewer`, not a replacement.

@@ -182,18 +182,16 @@ test("adversarial reviewer declares all bootstrap skills as comma-separated fron
 
 test("planner remains interactive and finalizes through the subagent handshake", () => {
   const source = readManagedPiFile(join("agents", "planner.md"));
-  const phaseTen = source.slice(source.indexOf("## Phase 10: Summarize & Exit"));
-
-  assert.match(source, /one phase per message/i);
-  assert.match(source, /\[END — wait\]/);
-  assert.match(phaseTen, /call the `subagent_done` tool/i);
-  assert.doesNotMatch(phaseTen, /Ctrl\+D|exit this session/i);
+  assert.match(source, /interactive collaborator when deliberately delegated/i);
+  assert.match(source, /end the turn, and wait for answers/i);
+  assert.match(source, /call the `subagent_done` tool/i);
+  assert.doesNotMatch(source, /Ctrl\+D|one phase per message/i);
 });
 
 test("todo workflow wires blockers before tickets become agent-ready", () => {
   const skillsDir = join(testDir, "..", "skills");
   const planner = readManagedPiFile(join("agents", "planner.md"));
-  const phaseNine = planner.split("## Phase 9: Create Todos")[1].split("## Phase 10:")[0];
+  const draftTasks = planner.split("## One proposal, grounded tasks")[1].split("## Fresh review and consent")[0];
   const worker = readManagedPiFile(join("agents", "worker.md"));
   const tracker = readFileSync(join(skillsDir, "todo-tracker.md"), "utf8");
   const implementation = readFileSync(join(skillsDir, "implement", "SKILL.md"), "utf8");
@@ -202,11 +200,12 @@ test("todo workflow wires blockers before tickets become agent-ready", () => {
     assert.equal(existsSync(join(skillsDir, name)), false, `${name} should be retired`);
   }
   assert.doesNotMatch(planner, /write-todos/);
-  assert.match(phaseNine, /create[^\n]*status: "draft"/);
-  assert.match(phaseNine, /append[^\n]*Blocked by: TODO-/);
-  assert.match(phaseNine, /update[^\n]*status: "ready-for-agent"/);
-  assert.ok(phaseNine.indexOf('action: "create"') < phaseNine.indexOf('action: "append"'));
-  assert.ok(phaseNine.indexOf('action: "append"') < phaseNine.indexOf('action: "update"'));
+  assert.match(draftTasks, /create[^\n]*status: "draft"/);
+  assert.match(draftTasks, /append[^\n]*Blocked by: TODO-/);
+  assert.doesNotMatch(draftTasks, /status: "ready-for-agent"/);
+  assert.ok(draftTasks.indexOf('action: "create"') < draftTasks.indexOf('action: "append"'));
+  assert.match(planner, /Only the main author\/orchestrator may activate fully wired reviewed tasks after that approval/);
+  assert.match(planner, /update[^\n]*status: "ready-for-agent"/);
   const todoTool = readFileSync(join(testDir, "..", "extensions", "todos", "index.ts"), "utf8");
   const listAction = todoTool.split('case "list": {')[1].split('case "list-all":')[0];
   assert.doesNotMatch(listAction, /params\.status/, "update the frontier instructions if list gains status filtering");
