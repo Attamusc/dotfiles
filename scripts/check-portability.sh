@@ -732,13 +732,19 @@ darwin_config = tomllib.loads(pathlib.Path(sys.argv[1]).read_text())
 fedora_config = tomllib.loads(pathlib.Path(sys.argv[2]).read_text())
 for config in (darwin_config, fedora_config):
     assert config["settings"] == {"upgrade": {"auto_prune": False}}
-    assert set(config) == {"tools", "settings"}
+assert set(darwin_config) == {"tools", "settings"}
+assert set(fedora_config) == {"tools", "settings", "env"}
+assert fedora_config["env"] == {
+    "PI_LSP_GOPLS": "{{ env.HOME }}/.local/share/pi-lsp/go/bin/gopls",
+    "PI_LSP_GO_ROOT": "{{ env.HOME }}/.local/share/mise/installs/go/1.26.5",
+    "PI_LSP_GO_PROFILE": "{{ env.HOME }}/.local/share/pi-lsp/go/profile",
+}
 darwin = darwin_config["tools"]
 fedora = fedora_config["tools"]
 shared = {
     "go": "1.26",
     "go:github.com/attamusc/spin": {
-        "version": "0.0.0-20260315212148-2c0a74c0db03",
+        "version": "0.0.0-20261022014811-a230a1a1c420",
         "depends": "go",
     },
     "node": "25.8.1",
@@ -1179,12 +1185,12 @@ mcp=json.loads(pathlib.Path(sys.argv[2]).read_text())
 opencode=json.loads(pathlib.Path(sys.argv[3]).read_text())
 expected_packages=[
     "git:github.com/HazAT/glimpse",
-    "git:github.com/Attamusc/pi-interactive-subagents@d57e498193e9ae25077c8edb0d14cf556808fc63",
+    "git:github.com/Attamusc/pi-interactive-subagents@952aff80d965b61d7f887ba3325dbfde2cdb743c",
     "git:github.com/HazAT/pi-autoresearch",
     "git:github.com/carderne/pi-nvim",
     "git:github.com/Attamusc/pi-television@c3826bc268e05a1045e1d2339fc5a0cd3fd17a7e",
     "git:github.com/Attamusc/pi-hunk-review@v0.1.1",
-    "git:github.com/Attamusc/pi-lsp@9496ab5a4fd6309c5647e4f358d1b6a0b0ff8409",
+    "git:github.com/Attamusc/pi-lsp@c548647c1c627af33d8d62156bf88714207e0e00",
     "git:github.com/Attamusc/pi-workflows@1614faf29c6ad1d0fcc9fe6db86a770f34e2b129",
 ]
 assert settings["packages"] == expected_packages

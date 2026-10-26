@@ -26,9 +26,10 @@ measured productivity result.
 
 The original request authorized planning and todo creation. On 2026-10-22 the
 user said “ok go”, authorizing execution of this roadmap: scoped source changes,
-local verification and local commits. Package/runtime installation, publication,
-pushes, workstation reconciliation/activation, live provider calls, real-Herdr
-live tests and hardware changes remain behind their separate approval gates.
+local verification and local commits. At that point, installation, pushes and
+activation were excluded. On 2026-10-26 the user authorized pushing and locally
+activating the four completed projects, including their scoped package/tool pins.
+ACP, live provider calls, real-Herdr tests and hardware changes remain out of scope.
 
 The roadmap contains **16 todos** tagged `agent-tooling-roadmap`. At execution
 start, five discovery tickets were ready and eleven downstream tickets were drafts.
@@ -43,6 +44,27 @@ the ticket bodies. After a discovery ticket finishes, refine its dependent draft
 with the resulting exact contract, test commands and writable scope before
 promoting them. A closed blocker alone does not promote a draft automatically.
 If an assumption fails, re-triage rather than silently changing scope.
+
+## Local rollout checkpoint — 2026-10-26
+
+- Spin `a230a1a1c420` is pushed and installed through mise at
+  `0.0.0-20261022014811-a230a1a1c420`. Installed structured status JSON passes.
+- The subagent fix was rebased unchanged onto current main as `5e2c4ef`; all
+  **291 tests pass**, with no skips. The installed pin `952aff8` includes that fix
+  and preserves a newer concurrent update rather than downgrading it.
+- pi-lsp `c548647` (0.4.0) is pushed and installed. Stock gopls v0.23.0 and the
+  telemetry-off private profile are provisioned persistently outside workspaces.
+  All five Go operations and empty/error/corrected snapshots pass against the
+  installed service using this profile. Spin's public module dependencies are
+  cached; other projects still need their dependencies provisioned per contract.
+- Managed package/tool pins and Linux Go environment are updated. Local mise
+  changes preserve unrelated configuration. The readiness helper runs directly
+  from this repository: **15 tests pass**, observed `baseline:clear`,
+  `runtime:unverified`. Full Fedora/macOS portability checks pass.
+
+Existing Pi processes retain their loaded extensions and environment; restart Pi
+from a fresh shell to load the new versions. No daemon, provider or ACP rollout
+is implied. Unrelated local planner commits are not part of the dotfiles push.
 
 ## Go completion checkpoint — 2026-10-26
 
