@@ -1,7 +1,7 @@
 # Agent tooling roadmap
 
 Date: 2026-10-18
-Status: nine todos complete; Go and ACP paused for owner decisions
+Status: twelve todos complete; ACP paused for owner decision
 Owner: Sean; execution coordinated through Pi's todo tracker
 
 ## Goal and priority
@@ -44,7 +44,21 @@ with the resulting exact contract, test commands and writable scope before
 promoting them. A closed blocker alone does not promote a draft automatically.
 If an assumption fails, re-triage rather than silently changing scope.
 
-## Execution checkpoint — 2026-10-22
+## Go completion checkpoint — 2026-10-26
+
+Go's three tickets are complete in local pi-lsp commit `c548647` (package 0.4.0,
+contract v4). The existing tool supports all five operations using unchanged stock
+gopls v0.23.0 and Go 1.26.5 on Linux; diagnostic snapshots are explicitly partial.
+Normal tests pass **182 cases, with five opt-in skips**; the separate real-gopls
+smoke test passes navigation and empty/error/corrected diagnostic snapshots.
+Typecheck and package dry-run pass. Independent Claude functional validation is
+PASS. Nothing was pushed or activated; ACP remains paused.
+
+The user explicitly replaced the over-scoped sandbox/syscall/SIGSTOP proof work
+with normal tests, one functional integration fixture, review and a local commit.
+The unused proof machinery is not a remaining release gate or a security claim.
+
+## Earlier execution checkpoint — 2026-10-22
 
 - **Nine of sixteen todos are complete:** all three tickets for Spin, the bounded
   subagent-diagnostic slice and workstation readiness. All three scoped
@@ -230,16 +244,14 @@ settled; no bootstrap manifest silently acquires it.
 ### Tickets and dependencies
 
 1. **TODO-26d6912f — Define bounded gopls launch and result contract.**
-   Needs info. Unapproved research is preserved as pi-lsp commit `4dee150`.
-   A current-version audit, operator provisioning and observed native safety proof
-   are required; the historical pair excludes a primary intended consumer.
+   Done. Contract v4 documents stock gopls v0.23.0 / Go 1.26.5, Linux modules,
+   provisioned tools/profile and partial versioned push diagnostics.
 2. **TODO-5cf86f0f — Implement approved backend with deterministic fixtures.**
-   Draft; blocked by TODO-26d6912f. Preserve existing tool shapes and lifecycle
-   ownership, with fake-server error/cancellation/staleness/containment cases.
+   Done in `c548647`; existing tool shapes and lifecycle ownership are preserved.
 3. **TODO-364aa0e7 — Independently verify native behavior and unchanged backends.**
-   Draft; blocked by TODO-5cf86f0f and operationally gated on the approved gopls
-   prerequisite. Real native fixtures and before/after workspace evidence are
-   mandatory; skipped runtime checks are not passing native coverage.
+   Done under the user-approved functional scope: normal tests, one real Go
+   navigation/error/correction smoke test, typecheck, packaging and Claude review.
+   Native Rust/Ruby were not rerun; no hostile-workspace sandbox guarantee is made.
 
 Verification baseline: `npm test`, `npm run typecheck`, `npm run pack:check`, plus
 the documented opt-in native argv selected by the contract. No formatting/code
