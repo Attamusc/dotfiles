@@ -306,6 +306,17 @@ test("OpenCode and Copilot prefer GPT with a Claude advisor boundary", () => {
   assert.equal(copilotSettings.subagents.agents.spec.model, "gpt-6-sol");
 });
 
+test("shared review defaults use Pi seats and keep Claude Code opt-in", () => {
+  const instructions = readFileSync(join(testDir, "..", "AGENTS.md"), "utf8");
+  assert.match(instructions, /\*\*Default review seats:\*\* Use `reviewer` for code review and `validator` for integration\/contract validation/);
+  assert.match(instructions, /Do not substitute `claude-reviewer` or `claude-validator` unless explicitly requested or selected by machine-local instructions/);
+  assert.doesNotMatch(instructions, /Pi-backed (?:review|validation) alternative; only when the user explicitly requests it/);
+  assert.match(instructions, /agent: "reviewer", tools: "read"/);
+  assert.match(instructions, /\*\*Code review needed\*\* → Delegate to `reviewer`/);
+  assert.match(instructions, /\*\*Irreversible operation, declared integration contract, or security-sensitive change\*\* → Spawn `validator`/);
+  assert.match(instructions, /use the existing `reviewer`, `adversarial-reviewer`, or `validator` seat/);
+});
+
 test("nested utilities and code review preserve their routing boundaries", () => {
   const providers = modelProviders();
   const answerSource = readManagedPiFile(join("extensions", "answer", "index.ts"));

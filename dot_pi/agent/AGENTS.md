@@ -179,10 +179,10 @@ Slash commands are the user's to run. You have no way to invoke one; emitting `/
 | `planner` | Interactive planning collaborator when deliberately delegated; investigates facts and drafts a compact proposal and grounded tasks. | GPT-6.1-sol | high |
 | `scout` | Fast codebase reconnaissance | GPT-6-luna (fast, cheap) | low |
 | `worker` | Implements tasks from todos, makes polished commits. Reports back if a todo is missing examples/references. | GPT-6.1-sol | low |
-| `reviewer` | Pi-backed review alternative; only when the user explicitly requests it | Claude Opus 5.5 — independent review of GPT-produced work | high |
-| `validator` | Pi-backed validation alternative; only when the user explicitly requests it | Claude Opus 5.5 — independent contract gate | high |
-| `claude-reviewer` | Read-only Claude Code review via subscription; Pi supplies diff and tests | Sonnet (Claude Code CLI) | CLI-owned |
-| `claude-validator` | Read-only Claude Code contract check via subscription | Opus (Claude Code CLI) | CLI-owned |
+| `reviewer` | Default Pi-backed code reviewer for quality, security, and correctness | Claude Opus 5.5 — independent review of GPT-produced work | high |
+| `validator` | Default Pi-backed validator for declared integration contracts | Claude Opus 5.5 — independent contract gate | high |
+| `claude-reviewer` | Opt-in read-only Claude Code review via subscription; Pi supplies diff and tests | Sonnet (Claude Code CLI) | CLI-owned |
+| `claude-validator` | Opt-in read-only Claude Code contract check via subscription | Opus (Claude Code CLI) | CLI-owned |
 | `researcher` | Deep research — fetches external sources, analyses code and telemetry, synthesises findings | GPT-5.6-terra | high |
 | `adversarial-reviewer` | Adversarial review of changes or research positions — proves the target wrong with tiered, well-cited evidence. Posture is structural, no balanced mode. | Claude Opus 5.5 — independent falsification of GPT-produced work | high |
 
@@ -206,7 +206,7 @@ Every delegation brief must state the target, scope, constraints, expected outpu
 
 Child handoffs flow upward as bounded findings, evidence, and blockers. The parent owns synthesis and decisions. Do not forward child transcripts or substitute transcript volume for a focused handoff.
 
-**Default review seats:** Always use `claude-reviewer` for code review and `claude-validator` for integration/contract validation. This preference also applies when a skill, plan, or example names the generic `reviewer` or `validator` role. Do not switch to the Pi-backed versions after a failure without an explicit user request; preserve the evidence and report the blocker.
+**Default review seats:** Use `reviewer` for code review and `validator` for integration/contract validation, including generic role references in skills, plans, and examples. Do not substitute `claude-reviewer` or `claude-validator` unless explicitly requested or selected by machine-local instructions. Machine-specific preferences must not change these shared defaults.
 
 **Claude Code review seats:** `claude-reviewer` and `claude-validator` are separate from the Pi-backed `reviewer` and `validator`. Pi resolves any todo, runs a bounded `git diff` and tests, and supplies changed paths, acceptance criteria or contract references, test argv/status/output, and labeled omissions in the task. For a larger diff, create a bounded evidence artifact inside the child's working directory and give its exact path; keep the task under 60 KiB.
 
@@ -219,7 +219,7 @@ The result returns Claude's actual `claudeSessionId` after process exit. To foll
 subagent({ name: "Scout", agent: "scout", interactive: false, task: "Analyze the codebase..." })
 subagent({ name: "Worker", agent: "worker", interactive: false, task: "Implement TODO-xxxx.\n\nResolved task: [paste scope, constraints, references, acceptance criteria, and scope-mismatch-before-writes rule: fetch/claim in authoritative scope; pause/report mismatch before writes; never force/steal/copy tickets]" })
 // For read-only reviewers, collect a bounded diff and verification results first.
-subagent({ name: "Reviewer", agent: "claude-reviewer", interactive: false, task: "Evidence-only review: read the prepared diff and test results; report findings inline." })
+subagent({ name: "Reviewer", agent: "reviewer", tools: "read", interactive: false, task: "Evidence-only review: read the prepared diff and test results; report findings inline." })
 subagent({ name: "Researcher", agent: "researcher", interactive: false, task: "Research [topic]..." })
 
 // Planner — clarifies WHAT to build and plans HOW (interactive, user collaborates)
@@ -245,9 +245,9 @@ subagent({ name: "Scout: DB", agent: "scout", task: "Map database schema" })
 - **Explicit request to grill** → Use `grill-me` or `grill-with-docs`; never load an interrogation script automatically for ordinary planning.
 - **Reviewed todos approved for execution** → Verify scope, dependencies, and that the task is unclaimed and eligible, then delegate without claiming on the worker's behalf. The implementation worker fetches and claims in the authoritative task scope before writes. Cross-workspace or scoped-store mismatches pause before writes and are reported to the coordinator; never steal claims or silently copy tickets. Scouts are optional for useful factual gaps.
 - **Worker reports missing context** → Provide the missing examples/references, update the todo, re-spawn the worker
-- **Code review needed** → Delegate to `claude-reviewer` (quality/security/maintainability)
+- **Code review needed** → Delegate to `reviewer` (quality/security/maintainability)
 - **Need to prove a claim or change wrong** → Delegate to `adversarial-reviewer` (correctness/evidence/citation integrity). Complementary to `reviewer`, not a replacement.
-- **Irreversible operation, declared integration contract, or security-sensitive change** → Spawn `claude-validator` after worker finishes. The validator confirms the implementation matches its source-of-truth contract and checks the relevant risk boundary. A todo isn't truly done until validator passes.
+- **Irreversible operation, declared integration contract, or security-sensitive change** → Spawn `validator` after worker finishes. The validator confirms the implementation matches its source-of-truth contract and checks the relevant risk boundary. A todo isn't truly done until validator passes.
 - **Need context first** → Start with `scout`
 - **Web research or external info needed** → Delegate to `researcher`
 
@@ -273,7 +273,7 @@ After a restart, reconcile by rereading the plan or handoff, VCS state, todo sta
 
 #### Manual Advisor Checkpoints
 
-Advisor consultation is opt-in and user-invoked only. It is read-only and bounded to the current session; use the existing `claude-reviewer`, `adversarial-reviewer`, or `claude-validator` seat that matches the question. Aim for no more than roughly four consultations per task, at these checkpoints: before a major decision, after two genuine failed attempts, before completing nontrivial work, or when the user explicitly requests advice.
+Advisor consultation is opt-in and user-invoked only. It is read-only and bounded to the current session; use the existing `reviewer`, `adversarial-reviewer`, or `validator` seat that matches the question. Aim for no more than roughly four consultations per task, at these checkpoints: before a major decision, after two genuine failed attempts, before completing nontrivial work, or when the user explicitly requests advice.
 
 Give the advisor one fixed, bounded evidence briefing:
 
