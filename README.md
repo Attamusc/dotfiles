@@ -210,6 +210,58 @@ Open a fresh shell and start a new Pi process after setup. `/reload` refreshes
 extensions but cannot import environment changes into an existing process.
 Neither the global Ruby gem set nor the ordinary Rust default is changed.
 
+## Restart idle Pi peers in Herdr
+
+`pi-restart-all` previews idle/done Pi peers;
+`pi-restart-all --apply --confirm-empty-editors` restarts those peers sequentially.
+Run inside Herdr with `HERDR_ENV=1` and `HERDR_PANE_ID` set. The calling pane is always excluded. Restrict an approved
+batch with repeatable `--pane 'w1:p1'` arguments on both preview and apply.
+Every selected peer is preflighted before any quit; apply rechecks each identity.
+
+Use apply under supervision: a failure can leave a peer at its shell, requiring
+manual recovery.
+
+Before applying, confirm that target sessions are at normal chat prompts with
+empty input editors. Herdr cannot inspect unsent drafts: pasting `/quit` into
+a draft could submit it instead of quitting. The helper requires your explicit
+`--confirm-empty-editors` acknowledgement and never clears input buffers.
+
+Herdr alone submits `/quit` and starts Pi in the same pane with the exact saved
+`--session` path. A read-only local `ps -p PID -o pid=` check supplements Herdr's
+foreground snapshot: the original shell/cwd must return and the old PID must
+be absent before startup. Within that same exit deadline, the helper also waits
+for Herdr to clear the old agent/session record and for its name lookup to report
+`agent_not_found`. Process exit alone does not prove that Herdr released the name.
+Background/suspended processes and ambiguous errors
+stop the run; no signals, trust approvals, layout changes, or automatic retries
+are used. All Herdr and ps queries are local to the inherited server context;
+there is no `--machine` support. Exit, start, and readiness stages default to
+30 seconds each (`--timeout` overrides the stage deadline). Transient foreground
+children from prompt hooks or startup are waited out; actions still require a
+verified single foreground process. Session paths containing spaces or shell
+metacharacters are rejected before quitting because Herdr's shell quoting has
+not been verified here.
+
+This resumes the saved conversation with currently installed configuration,
+not invisible original process-only flags or restrictions. Each restarted agent
+is named `restart-<16 hex digits>`; any original agent name is not preserved.
+Default mode includes every eligible Pi peer; it cannot identify persistent
+controlled peers or name-based coordination. Review the preview before every
+apply. If those peers are present, use a `--pane` allowlist containing only the
+standalone sessions you intend to restart. Do not select controlled or
+name-coordinated peers. Session contents are never read. On failure, inspect the
+reported stage, completed count, and recovery identity before taking manual
+action: a failed or timed-out submission may have occurred. Native Herdr errors
+include the exit status and bounded, escaped code/message fields; unrelated
+response fields and unstructured stderr are not dumped.
+Preview is not a reservation, and apply fails closed if an identity changes.
+
+Fixture-only smoke check (stubs both Herdr and ps; no live session queries):
+
+```sh
+python3 tests/herdr/test-pi-restart-all.py
+```
+
 ## Preview and apply
 
 Run the non-mutating repository contract check first:

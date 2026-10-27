@@ -1,0 +1,264 @@
+#!/usr/bin/env python3
+"""Preview or restart idle Pi peers through the inherited local Herdr server."""
+import argparse
+import hashlib
+import json
+import math
+import os
+from pathlib import Path
+import re
+import subprocess
+import sys
+import time
+
+
+class Unsafe(ValueError):
+    pass
+
+
+class HerdrError(Unsafe):
+    def __init__(self, message, code, exit_code):
+        super().__init__(message)
+        self.code = code
+        self.exit_code = exit_code
+
+
+def require(condition, message):
+    if not condition:
+        raise Unsafe(message)
+
+
+def text(value):
+    return isinstance(value, str) and 0 < len(value) <= 4096 and not any(ord(c) < 32 for c in value)
+
+
+def pid(value):
+    return type(value) is int and value > 0
+
+
+def run(argv, deadline):
+    remaining = deadline - time.monotonic()
+    require(remaining > 0, 'stage deadline expired')
+    try:
+        return subprocess.run(argv, capture_output=True, text=True, timeout=remaining)
+    except (OSError, subprocess.TimeoutExpired) as error:
+        uncertain = '; submission may have occurred' if argv[:3] in (['herdr', 'agent', 'prompt'],
+                                                                   ['herdr', 'agent', 'start']) else ''
+        raise Unsafe(f'{argv[0]} call failed or timed out{uncertain}') from error
+
+
+def herdr(args, deadline):
+    result = run(['herdr', *args], deadline)
+    operation = f'Herdr {args[0]} {args[1]}'
+    try:
+        value = json.loads(result.stderr if result.returncode else result.stdout)
+    except ValueError as error:
+        if result.returncode:
+            raise Unsafe(f'{operation} failed (exit={result.returncode}; native JSON error unavailable); not retrying') from error
+        raise Unsafe('malformed Herdr JSON response') from error
+    if isinstance(value, dict) and 'error' in value:
+        native = value['error']
+        require(isinstance(native, dict) and isinstance(native.get('code'), str) and
+                isinstance(native.get('message'), str), 'malformed Herdr error envelope')
+        detail = json.dumps({'code': native['code'][:96], 'message': native['message'][:512]}, ensure_ascii=True)
+        raise HerdrError(f'{operation} failed (exit={result.returncode}; native={detail}); not retrying',
+                         native['code'], result.returncode)
+    require(result.returncode == 0, f'{operation} failed (exit={result.returncode}; native JSON error unavailable); not retrying')
+    require(isinstance(value, dict) and isinstance(value.get('result'), dict), 'invalid Herdr result')
+    return value['result']
+
+
+def exists(old_pid, deadline):
+    result = run(['ps', '-p', str(old_pid), '-o', 'pid='], deadline)
+    if result.returncode == 0 and result.stdout.strip() == str(old_pid) and not result.stderr:
+        return True
+    if result.returncode == 1 and not result.stdout and not result.stderr:
+        return False
+    raise Unsafe('ps exit evidence unknown (error or unexpected output)')
+
+
+def identity(agent, expected_pane):
+    require(isinstance(agent, dict), 'missing agent identity')
+    require(agent.get('pane_id') == expected_pane and agent.get('agent') == 'pi', 'pane/harness identity changed')
+    for key in ('pane_id', 'terminal_id', 'cwd', 'foreground_cwd'):
+        require(text(agent.get(key)), f'missing/invalid {key}')
+    cwd = agent['cwd']
+    require(Path(cwd).is_absolute() and Path(cwd).is_dir() and agent['foreground_cwd'] == cwd,
+            'invalid or changed cwd')
+    session = agent.get('agent_session')
+    require(isinstance(session, dict) and session.get('agent') == 'pi' and
+            session.get('kind') == 'path' and session.get('source') == 'herdr:pi', 'unsupported session identity')
+    path = session.get('value')
+    require(text(path) and Path(path).is_absolute() and Path(path).is_file(), 'invalid session file')
+    require(re.fullmatch(r'/[A-Za-z0-9_./-]+', path) is not None,
+            'unsupported session path: spaces and shell metacharacters are not allowed')
+    return (expected_pane, agent['terminal_id'], cwd, path)
+
+
+def process(pane, deadline, settling=False):
+    info = herdr(['pane', 'process-info', '--pane', pane], deadline).get('process_info')
+    require(isinstance(info, dict) and info.get('pane_id') == pane and pid(info.get('shell_pid')),
+            'invalid process ownership')
+    processes = info.get('foreground_processes')
+    valid = isinstance(processes, list) and all(isinstance(p, dict) and pid(p.get('pid')) and
+            text(p.get('name')) for p in processes)
+    if not valid:
+        require(settling, 'invalid foreground process list')
+        return info, None
+    if len(processes) != 1:
+        require(settling, 'ambiguous foreground process layout')
+        return info, None
+    foreground = processes[0]
+    if not (pid(info.get('foreground_process_group_id')) and text(foreground.get('cwd'))):
+        require(settling, 'missing process identity')
+        return info, None
+    return info, foreground
+
+
+def snapshot(agent, deadline, expected=None):
+    pane = agent['pane_id']
+    current = herdr(['agent', 'get', pane], deadline).get('agent')
+    key = identity(current, pane)
+    require(key == identity(agent, pane), 'session/terminal/cwd identity changed')
+    require(current.get('agent_status') in ('idle', 'done'), 'target became busy or unknown')
+    info, foreground = process(pane, deadline)
+    require(foreground.get('argv0') == 'pi' and foreground['pid'] != info['shell_pid'] and
+            foreground['cwd'] == key[2], 'not a supported foreground Pi process')
+    result = (key, foreground['pid'], info['shell_pid'])
+    require(expected is None or expected == result, 'process identity changed since preflight')
+    require(exists(foreground['pid'], deadline), 'baseline Pi PID missing')
+    return result
+
+
+def pause(deadline):
+    remaining = deadline - time.monotonic()
+    require(remaining > 0, 'stage deadline expired')
+    time.sleep(min(0.05, remaining))
+
+
+def restart(agent, saved, timeout):
+    key, old_pid, shell_pid = saved
+    pane, terminal, cwd, session = key
+    name = 'restart-' + hashlib.sha256(pane.encode()).hexdigest()[:16]
+    snapshot(agent, time.monotonic() + timeout, saved)
+    print(f'STAGE {pane}: submit-quit', flush=True)
+    herdr(['agent', 'prompt', pane, '/quit'], time.monotonic() + timeout)
+    print(f'STAGE {pane}: wait-for-exit-and-release', flush=True)
+    deadline = time.monotonic() + timeout
+    while True:
+        info, foreground = process(pane, deadline, settling=True)
+        require(info['shell_pid'] == shell_pid, 'shell changed during exit')
+        if foreground is not None and foreground['pid'] == shell_pid:
+            require(foreground['cwd'] == cwd, 'shell cwd changed during exit')
+            require(info['foreground_process_group_id'] == shell_pid, 'shell is not foreground group owner')
+            if not exists(old_pid, deadline):
+                owner = herdr(['pane', 'get', pane], deadline).get('pane')
+                require(isinstance(owner, dict) and owner.get('pane_id') == pane and
+                        owner.get('terminal_id') == terminal and owner.get('cwd') == cwd,
+                        'pane ownership changed during release')
+                require(owner.get('agent') in (None, 'pi'), 'harness changed during release')
+                reported = owner.get('agent_session')
+                require(reported is None or (isinstance(reported, dict) and reported.get('agent') == 'pi' and
+                        reported.get('kind') == 'path' and reported.get('source') == 'herdr:pi' and
+                        reported.get('value') == session), 'session changed during release')
+                if owner.get('agent') is None and reported is None and owner.get('agent_status') == 'unknown':
+                    try:
+                        named = herdr(['agent', 'get', name], deadline).get('agent')
+                    except HerdrError as error:
+                        if error.exit_code == 1 and error.code == 'agent_not_found':
+                            break
+                        raise
+                    require(isinstance(named, dict) and named.get('pane_id') == pane and
+                            named.get('terminal_id') == terminal, 'restart name belongs to another owner')
+        pause(deadline)
+    print(f'STAGE {pane}: submit-start', flush=True)
+    herdr(['agent', 'start', name, '--kind', 'pi', '--pane', pane,
+           '--timeout', '30000', '--', '--session', session], time.monotonic() + timeout)
+    print(f'STAGE {pane}: verify-ready', flush=True)
+    deadline = time.monotonic() + timeout
+    while True:
+        current = herdr(['agent', 'get', pane], deadline).get('agent')
+        require(isinstance(current, dict) and current.get('pane_id') == pane and
+                current.get('terminal_id') == terminal and current.get('cwd') == cwd,
+                'startup pane/terminal/cwd identity changed')
+        require(current.get('agent_status') != 'blocked', 'startup blocked; human action required')
+        if current.get('agent_session') is not None:
+            require(identity(current, pane) == key, 'startup session identity changed')
+        info, foreground = process(pane, deadline, settling=True)
+        require(info['shell_pid'] == shell_pid, 'startup shell changed')
+        if foreground is not None:
+            require(foreground['pid'] != old_pid, 'old Pi PID reappeared')
+            if (current.get('agent_session') is not None and current.get('agent_status') in ('idle', 'done')
+                    and foreground.get('argv0') == 'pi' and foreground['pid'] != shell_pid):
+                require(foreground['cwd'] == cwd, 'startup cwd changed')
+                print(f'VERIFIED {pane}: old_pid={old_pid} new_pid={foreground["pid"]}', flush=True)
+                return
+        pause(deadline)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--apply', action='store_true', help='restart preflighted idle/done peers')
+    parser.add_argument('--confirm-empty-editors', action='store_true',
+                        help='confirm targets are at normal chat prompts with empty input editors')
+    parser.add_argument('--pane', action='append', default=[], help='restrict to this pane (repeatable)')
+    parser.add_argument('--timeout', type=float, default=30, help='positive seconds per stage (default 30)')
+    args = parser.parse_args()
+    completed = 0
+    recovery = None
+    try:
+        require(math.isfinite(args.timeout) and args.timeout > 0, 'timeout must be positive and finite')
+        require(not args.apply or args.confirm_empty_editors,
+                '--apply requires --confirm-empty-editors; never submit /quit into an unsent draft or dialog')
+        caller = os.environ.get('HERDR_PANE_ID')
+        require(os.environ.get('HERDR_ENV') == '1' and text(caller), 'run inside Herdr with HERDR_PANE_ID')
+        require(len(set(args.pane)) == len(args.pane) and all(text(p) for p in args.pane), 'duplicate/invalid --pane')
+        caller_info = herdr(['pane', 'process-info', '--pane', caller], time.monotonic() + args.timeout).get('process_info')
+        require(isinstance(caller_info, dict) and caller_info.get('pane_id') == caller, 'calling pane identity is not canonical')
+        agents = herdr(['agent', 'list'], time.monotonic() + args.timeout).get('agents')
+        require(isinstance(agents, list) and len(agents) <= 1000, 'invalid/unbounded agent inventory')
+        seen = set()
+        selected = []
+        for agent in agents:
+            require(isinstance(agent, dict) and text(agent.get('pane_id')), 'missing pane identity')
+            pane = agent['pane_id']
+            require(pane not in seen, 'duplicate pane in inventory')
+            seen.add(pane)
+            if pane == caller:
+                print(f'SKIP {pane!r}: calling pane')
+                continue
+            if args.pane and pane not in args.pane:
+                continue
+            if agent.get('agent') != 'pi':
+                print(f'SKIP {pane!r}: harness {str(agent.get("agent"))[:80]!r}')
+                continue
+            if agent.get('agent_status') not in ('idle', 'done'):
+                print(f'SKIP {pane!r}: status {str(agent.get("agent_status"))[:80]!r}')
+                continue
+            identity(agent, pane)
+            selected.append(agent)
+        require(not (set(args.pane) - seen - {caller}), 'requested pane missing from inventory')
+        prepared = []
+        for agent in selected:
+            saved = snapshot(agent, time.monotonic() + args.timeout)
+            prepared.append((agent, saved))
+            print(f'TARGET {agent["pane_id"]!r} {agent["agent_status"]} cwd={agent["cwd"]!r}')
+        print(f'{"APPLY" if args.apply else "PREVIEW"}: selected={len(prepared)}')
+        if args.apply:
+            for agent, saved in prepared:
+                recovery = saved
+                print(f'RECOVERY pane={saved[0][0]!r} terminal={saved[0][1]!r} cwd={saved[0][2]!r} '
+                      f'session={saved[0][3]!r} old_pid={saved[1]} shell_pid={saved[2]}', flush=True)
+                restart(agent, saved, args.timeout)
+                completed += 1
+                recovery = None
+        print(f'completed={completed}')
+        return 0
+    except (Unsafe, OSError, KeyError, TypeError) as error:
+        print(f'pi-restart-all: stopped: {error}; completed={completed}; '
+              f'recovery={recovery!r}; no automatic retries', file=sys.stderr)
+        return 1
+
+
+if __name__ == '__main__':
+    sys.exit(main())
