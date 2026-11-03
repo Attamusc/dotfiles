@@ -91,11 +91,45 @@ test("privacy vocabulary rejects secrets and redactions on every string surface"
   for(const secret of secrets) for(const mutation of [p=>p.payload=secret,p=>p.provenance=[`session:s#entry:${secret}`],p=>p.destination=secret]) { const proposal=structuredClone(fixture); mutation(proposal); const result=run(project,"prepare",proposal); assert.equal(result.status,2); assert.doesNotMatch(result.stdout,/synthetic-visible|password@example|abcdefgh|PRIVATE KEY|REDACTED/); }
 }finally{await rm(project,{recursive:true,force:true})}});
 
-test("ancestor symlink swaps never hand off bytes from outside the project",async()=>{const project=await root(),outside=await mkdtemp(join(tmpdir(),"promotion-outside-"));let swapper;try{
-  await writeFile(join(project,".notes/decisions.md"),"approved\n"); await writeFile(join(outside,"decisions.md"),"approved\n"); const shown=await prepared(project); await writeFile(join(project,".notes/decisions.md"),"raced\n");
-  const script='while :; do mv .notes .notes-real 2>/dev/null || true; ln -s "$1" .notes 2>/dev/null || true; rm .notes 2>/dev/null || true; mv .notes-real .notes 2>/dev/null || true; done'; swapper=spawn("sh",["-c",script,"swap",outside],{cwd:project,stdio:"ignore"});
-  for(let index=0;index<100;index++){const result=run(project,"handoff",{tuple:shown.tuple,approval:approval(shown.tuple)});assert.notEqual(result.status,0,result.stdout);}
-}finally{swapper?.kill("SIGKILL");await new Promise(resolve=>swapper?.once("exit",resolve)??resolve());await rm(project,{recursive:true,force:true});await rm(outside,{recursive:true,force:true})}});
+test("ancestor symlink swaps never hand off bytes from outside the project",async(t)=>{
+  const project=await root(),outside=await mkdtemp(join(tmpdir(),"promotion-outside-"));
+  let swapper, exited;
+  try {
+    await writeFile(join(project,".notes/decisions.md"),"approved\n"); await writeFile(join(outside,"decisions.md"),"approved\n"); const shown=await prepared(project); await writeFile(join(project,".notes/decisions.md"),"raced\n");
+    // Keep every filesystem writer in the one child that teardown can reap.
+    const script=`
+      const { renameSync, symlinkSync, unlinkSync } = require("node:fs");
+      while (true) {
+        try { renameSync(".notes", ".notes-real"); } catch {}
+        try { symlinkSync(process.argv[1], ".notes"); } catch {}
+        try { unlinkSync(".notes"); } catch {}
+        try { renameSync(".notes-real", ".notes"); } catch {}
+      }
+    `;
+    swapper=spawn(process.execPath,["-e",script,outside],{cwd:project,stdio:"ignore"});
+    exited=new Promise(resolve=>{
+      swapper.once("exit",(code,signal)=>resolve({code,signal}));
+      swapper.once("error",error=>resolve({error}));
+    });
+    for(let index=0;index<100;index++){const result=run(project,"handoff",{tuple:shown.tuple,approval:approval(shown.tuple)});assert.notEqual(result.status,0,result.stdout);}
+    t.diagnostic("100 unsafe-handoff rejection assertions completed");
+  } finally {
+    if (swapper) {
+      let timer;
+      try {
+        swapper.kill("SIGKILL");
+        const result=await Promise.race([exited,new Promise((_,reject)=>{
+          timer=setTimeout(()=>reject(new Error(`Swapper did not exit; retained fixtures: ${project}, ${outside}`)),5000);
+        })]);
+        assert.equal(result.error,undefined,`Swapper failed; retained fixtures: ${project}, ${outside}`);
+        assert.equal(result.signal,"SIGKILL",`Unexpected swapper exit; retained fixtures: ${project}, ${outside}`);
+        t.diagnostic(`Owned swapper ${swapper.pid} reaped with ${result.signal} before fixture removal`);
+      } finally { clearTimeout(timer); }
+    }
+    await rm(project,{recursive:true,force:true});
+    await rm(outside,{recursive:true,force:true});
+  }
+});
 
 test("handoff requires exact approved state and canonical tuple encoding",async()=>{const project=await root();try{
   await writeFile(join(project,".notes/decisions.md"),"base\n"); const shown=await prepared(project); const approved=approval(shown.tuple);
