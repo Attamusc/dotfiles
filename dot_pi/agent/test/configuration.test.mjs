@@ -166,6 +166,17 @@ test("restricted agents receive every tool required by their instructions", () =
   assert.deepEqual(failures, []);
 });
 
+test("MCP-enabled research agents expose codemode and explain tool discovery", () => {
+  for (const file of ["researcher.md", "adversarial-reviewer.md"]) {
+    const agent = parseAgent(file);
+    assert.ok(agent.tools.includes("codemode"), `${file} must expose an MCP access tool`);
+    assert.ok(!agent.tools.includes("mcp"), `${file} must not name the obsolete mcp tool`);
+    assert.match(agent.body, /searchTools\(\)/, file);
+    assert.match(agent.body, /describeTool\(\)/, file);
+    assert.doesNotMatch(agent.body, /`mcp`/, file);
+  }
+});
+
 test("adversarial reviewer declares all bootstrap skills as comma-separated frontmatter", () => {
   const source = readManagedPiFile(join("agents", "adversarial-reviewer.md"));
   const frontmatter = source.split("---", 3)[1];
