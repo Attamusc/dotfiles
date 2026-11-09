@@ -201,13 +201,33 @@ test("managed package wiring preserves the staged activation boundary", async ()
   assert.doesNotMatch(docs, /saved workflows? (?:is|are) sandboxed|resume execution/i);
 });
 
+test("Atta entries have separate outcome, capability and publication contracts", async () => {
+  const task = await source("atta-task");
+  const investigation = await source("atta-investigate");
+  const push = await source("atta-push");
+  assert.equal(metadata(task, "model-invocation"), "explicit");
+  assert.equal(metadata(push, "model-invocation"), "explicit");
+  assert.equal(metadata(investigation, "model-invocation"), "automatic");
+  assert.match(task, /taskOutcome: "observe"/);
+  assert.match(task, /if \(!r\.ok\) return "execution-failed"/);
+  assert.match(task, /pass <= 2/);
+  assert.match(task, /noPush: true, noMerge: true/);
+  assert.match(investigation, /tools: \["read"\]/);
+  assert.match(investigation, /done: r\.ok && valid/);
+  assert.match(investigation, /not an OS sandbox/);
+  assert.match(push, /import iteratePr from "\.\/iterate-pr\.ts"/);
+  assert.match(push, /return iteratePr\(composed\)/);
+  assert.match(push, /Never merge or auto-merge/);
+  assert.doesNotMatch([task, investigation, push].join("\n"), /isolate:\s*true|\.integrate\(|cleanupIsolation|workflow_run/);
+});
+
 if (!candidate) {
   test("exact API contract (requires explicit disposable candidate and compiler)", { skip: "set PI_WORKFLOWS_CANDIDATE; absence is recorded, never treated as compatibility" }, () => {});
 } else {
-  test("all eight workflows typecheck against the explicit exact-revision candidate", () => {
+  test("all eleven workflows typecheck against the explicit exact-revision candidate", () => {
     const compiler = join(candidate, "node_modules/.bin/tsc");
     const output = execFileSync("node", [join(root, "scripts/check-pi-workflows-contract.mjs"), "--candidate", candidate, "--revision", revision, "--compiler", compiler], { cwd: root, encoding: "utf8" });
-    assert.match(output, /8 workflows typechecked/);
+    assert.match(output, /11 workflows typechecked/);
   });
 
   test("metadata permits automatic invocation only for bounded status/report workflows", async () => {

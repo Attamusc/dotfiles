@@ -18,7 +18,7 @@ const actualRevision = requiredRevision;
 
 const api = join(exactCandidate.root, "src/api.ts");
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const workflows = ["deep-review", "investigate", "iterate-pr", "jungle-book", "mine-workflows", "report-validate", "resume-status", "verify-claims"];
+const workflows = ["deep-review", "investigate", "iterate-pr", "jungle-book", "mine-workflows", "report-validate", "resume-status", "verify-claims", "atta-task", "atta-investigate", "atta-push"];
 const tsc = resolve(compiler);
 const candidateRoot = exactCandidate.root;
 if (tsc !== join(candidateRoot, "node_modules/.bin/tsc")) throw new Error("--compiler must be the TypeScript compiler from the explicit candidate checkout");
