@@ -1,0 +1,130 @@
+#!/usr/bin/env python3
+"""Install the SHA-pinned private jj Workbench release without touching layouts."""
+import hashlib
+import json
+import os
+from pathlib import Path, PurePosixPath
+import re
+import subprocess
+import sys
+import tarfile
+import tempfile
+
+GENERATED = {'gpui-kit.d.ts', 'jsconfig.json', '.installed-release.json'}
+
+
+def digest(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def safe_name(name):
+    path = PurePosixPath(name)
+    return bool(path.parts) and not path.is_absolute() and '..' not in path.parts and path.as_posix() == name
+
+
+def atomic_write(file, data):
+    file.parent.mkdir(parents=True, exist_ok=True)
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(dir=file.parent, prefix='.jj-install-', delete=False) as out:
+            temporary = Path(out.name)
+            out.write(data)
+        temporary.chmod(0o644)
+        os.replace(temporary, file)
+    finally:
+        if temporary is not None and temporary.exists():
+            temporary.unlink()
+
+
+def runtime_files(target):
+    files = {}
+    if target.exists():
+        for file in target.rglob('*'):
+            if file.is_symlink():
+                raise ValueError('runtime tree contains a symlink')
+            if file.is_file():
+                name = file.relative_to(target).as_posix()
+                if name in GENERATED:
+                    continue
+                if file.name.startswith('.jj-install-'):
+                    # Reserved installer temp namespace, possibly left by SIGKILL.
+                    file.unlink()
+                    continue
+                files[name] = file.read_bytes()
+    return files
+
+
+def install():
+    home = Path.home()
+    pin = json.loads((home / '.config/herdr-app/jj-workbench-release.json').read_text())
+    repo, version, expected = pin['repository'], pin['version'], pin['sha256']
+    if repo != 'Attamusc/herdr-jj-workbench' or not re.fullmatch(r'v\d+\.\d+\.\d+', version) or not re.fullmatch(r'[a-f0-9]{64}', expected):
+        raise ValueError('invalid jj Workbench release pin')
+    target = home / '.config/herdr-app/mods/jj-workbench'
+    marker = target / '.installed-release.json'
+    if target.is_symlink() or marker.is_symlink():
+        raise ValueError('refusing a development or manifest symlink')
+    old = json.loads(marker.read_text()) if marker.is_file() else None
+    if old and (old.get('repository') != repo or not isinstance(old.get('files'), dict) or any(not safe_name(n) or n in GENERATED for n in old['files'])):
+        raise ValueError('invalid installed-file manifest')
+    current = runtime_files(target)
+    if old and old.get('sha256') == expected and old.get('version') == version and set(current) == set(old['files']) and all(digest(current[n]) == checksum for n, checksum in old['files'].items()):
+        print(f'jj Workbench {version} already installed and verified')
+        return
+    with tempfile.TemporaryDirectory(prefix='herdr-jj-release-') as work:
+        def gh(*args):
+            return subprocess.run(['gh', *args], check=True, capture_output=True, text=True, timeout=120).stdout
+        if gh('repo', 'view', repo, '--json', 'isPrivate', '--jq', '.isPrivate').strip() != 'true':
+            raise ValueError('refusing release install: repository is not private')
+        archive = f'herdr-jj-workbench-{version}.tar.gz'
+        gh('release', 'download', version, '--repo', repo, '--pattern', archive, '--dir', work)
+        downloaded = Path(work) / archive
+        if digest(downloaded.read_bytes()) != expected:
+            raise ValueError('private release SHA256 verification failed')
+        payload = {}
+        with tarfile.open(downloaded, 'r:gz') as tar:
+            for member in tar.getmembers():
+                path = PurePosixPath(member.name)
+                if not safe_name(member.name) or path.parts[0] != 'jj-workbench' or len(path.parts) < 2 or not member.isfile():
+                    raise ValueError('archive contains an unexpected path or non-file')
+                name = PurePosixPath(*path.parts[1:]).as_posix()
+                if name in payload or any(p in GENERATED | {'.git', '.jj'} or p.startswith('.jj-install-') for p in path.parts[1:]) or member.size > 2 * 1024 * 1024:
+                    raise ValueError('archive contains duplicate, reserved or oversized files')
+                payload[name] = tar.extractfile(member).read()
+        if not {'main.js', 'jj.js', 'mod.json'}.issubset(payload) or sum(map(len, payload.values())) > 8 * 1024 * 1024:
+            raise ValueError('archive is not a bounded jj Workbench package')
+        if json.loads(payload['mod.json']).get('place') != 'none':
+            raise ValueError('release must not auto-dock into a layout')
+        if any('/'.join(PurePosixPath(n).parts[:i]) in payload for n in payload for i in range(1, len(PurePosixPath(n).parts))):
+            raise ValueError('archive has conflicting file/parent paths')
+        # An interrupted upgrade leaves only old bytes or verified new bytes.
+        # Accept that transition, but never arbitrary local edits or unknown files.
+        prior = old['files'] if old else {}
+        for name, data in current.items():
+            old_match = name in prior and digest(data) == prior[name]
+            new_match = name in payload and data == payload[name]
+            if not old_match and not new_match:
+                raise ValueError(f'locally modified or unknown runtime file: {name}')
+        for name in set(prior) & set(payload):
+            if name not in current:
+                raise ValueError(f'locally removed runtime file: {name}')
+        target.mkdir(parents=True, exist_ok=True)
+        for name in sorted(payload, key=lambda n: (n == 'main.js', n)):
+            if current.get(name) != payload[name]:
+                atomic_write(target / name, payload[name])
+        for name in set(prior) - set(payload):
+            file = target / name
+            if file.exists():
+                file.unlink()
+        state = {'repository': repo, 'version': version, 'sha256': expected,
+                 'files': {name: digest(data) for name, data in payload.items()}}
+        atomic_write(marker, (json.dumps(state, sort_keys=True, indent=2) + '\n').encode())
+        print(f'Installed and verified private jj Workbench {version}')
+
+
+if __name__ == '__main__':
+    try:
+        install()
+    except (OSError, ValueError, KeyError, TypeError, EOFError, tarfile.TarError, subprocess.SubprocessError) as error:
+        print(f'jj Workbench installation stopped: {error}', file=sys.stderr)
+        raise SystemExit(1)

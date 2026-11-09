@@ -1,0 +1,5 @@
+#!/bin/bash
+set -euo pipefail
+# Release pin: {{ include "dot_config/herdr-app/jj-workbench-release.json" | sha256sum }}
+# Installer: {{ include "dot_local/bin/executable_install-herdr-jj-workbench" | sha256sum }}
+python3 "$HOME/.local/bin/install-herdr-jj-workbench"
