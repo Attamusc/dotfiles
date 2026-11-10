@@ -9,6 +9,8 @@ Local checkout: `~/projects/github.com/Attamusc/herdr-jj-workbench`.
 This dotfiles repository owns only:
 
 - `dot_config/herdr-app/layouts/jj-main.json`: personal layout; no updater overwrites it.
+- `dot_config/herdr-app/themes/twilight.json`: personal terminal and chrome palette.
+- `dot_config/herdr-app/mods/twilight-workspace/`: read-only workspace header and abstract dusk artwork.
 - `dot_config/herdr-app/jj-workbench-release.json`: exact private release version and archive SHA-256.
 - `dot_local/bin/executable_install-herdr-jj-workbench`: authenticated, integrity-checked consumer.
 - `.chezmoiscripts/run_onchange_after_16-install-herdr-jj-workbench.sh.tmpl`: runs when the pin or installer changes.
@@ -38,6 +40,25 @@ Consumer checks:
 ```sh
 python3 tests/herdr/test-jj-workbench-release.py
 ```
+
+## Personal Twilight look
+
+`jj-main` selects Twilight: opaque ink-blue terminals, violet chrome, coral focus borders, gold waiting states and green completion states. The native Herdr branding, controls, agent list and jj-workbench roles are unchanged; terminal font preferences remain in settings. The additional 104px sidebar header shows the selected space's live name and machine over an abstract vector landscape. Below 160px wide it shows only the artwork, without clipped labels. It does not run commands, access the network, poll, or modify workspace state. It contains no franchise branding or game artwork.
+
+Apply only these personal files, without release installation or unrelated bootstrap scripts:
+
+```sh
+chezmoi apply --exclude=scripts --refresh-externals=never --error-on-conflict \
+  ~/.config/herdr-app/themes/twilight.json \
+  ~/.config/herdr-app/mods/twilight-workspace \
+  ~/.config/herdr-app/layouts/jj-main.json
+herdr-app check ~/.config/herdr-app/mods/twilight-workspace
+herdr-app status
+```
+
+Herdr reloads the files live; no app or Core restart is needed. A previous theme-picker selection can override a layout's theme; if necessary select the new palette with `herdr-app do app.theme --name twilight`. Do not edit Herdr's `.state` files directly.
+
+Check the personal source contracts with `python3 tests/herdr/test-twilight.py`, then capture and inspect the native result with `herdr-app shot /tmp/herdr-twilight.png`. The fixtures do not replace the native mod check or visual inspection. Selecting `main` as below removes the personal layout and header without changing terminal structure.
 
 Standalone checks and supported Herdr/jj versions are documented in the private repository. The mod uses stored-state reads plus explicit Refresh, commit-and-new and forget-only workspace management; forgetting retains files and terminals. It does not initialize/migrate repositories or install a second lifecycle manager.
 
