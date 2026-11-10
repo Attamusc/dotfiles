@@ -1185,7 +1185,7 @@ mcp=json.loads(pathlib.Path(sys.argv[2]).read_text())
 opencode=json.loads(pathlib.Path(sys.argv[3]).read_text())
 expected_packages=[
     "git:github.com/HazAT/glimpse",
-    "git:github.com/Attamusc/pi-interactive-subagents@952aff80d965b61d7f887ba3325dbfde2cdb743c",
+    "git:github.com/Attamusc/pi-interactive-subagents@4e74606d8aac27aada5c868647e7eb3834181b6c",
     "git:github.com/HazAT/pi-autoresearch",
     "git:github.com/carderne/pi-nvim",
     "git:github.com/Attamusc/pi-television@c3826bc268e05a1045e1d2339fc5a0cd3fd17a7e",
