@@ -41,20 +41,6 @@
           }
         },
         {
-          "id": "twilight-workspace",
-          "type": "block",
-          "background": {
-            "image": "mods/twilight-workspace/dusk.svg",
-            "fit": "cover"
-          },
-          "size": {
-            "px": 104
-          },
-          "content": {
-            "mod": "twilight-workspace"
-          }
-        },
-        {
           "id": "sidebar-lists",
           "type": "column",
           "children": [
@@ -89,13 +75,10 @@
           "id": "sidebar-footer",
           "type": "block",
           "size": {
-            "px": 69
+            "px": 36
           },
           "content": {
-            "mod": "workspace-chrome",
-            "props": {
-              "footer": true
-            }
+            "mod": "twilight-actions"
           }
         }
       ]

@@ -2,7 +2,6 @@ import json
 from pathlib import Path
 import re
 import unittest
-import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[2]
 APP = ROOT / "dot_config/herdr-app"
@@ -30,7 +29,7 @@ class TwilightTests(unittest.TestCase):
         self.theme = json.loads((APP / "themes/twilight.json").read_text())
         self.layout = json.loads((APP / "layouts/jj-main.json").read_text())
         self.nodes = {node["id"]: node for node in nodes(self.layout)}
-        self.mod = APP / "mods/twilight-workspace"
+        self.mod = APP / "mods/twilight-actions"
 
     def test_theme_has_valid_terminal_colors_and_full_ansi_palette(self):
         self.assertEqual(len(self.theme["ansi"]), 16)
@@ -56,7 +55,9 @@ class TwilightTests(unittest.TestCase):
         for role in ("spaces", "tabs", "files", "changes", "status"):
             self.assertEqual(self.nodes[role]["content"], {"mod": "jj-workbench", "props": {"role": role}})
         self.assertEqual(self.nodes["brand"]["content"], {"mod": "workspace-chrome"})
-        self.assertEqual(self.nodes["sidebar-footer"]["content"], {"mod": "workspace-chrome", "props": {"footer": True}})
+        self.assertEqual(self.nodes["sidebar-footer"]["content"], {"mod": "twilight-actions"})
+        self.assertEqual(self.nodes["sidebar-footer"]["size"], {"px": 36})
+        self.assertEqual([node["id"] for node in self.nodes["sidebar"]["children"]], ["brand", "sidebar-lists", "sidebar-footer"])
         self.assertEqual(self.nodes["agents"]["content"], {"mod": "agents"})
         pane = self.nodes["main"]["content"]["pane"]
         self.assertEqual(pane["header"]["content"], {"mod": "pane"})
@@ -64,30 +65,20 @@ class TwilightTests(unittest.TestCase):
         self.assertTrue(self.nodes["panel"]["hidden"])
         self.assertFalse(any(key in self.layout for key in ("font", "font_size", "ui_font")))
 
-    def test_banner_is_explicitly_docked_and_has_no_machine_or_network_actions(self):
+    def test_actions_are_explicitly_docked_and_have_no_machine_or_network_execution(self):
         self.assertEqual(json.loads((self.mod / "mod.json").read_text()), {"place": "none"})
-        self.assertEqual(self.nodes["twilight-workspace"]["content"], {"mod": "twilight-workspace"})
         source = (self.mod / "main.js").read_text()
         imports = re.findall(r'import .* from "([^"]+)";', source)
         self.assertEqual(imports, ["gpui-kit", "gpui-base", "herdr"])
-        self.assertNotRegex(source, r"\b(exec|fetch|hc|run|setShared|writeTextFile|setTimeout|setInterval)\s*\(")
+        self.assertNotRegex(source, r"\b(exec|fetch|hc|setShared|writeTextFile|setTimeout|setInterval)\s*\(")
         self.assertNotIn("cx.timer", source)
-        self.assertIn("space.name", source)
-        self.assertIn("space.machine", source)
-        self.assertIn("size.width < 160", source)
-        self.assertIn("compact !== this.compact", source)
-        self.assertEqual(self.nodes["twilight-workspace"]["background"], {"image": "mods/twilight-workspace/dusk.svg", "fit": "cover"})
+        self.assertNotIn(".init(", source)
 
-    def test_artwork_is_local_abstract_vector_without_franchise_branding(self):
-        svg = ET.parse(self.mod / "dusk.svg").getroot()
-        self.assertEqual(svg.tag, "{http://www.w3.org/2000/svg}svg")
-        self.assertEqual(len(svg.findall("{http://www.w3.org/2000/svg}path")), 3)
-        for element in svg.iter():
-            for key in element.attrib:
-                self.assertNotIn("href", key)
-        for path in self.mod.iterdir():
-            if path.suffix in (".js", ".json", ".svg"):
-                self.assertNotRegex(path.read_text().lower(), r"zelda|hyrule|triforce|sheikah|zonai")
+    def test_redundant_header_and_artwork_are_removed(self):
+        self.assertNotIn("twilight-workspace", self.nodes)
+        self.assertFalse((APP / "mods/twilight-workspace").exists())
+        for path in (self.mod / "main.js", APP / "themes/twilight.json"):
+            self.assertNotRegex(path.read_text().lower(), r"zelda|hyrule|triforce|sheikah|zonai")
 
 
 if __name__ == "__main__":
