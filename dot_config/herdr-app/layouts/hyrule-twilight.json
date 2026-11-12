@@ -177,19 +177,6 @@
               ]
             }
           ]
-        },
-        {
-          "id": "status",
-          "type": "block",
-          "size": {
-            "px": 28
-          },
-          "content": {
-            "mod": "jj-workbench",
-            "props": {
-              "role": "status"
-            }
-          }
         }
       ]
     }

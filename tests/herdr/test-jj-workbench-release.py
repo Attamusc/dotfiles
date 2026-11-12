@@ -50,7 +50,7 @@ class PrivateReleaseTests(unittest.TestCase):
 
     def test_private_verified_install_is_idempotent_and_preserves_personal_layout(self):
         payload = self.package()
-        layout = self.pin.parent / "layouts/jj-main.json"
+        layout = self.pin.parent / "layouts/hyrule-twilight.json"
         layout.parent.mkdir(); layout.write_text("personal")
         first = self.install()
         self.assertEqual(first.returncode, 0, first.stderr)

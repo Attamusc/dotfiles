@@ -27,7 +27,7 @@ def nodes(node):
 class TwilightTests(unittest.TestCase):
     def setUp(self):
         self.theme = json.loads((APP / "themes/twilight.json").read_text())
-        self.layout = json.loads((APP / "layouts/jj-main.json").read_text())
+        self.layout = json.loads((APP / "layouts/hyrule-twilight.json").read_text())
         self.nodes = {node["id"]: node for node in nodes(self.layout)}
         self.mod = APP / "mods/twilight-actions"
 
@@ -50,9 +50,10 @@ class TwilightTests(unittest.TestCase):
         self.assertEqual(len({colors[key] for key in ("working", "blocked", "done", "idle")}), 4)
 
     def test_personal_layout_keeps_workbench_roles_and_native_controls(self):
+        self.assertFalse((APP / "layouts/jj-main.json").exists())
         self.assertEqual(self.layout["theme"], "twilight")
         self.assertEqual(self.layout["terminal_opacity"], 1)
-        for role in ("spaces", "tabs", "files", "changes", "status"):
+        for role in ("spaces", "tabs", "files", "changes"):
             self.assertEqual(self.nodes[role]["content"], {"mod": "jj-workbench", "props": {"role": role}})
         self.assertEqual(self.nodes["brand"]["content"], {"mod": "workspace-chrome"})
         self.assertEqual(self.nodes["sidebar-footer"]["content"], {"mod": "twilight-actions"})
@@ -63,6 +64,8 @@ class TwilightTests(unittest.TestCase):
         self.assertEqual(pane["header"]["content"], {"mod": "pane"})
         self.assertEqual(pane["focus"], {"width": 1, "color": "accent"})
         self.assertTrue(self.nodes["panel"]["hidden"])
+        self.assertNotIn("status", self.nodes)
+        self.assertEqual([node["id"] for node in self.nodes["work"]["children"]], ["tabs", "work-body"])
         self.assertFalse(any(key in self.layout for key in ("font", "font_size", "ui_font")))
 
     def test_actions_are_explicitly_docked_and_have_no_machine_or_network_execution(self):

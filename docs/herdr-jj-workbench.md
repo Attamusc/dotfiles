@@ -8,7 +8,7 @@ Local checkout: `~/projects/github.com/Attamusc/herdr-jj-workbench`.
 
 This dotfiles repository owns only:
 
-- `dot_config/herdr-app/layouts/jj-main.json`: personal layout; no updater overwrites it.
+- `dot_config/herdr-app/layouts/hyrule-twilight.json`: personal layout; no updater overwrites it.
 - `dot_config/herdr-app/themes/twilight.json`: personal terminal and chrome palette.
 - `dot_config/herdr-app/mods/twilight-actions/`: compact Settings and Add machine toolbar.
 - `dot_config/herdr-app/jj-workbench-release.json`: exact private release version and archive SHA-256.
@@ -43,7 +43,7 @@ python3 tests/herdr/test-jj-workbench-release.py
 
 ## Personal Twilight look
 
-`jj-main` selects Twilight: opaque ink-blue terminals, violet chrome, coral focus borders, gold waiting states and green completion states. Native Herdr branding, the agent list and jj-workbench roles are unchanged; terminal font preferences remain in settings. There is no decorative workspace header. Settings and Add machine share a 36px icon-only toolbar, with hover labels and the native Settings update indicator. The buttons use Herdr's shipped gear/plus icons and open the same native settings and machine picker as before; they do not add machines automatically. They shrink to fit the 44px sidebar rail. The toolbar does not access the network, run external programs, poll, or change terminal structure.
+`hyrule-twilight` selects Twilight: opaque ink-blue terminals, violet chrome, coral focus borders, gold waiting states and green completion states. Native Herdr branding, the agent list and jj-workbench space/tab/file/change roles are unchanged; terminal font preferences remain in settings. There is no decorative workspace header or status strip beneath the terminals. Settings and Add machine share a 36px icon-only toolbar, with hover labels and the native Settings update indicator. The buttons use Herdr's shipped gear/plus icons and open the same native settings and machine picker as before; they do not add machines automatically. They shrink to fit the 44px sidebar rail. The toolbar does not access the network, run external programs, poll, or change terminal structure.
 
 Apply only these personal files, without release installation or unrelated bootstrap scripts:
 
@@ -51,10 +51,13 @@ Apply only these personal files, without release installation or unrelated boots
 chezmoi apply --exclude=scripts --refresh-externals=never --error-on-conflict \
   ~/.config/herdr-app/themes/twilight.json \
   ~/.config/herdr-app/mods/twilight-actions \
-  ~/.config/herdr-app/layouts/jj-main.json
+  ~/.config/herdr-app/layouts/hyrule-twilight.json
 herdr-app check ~/.config/herdr-app/mods/twilight-actions
+herdr-app do layout.switch --name hyrule-twilight
 herdr-app status
 ```
+
+Notifications retain Herdr’s native placement: the installed layout/notification API can select a toast-rendering mod but exposes no notification anchor setting. Restyling a toast does not move its native overlay.
 
 Herdr reloads the files live; no app or Core restart is needed. A previous theme-picker selection can override a layout's theme; if necessary select the new palette with `herdr-app do app.theme --name twilight`. Do not edit Herdr's `.state` files directly.
 
