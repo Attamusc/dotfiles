@@ -1,0 +1,5 @@
+#!/bin/bash
+set -euo pipefail
+# Source pin: {{ include "dot_config/herdr-app/spin-picker-source.json" | sha256sum }}
+# Installer: {{ include "dot_local/bin/executable_install-herdr-spin-picker" | sha256sum }}
+python3 "$HOME/.local/bin/install-herdr-spin-picker"

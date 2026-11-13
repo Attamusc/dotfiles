@@ -1,0 +1,180 @@
+#!/usr/bin/env python3
+"""Install the immutable, SHA-verified private Spin picker source."""
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import subprocess
+import sys
+import tempfile
+
+REPOSITORY = 'Attamusc/herdr-spin-picker'
+LIMITS = {'main.js': 512 * 1024, 'mod.json': 16 * 1024}
+GENERATED = {'gpui-kit.d.ts', 'jsconfig.json'}
+MARKER = '.installed-source.json'
+ACTION = 'mod.open:spin-picker'
+
+
+def digest(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def unique_object(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f'duplicate JSON key: {key}')
+        result[key] = value
+    return result
+
+
+def parse(data):
+    return json.loads(data, object_pairs_hook=unique_object)
+
+
+def validate_state(state):
+    if (not isinstance(state, dict) or set(state) != {'repository', 'revision', 'files'}
+            or state['repository'] != REPOSITORY
+            or not isinstance(state['revision'], str)
+            or not re.fullmatch('[a-f0-9]{40}', state['revision'])
+            or not isinstance(state['files'], dict) or set(state['files']) != set(LIMITS)
+            or any(not isinstance(value, str) or not re.fullmatch('[a-f0-9]{64}', value)
+                   for value in state['files'].values())):
+        raise ValueError('invalid source pin or installed manifest')
+    return state
+
+
+def reject_symlinks(path):
+    home = Path.home()
+    for part in (path, *path.parents):
+        if part.is_symlink():
+            raise ValueError(f'refusing symlink: {part}')
+        if part == home:
+            break
+
+
+def atomic_write(path, data):
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(dir=path.parent, prefix='.spin-install-', delete=False) as out:
+            temporary = Path(out.name)
+            out.write(data)
+        temporary.chmod(0o644)
+        os.replace(temporary, path)
+    finally:
+        if temporary is not None and temporary.exists():
+            temporary.unlink()
+
+
+def encoded(value):
+    return (json.dumps(value, sort_keys=True, indent=2) + '\n').encode()
+
+
+def runtime_files(target):
+    current = {}
+    if target.exists():
+        if not target.is_dir():
+            raise ValueError('runtime target is not a directory')
+        for path in target.iterdir():
+            if path.is_symlink() or not path.is_file():
+                raise ValueError(f'refusing symlink or non-file: {path.name}')
+            if path.name not in set(LIMITS) | GENERATED | {MARKER}:
+                raise ValueError(f'unknown runtime file: {path.name}')
+            if path.name in LIMITS:
+                if path.stat().st_size > LIMITS[path.name]:
+                    raise ValueError(f'oversized local file: {path.name}')
+                current[path.name] = path.read_bytes()
+    return current
+
+
+def install():
+    config = Path.home() / '.config/herdr-app'
+    pin_path = config / 'spin-picker-source.json'
+    target = config / 'mods/spin-picker'
+    keys_path = config / 'keys.json'
+    for path in (pin_path, target, keys_path):
+        reject_symlinks(path)
+    pin = validate_state(parse(pin_path.read_bytes()))
+    marker = target / MARKER
+    current = runtime_files(target)
+    old_bytes = marker.read_bytes() if marker.exists() else None
+    old = validate_state(parse(old_bytes)) if old_bytes is not None else None
+    if old and set(current) != set(LIMITS):
+        raise ValueError('locally removed manifest-owned file')
+
+    keys = None
+    keys_changed = False
+    keys_bytes = keys_path.read_bytes() if keys_path.exists() else None
+    if keys_bytes is not None:
+        keys = parse(keys_bytes)
+        if not isinstance(keys, dict):
+            raise ValueError('keys.json must be an object')
+        global_keys = keys.get('global', {})
+        if not isinstance(global_keys, dict) or any(not (isinstance(v, str) or (
+                isinstance(v, dict) and set(v) <= {'command', 'args'}
+                and isinstance(v.get('command'), str) and isinstance(v.get('args', {}), dict)))
+                for v in global_keys.values()):
+            raise ValueError('invalid global key bindings')
+        for section, bindings in keys.items():
+            if isinstance(bindings, dict) and 'ctrl-p' in bindings:
+                if section != 'global' or bindings['ctrl-p'] != ACTION:
+                    raise ValueError(f'conflicting ctrl-p shortcut in {section}')
+        if global_keys.get('ctrl-p') != ACTION:
+            keys['global'] = {**global_keys, 'ctrl-p': ACTION}
+            keys_changed = True
+
+    verified = old == pin and all(digest(current[n]) == pin['files'][n] for n in LIMITS)
+    if verified:
+        mod = parse(current['mod.json'])
+        if not isinstance(mod, dict) or mod.get('place') != 'none':
+            raise ValueError('mod.json place must be none')
+    if not verified:
+        private = subprocess.run(['gh', 'repo', 'view', REPOSITORY, '--json', 'isPrivate', '--jq', '.isPrivate'],
+                                 check=True, capture_output=True, text=True, timeout=120).stdout.strip()
+        if private != 'true':
+            raise ValueError('repository is not private')
+        payload = {}
+        for name, limit in LIMITS.items():
+            endpoint = f'repos/{REPOSITORY}/contents/mods/spin-picker/{name}?ref={pin["revision"]}'
+            data = subprocess.run(['gh', 'api', endpoint, '--header', 'Accept: application/vnd.github.raw+json'],
+                                  check=True, capture_output=True, timeout=120).stdout
+            if len(data) > limit:
+                raise ValueError(f'oversized source file: {name}')
+            if digest(data) != pin['files'][name]:
+                raise ValueError(f'SHA256 verification failed: {name}')
+            payload[name] = data
+        mod = parse(payload['mod.json'])
+        if not isinstance(mod, dict) or mod.get('place') != 'none':
+            raise ValueError('mod.json place must be none')
+        for name, data in current.items():
+            if digest(data) != pin['files'][name] and (old is None or digest(data) != old['files'][name]):
+                raise ValueError(f'locally modified runtime file: {name}')
+    for path in (pin_path, target, keys_path):
+        reject_symlinks(path)
+    if (runtime_files(target) != current
+            or (marker.read_bytes() if marker.exists() else None) != old_bytes
+            or (keys_path.read_bytes() if keys_path.exists() else None) != keys_bytes):
+        raise ValueError('runtime files or shortcuts changed during installation; rerun after reviewing them')
+    if not verified:
+        target.mkdir(parents=True, exist_ok=True)
+        for name in ('mod.json', 'main.js'):
+            if current.get(name) != payload[name]:
+                atomic_write(target / name, payload[name])
+    if keys_changed:
+        atomic_write(keys_path, encoded(keys))
+    if not verified:
+        atomic_write(marker, encoded(pin))
+    print(f'Spin picker {pin["revision"]}: ' + ('already installed and verified' if verified else 'installed and verified'))
+    if keys is None:
+        print('keys.json absent: start Herdr once then rerun installer to bind CtrlP')
+    else:
+        print('CtrlP bound to mod.open:spin-picker; other shortcuts preserved')
+
+
+if __name__ == '__main__':
+    try:
+        install()
+    except (OSError, ValueError, TypeError, KeyError, subprocess.SubprocessError) as error:
+        print(f'Spin picker installation stopped: {error}', file=sys.stderr)
+        raise SystemExit(1)
