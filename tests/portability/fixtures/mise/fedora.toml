@@ -2,6 +2,8 @@
 auto_prune = false
 
 [env]
+PI_WORKFLOWS_MAX_CONCURRENT = "2"
+
 PI_LSP_GOPLS = "{{ env.HOME }}/.local/share/pi-lsp/go/bin/gopls"
 PI_LSP_GO_ROOT = "{{ env.HOME }}/.local/share/mise/installs/go/1.26.5"
 PI_LSP_GO_PROFILE = "{{ env.HOME }}/.local/share/pi-lsp/go/profile"

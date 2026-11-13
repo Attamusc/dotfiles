@@ -732,9 +732,11 @@ darwin_config = tomllib.loads(pathlib.Path(sys.argv[1]).read_text())
 fedora_config = tomllib.loads(pathlib.Path(sys.argv[2]).read_text())
 for config in (darwin_config, fedora_config):
     assert config["settings"] == {"upgrade": {"auto_prune": False}}
-assert set(darwin_config) == {"tools", "settings"}
+assert set(darwin_config) == {"tools", "settings", "env"}
+assert darwin_config["env"] == {"PI_WORKFLOWS_MAX_CONCURRENT": "2"}
 assert set(fedora_config) == {"tools", "settings", "env"}
 assert fedora_config["env"] == {
+    "PI_WORKFLOWS_MAX_CONCURRENT": "2",
     "PI_LSP_GOPLS": "{{ env.HOME }}/.local/share/pi-lsp/go/bin/gopls",
     "PI_LSP_GO_ROOT": "{{ env.HOME }}/.local/share/mise/installs/go/1.26.5",
     "PI_LSP_GO_PROFILE": "{{ env.HOME }}/.local/share/pi-lsp/go/profile",
@@ -1836,8 +1838,9 @@ check_documentation_contract() {
     'trusted in-process' \
     'Dynamic source alone' \
     'Node 24' \
-    '`report-validate` is the only automatic' \
-    'Eight saved workflows are retained' \
+    'is the original tool-free automatic validator:' \
+    '`atta-investigate` is additionally automatic-eligible only after native exact-source' \
+    'Eleven saved workflows are managed' \
     '`diagnose-and-fix` | deferred' \
     '`portability-phase` | deferred' \
     'audit and reconstruction' \
