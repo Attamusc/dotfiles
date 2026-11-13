@@ -61,6 +61,51 @@ class PrivateReleaseTests(unittest.TestCase):
         self.assertEqual(second.returncode, 0, second.stderr)
         self.assertIn("already installed and verified", second.stdout)
 
+    def test_nested_generated_metadata_survives_upgrade_and_idempotence(self):
+        self.package({"git/changes.js": b"old git"}); self.assertEqual(self.install().returncode, 0)
+        for name in ["gpui-kit.d.ts", "git/gpui-kit.d.ts", "git/jsconfig.json"]:
+            (self.target / name).write_text("generated metadata")
+        payload = self.package({"git/changes.js": b"new git"}, version="v0.1.1")
+        result = self.install()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        manifest = json.loads((self.target / ".installed-release.json").read_text())
+        self.assertEqual(set(manifest["files"]), set(payload))
+        for name in ["gpui-kit.d.ts", "git/gpui-kit.d.ts", "git/jsconfig.json"]:
+            self.assertEqual((self.target / name).read_text(), "generated metadata")
+        self.env["PATH"] = os.environ["PATH"]
+        self.assertIn("already installed and verified", self.install().stdout)
+
+    def test_nested_unknown_files_and_install_markers_still_refuse_upgrade(self):
+        self.package({"git/changes.js": b"old git"}); self.assertEqual(self.install().returncode, 0)
+        self.package({"git/changes.js": b"new git"}, version="v0.1.1")
+        for name in ["git/unknown.js", "git/.installed-release.json"]:
+            path = self.target / name; path.write_text("unowned")
+            result = self.install()
+            self.assertNotEqual(result.returncode, 0)
+            self.assertEqual((self.target / "git/changes.js").read_bytes(), b"old git")
+            path.unlink()
+
+    def test_nested_generated_symlinks_and_archive_entries_are_refused(self):
+        self.package({"git/changes.js": b"old git"}); self.assertEqual(self.install().returncode, 0)
+        outside = self.root / "outside"; outside.write_text("untouched")
+        link = self.target / "git/gpui-kit.d.ts"; link.symlink_to(outside)
+        self.package({"git/changes.js": b"new git"}, version="v0.1.1")
+        self.assertNotEqual(self.install().returncode, 0)
+        self.assertEqual(outside.read_text(), "untouched"); link.unlink()
+        self.package({"git/gpui-kit.d.ts": b"must not ship"}, version="v0.1.1")
+        self.assertNotEqual(self.install().returncode, 0)
+        self.assertFalse(link.exists())
+
+    def test_manifest_cannot_claim_nested_generated_metadata(self):
+        self.package({"git/changes.js": b"old git"}); self.assertEqual(self.install().returncode, 0)
+        metadata = self.target / "git/gpui-kit.d.ts"; metadata.write_text("generated")
+        marker = self.target / ".installed-release.json"; state = json.loads(marker.read_text())
+        state["files"]["git/gpui-kit.d.ts"] = hashlib.sha256(metadata.read_bytes()).hexdigest()
+        marker.write_text(json.dumps(state))
+        result = self.install()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("invalid installed-file manifest", result.stderr)
+
     def test_public_repo_is_refused_before_install(self):
         self.package(); self.env["FIXTURE_PRIVATE"] = "false"
         result = self.install()

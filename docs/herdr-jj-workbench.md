@@ -20,7 +20,7 @@ This dotfiles repository owns only:
 
 Authenticate `gh` with access to `Attamusc/herdr-jj-workbench` before first bootstrap or a pin update. The installer uses `gh release download`; no token is embedded in dotfiles, URLs or rendered templates. It refuses to download unless the repository reports private, and verifies the archive SHA before opening it.
 
-The runtime folder `~/.config/herdr-app/mods/jj-workbench` is installer-owned, **not chezmoi file-managed**. The personal layout, keybindings, settings and theme remain independent. Existing identical runtime files can be adopted; local edits, unknown files, symlinks, archive traversal and invalid payloads are refused. Generated type/jsconfig files are retained. `.jj-install-*` is a reserved temporary-file namespace.
+The runtime folder `~/.config/herdr-app/mods/jj-workbench` is installer-owned, **not chezmoi file-managed**. The personal layout, keybindings, settings and theme remain independent. Existing identical runtime files can be adopted; local edits, unknown files, symlinks, archive traversal and invalid payloads are refused. Generated `gpui-kit.d.ts` and `jsconfig.json` files are retained at every import-directory depth and excluded from runtime ownership; archives and manifests cannot claim them. Nested install markers, unknown runtime files and all symlinks remain refused. `.jj-install-*` is a reserved temporary-file namespace.
 
 An interrupted pin update may contain old bytes or verified new bytes. Re-running accepts only that exact transition, completes changed/added files, removes only old manifest-owned obsolete files and writes the new manifest last. It never blesses arbitrary local edits.
 
