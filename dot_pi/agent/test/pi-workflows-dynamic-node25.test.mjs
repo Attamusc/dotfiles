@@ -5,7 +5,7 @@ import { requireExactCandidate } from "./pi-workflows-candidate.mjs";
 
 const candidate = process.env.PI_WORKFLOWS_CANDIDATE;
 const node25 = Number(process.versions.node.split(".")[0]) >= 25;
-const revision = "1614faf29c6ad1d0fcc9fe6db86a770f34e2b129";
+const revision = "12a8c12005934c3409717c2fa91ce89e6906c2ca";
 if (candidate) requireExactCandidate(candidate, revision);
 
 if (!candidate || !node25) {

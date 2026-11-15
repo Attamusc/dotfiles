@@ -23,6 +23,13 @@ export function scopedTodosDir(cwd, historyDir) {
   return path.join(historyDir, projectScopeSlug(cwd), "todos");
 }
 
+// The host captures the literal override; MCP must not consult its own environment.
+export function resolveTaskStore(cwd, storeOverride, historyDir) {
+  if (!path.isAbsolute(cwd)) throw new Error("Task scope cwd must be absolute");
+  if (typeof storeOverride !== "string") throw new Error("Explicit task store override is required");
+  return storeOverride.trim() ? path.resolve(cwd, storeOverride.trim()) : scopedTodosDir(cwd, historyDir);
+}
+
 async function linkLegacyTodos(legacyTodos, scopedTodos) {
   await mkdir(path.dirname(legacyTodos), { recursive: true });
   try {

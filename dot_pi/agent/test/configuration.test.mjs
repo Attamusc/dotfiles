@@ -218,9 +218,10 @@ test("todo workflow wires blockers before tickets become agent-ready", () => {
   assert.match(planner, /Only the main author\/orchestrator may activate fully wired reviewed tasks after that approval/);
   assert.match(planner, /update[^\n]*status: "ready-for-agent"/);
   const todoTool = readFileSync(join(testDir, "..", "extensions", "todos", "index.ts"), "utf8");
-  const listAction = todoTool.split('case "list": {')[1].split('case "list-all":')[0];
-  assert.doesNotMatch(listAction, /params\.status/, "update the frontier instructions if list gains status filtering");
-  assert.match(listAction, /serializeTodoListForAgent/);
+  const dispatch = todoTool.split('async execute(')[1].split('renderCall(')[0];
+  assert.doesNotMatch(dispatch, /params\.status/, "update the frontier instructions if list gains status filtering");
+  assert.match(dispatch, /runTodo\(params/);
+  assert.match(dispatch, /serializeTodoListForAgent/);
   assert.match(tracker, /The `list` action does not filter on its optional `status` argument/);
   assert.match(tracker, /Keep only entries with status: "ready-for-agent"/);
   assert.match(tracker, /`list` returns only front matter/);

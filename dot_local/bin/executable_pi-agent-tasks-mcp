@@ -1,0 +1,29 @@
+#!/usr/bin/env node
+import { realpathSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+
+const diagnostics = {
+  'invalid-home': 'Explicit absolute HOME from the current trusted Pi host is required.',
+  'home-mismatch': 'HOME must identify the installed launcher home; no home fallback was attempted.',
+  'invalid-startup': 'Require captured absolute scope cwd, single-token store override, actor and valid actions.',
+  'capability-unavailable': 'The pinned task capability is unavailable; no backend fallback was attempted.',
+  'missing-store': 'Captured task store does not exist; reconcile scope with the human before retrying.',
+  'startup-path-unavailable': 'Captured startup path is unavailable; verify the current host home and scope.',
+  'startup-failed': 'Task MCP startup failed; verify the pinned package and explicit scope binding.',
+};
+
+try {
+  const home = process.env.HOME;
+  if (!home || !path.isAbsolute(home)) throw { code: 'invalid-home' };
+  const launcherHome = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+  if (realpathSync(home) !== realpathSync(launcherHome)) throw { code: 'home-mismatch' };
+  const { launchTaskMcp } = await import(pathToFileURL(path.join(home, '.pi/agent/extensions/todos/mcp.mjs')));
+  await launchTaskMcp(process.argv.slice(2));
+} catch (error) {
+  const mapped = { missing: 'missing-store', invalid: 'invalid-startup', ENOENT: 'startup-path-unavailable' }[error?.code] ?? error?.code;
+  const code = Object.hasOwn(diagnostics, mapped) ? mapped : 'startup-failed';
+  // Only static allowlisted diagnostics: no input paths, exception text or stacks.
+  console.error(JSON.stringify({ error: { code, message: diagnostics[code] } }));
+  process.exitCode = 1;
+}

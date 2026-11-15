@@ -1187,13 +1187,13 @@ mcp=json.loads(pathlib.Path(sys.argv[2]).read_text())
 opencode=json.loads(pathlib.Path(sys.argv[3]).read_text())
 expected_packages=[
     "git:github.com/HazAT/glimpse",
-    "git:github.com/Attamusc/pi-interactive-subagents@f20f13f698b675d4b2ce9a922decb09f349043d9",
+    "git:github.com/Attamusc/pi-interactive-subagents@ea874c8a01d4109ec0dd4eb372e44bef3b80442e",
     "git:github.com/HazAT/pi-autoresearch",
     "git:github.com/carderne/pi-nvim",
     "git:github.com/Attamusc/pi-television@c3826bc268e05a1045e1d2339fc5a0cd3fd17a7e",
     "git:github.com/Attamusc/pi-hunk-review@v0.1.1",
     "git:github.com/Attamusc/pi-lsp@c548647c1c627af33d8d62156bf88714207e0e00",
-    "git:github.com/Attamusc/pi-workflows@1614faf29c6ad1d0fcc9fe6db86a770f34e2b129",
+    "git:github.com/Attamusc/pi-workflows@12a8c12005934c3409717c2fa91ce89e6906c2ca",
 ]
 assert settings["packages"] == expected_packages
 assert settings["extensions"] == ["+extensions/smart-sessions/index.ts"]
@@ -1310,7 +1310,7 @@ def check(root, gpt_provider, claude_provider, expected_extensions):
     assert settings["defaultProvider"] == gpt_provider
     assert settings["defaultModel"] == "gpt-6.1-sol"
     assert settings["extensions"] == expected_extensions
-    managed = "git:github.com/Attamusc/pi-workflows@1614faf29c6ad1d0fcc9fe6db86a770f34e2b129"
+    managed = "git:github.com/Attamusc/pi-workflows@12a8c12005934c3409717c2fa91ce89e6906c2ca"
     assert settings["packages"].count(managed) == 1
     if root.name == "pi-routing-private":
         assert settings["packages"][-1] == "git:github.com/example/private-package@0123456789abcdef0123456789abcdef01234567"
@@ -1834,13 +1834,15 @@ check_documentation_contract() {
     fail "smoke guidance starts a nested login shell that Fedora clears on exit"
   fi
   for required in \
-    'git:github.com/Attamusc/pi-workflows@1614faf29c6ad1d0fcc9fe6db86a770f34e2b129' \
+    'git:github.com/Attamusc/pi-workflows@12a8c12005934c3409717c2fa91ce89e6906c2ca' \
     'trusted in-process' \
     'Dynamic source alone' \
     'Node 24' \
     'is the original tool-free automatic validator:' \
     '`atta-investigate` is additionally automatic-eligible only after native exact-source' \
     'Eleven saved workflows are managed' \
+    'Pi-only workflow guard' \
+    'never emitted into discovery' \
     '`diagnose-and-fix` | deferred' \
     '`portability-phase` | deferred' \
     'audit and reconstruction' \

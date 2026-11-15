@@ -11,7 +11,7 @@ import { runPackageCheck } from "../../../scripts/check-pi-workflows-package.mjs
 const root = resolve(import.meta.dirname, "../../..");
 const workflowsDir = join(root, "dot_pi/agent/workflows");
 const candidate = process.env.PI_WORKFLOWS_CANDIDATE;
-const revision = "1614faf29c6ad1d0fcc9fe6db86a770f34e2b129";
+const revision = "12a8c12005934c3409717c2fa91ce89e6906c2ca";
 const names = ["deep-review", "investigate", "iterate-pr", "jungle-book", "mine-workflows", "report-validate", "resume-status", "verify-claims"];
 const readOnly = ["deep-review", "investigate", "jungle-book", "mine-workflows", "report-validate", "resume-status", "verify-claims"];
 if (candidate) requireExactCandidate(candidate, revision);

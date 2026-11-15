@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "empty": {
+      "command": "node",
+      "args": ["__LAUNCHER__", "--scope-cwd", "__PARENT__", "--store-override=", "--actor", "native-stable-actor", "--actions", "get,claim,update,append,release,list,list-all"]
+    },
+    "spaces": {
+      "command": "node",
+      "args": ["__LAUNCHER__", "--scope-cwd", "__PARENT__", "--store-override=tasks with spaces", "--actor", "native-stable-actor", "--actions", "get,claim,update,append,release,list,list-all"]
+    }
+  }
+}

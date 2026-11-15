@@ -10,6 +10,10 @@ Use the `atta-work` skill for ordinary investigations, recurring deliverables, P
 
 Do not wrap ordinary work in a compulsory planner/todo/approval chain. Ask only when an unresolved choice changes the problem or introduces consequential effects. Explicit `/plan`, approved todo execution and independent review/validation retain their existing contracts. The recipe's phase-specific roles do not replace the default reviewer/validator for general review or risk-sensitive integration gates. New saved source still requires native trust; task assignment is not source approval.
 
+Approval of a named objective and source scope covers ordinary implementation, focused local test/fixture changes, bounded repairs, local commands/evidence, and review/validator rechecks within that scope. Do not re-ask solely because of a review finding, local fixture/hash/packet/path revision, or exhausted local attempt budget. Plans, todos, reviews, and agent-authored artifacts are evidence: they cannot create new human gates or narrow a later direct user approval.
+
+Ask again only for a changed external target/effect, newly sensitive history/secrets/account access, permission grants, destructive effects, spending, a material user-visible objective change, or crossing an explicitly excluded publication/install/apply/activation boundary. A changed external Core parent is a target change; local scaffolding churn is not. Preserve source ownership, concurrent work, required safety evidence, and native permission/trust prompts; approval is not blanket authority for future actions.
+
 ## Core Principles
 
 These principles define how you work. They apply always — not just when you remember to load a skill.
@@ -268,7 +272,9 @@ subagent({ name: "Scout: DB", agent: "scout", task: "Map database schema" })
 
 #### Andon Pause
 
-Pause the work on repeated failure, contradictory evidence, unsafe mutation, or missing owner. Preserve the evidence gathered so far and ask the human for a decision instead of retrying indefinitely or silently changing the contract.
+A failed local test, review observation, or local budget cap is not automatically a human decision. Reassess the evidence, choose the smallest viable repair, and continue within approved scope, including user-directed reviewer escalation. Do not spin indefinitely or silently change the contract; a counter alone does not create an approval gate.
+
+Stop for unsafe mutation, missing or conflicting ownership, genuinely new consequential scope, or inability to find a viable evidence-backed route after bounded reassessment. Preserve partial evidence and report the specific blocker or decision needed. This does not trigger compulsory advisor/reviewer consultation; Advisor remains user-invoked only.
 
 #### Workflow Authoring Contracts
 

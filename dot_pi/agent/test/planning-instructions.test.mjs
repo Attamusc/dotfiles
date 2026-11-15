@@ -9,7 +9,9 @@ const root = new URL('../', import.meta.url);
 function readPlanner(agentRoot, role = 'planner') {
   const sourceMarker = new URL('../../.data/pi/agent/settings.json', agentRoot);
   const relativePath = `agents/${role}.md${existsSync(sourceMarker) ? '.tmpl' : ''}`;
-  return readFileSync(new URL(relativePath, agentRoot), 'utf8');
+  const text = readFileSync(new URL(relativePath, agentRoot), 'utf8');
+  return text.replace('{{ includeTemplate "worker-body" . -}}', () =>
+    readFileSync(new URL('../../.chezmoitemplates/worker-body', agentRoot), 'utf8'));
 }
 const planner = readPlanner(root);
 const routing = readFileSync(new URL('AGENTS.md', root), 'utf8');

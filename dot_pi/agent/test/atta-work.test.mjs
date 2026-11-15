@@ -42,7 +42,7 @@ test("Atta routing preserves continuation, trust and renamed entry guidance", ()
 });
 
 test("native saved discovery (not live execution)", { skip: !process.env.PI_WORKFLOWS_CANDIDATE && "exact candidate/compiler unavailable; set PI_WORKFLOWS_CANDIDATE" }, async () => {
-  const { root: candidate } = requireExactCandidate(process.env.PI_WORKFLOWS_CANDIDATE, "1614faf29c6ad1d0fcc9fe6db86a770f34e2b129");
+  const { root: candidate } = requireExactCandidate(process.env.PI_WORKFLOWS_CANDIDATE, "12a8c12005934c3409717c2fa91ce89e6906c2ca");
   const require = createRequire(join(candidate, "package.json"));
   const { createJiti } = await import(pathToFileURL(require.resolve("jiti")));
   const { discoverSavedWorkflows } = await createJiti(import.meta.url).import(join(candidate, "src/saved.ts"));
