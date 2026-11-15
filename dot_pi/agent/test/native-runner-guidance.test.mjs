@@ -43,7 +43,7 @@ test('Pi worker body matches its rendered partial and committed pre-extraction g
   assert.match(read(staged + 'worker-copilot.md.tmpl'), /includeTemplate "worker-body"/);
   assert.doesNotMatch(read(staged + 'worker-copilot-readonly.md.tmpl'), /includeTemplate "worker-body"/);
   const managed = f.managed().split(/\r?\n/);
-  assert.equal(managed.some(file => /(?:^|\/)(?:worker-copilot(?:-readonly)?(?:\.md)?|native-agent-definitions|worker-body)(?:\/|$)/.test(file)), false);
+  assert.equal(managed.some(file => /(?:^|\/)(?:worker-(?:copilot|claude)(?:-readonly)?(?:\.md)?|native-agent-definitions|worker-body)(?:\/|$)/.test(file)), false);
 });
 
 test('coding profile declares commit skill while reader has no selected skill', () => {
@@ -83,6 +83,41 @@ test('staged native roles render with actual contract2 parser and explicit curre
   }
 });
 
+test('staged Claude roles preserve explicit controls, task bindings and legacy review seats', async t => {
+  if (!workflowRoot) { t.skip('set PI_WORKFLOWS_GUARD_ROOT to the Claude-enabled contract overlay'); return; }
+  const { parseAgentDefinition, bindNativeMcp } = await import(packageEntry());
+  const f = fixture(t);
+  for (const readonly of [false, true]) {
+    const name = `worker-claude${readonly ? '-readonly' : ''}`;
+    const text = f.render(staged + name + '.md.tmpl');
+    const canonicalRoot = path.join(f.home, '.pi/agent/agents');
+    const canonicalPath = path.join(canonicalRoot, name + '.md');
+    const parsed = parseAgentDefinition({ path: canonicalPath, content: text, origin: { kind: 'global-user', canonicalPath, canonicalRoot } }, { requiredFields: ['name', 'description'] });
+    assert.equal(parsed.ok, true, JSON.stringify(parsed.diagnostics));
+    const d = parsed.definition;
+    assert.equal(d.runner, 'claude'); assert.equal(d.model, 'sonnet'); assert.equal(d.thinking, 'low');
+    assert.equal(d.native.runnerVersion, '2.1.325'); assert.equal(d.native.workspaceTrust, 'existing');
+    assert.deepEqual(d.skills, readonly ? undefined : ['commit']);
+    assert.match(text, /not\s+an OS or path sandbox/);
+    const frontmatter = text.split('---')[1];
+    assert.match(frontmatter, new RegExp(`^permission-mode: ${readonly ? 'dontAsk' : 'manual'}$`, 'm'));
+    assert.match(frontmatter, readonly ? /^native-tools: \[Read, Glob, Grep\]$/m : /^native-tools: \[Read, Glob, Grep, Edit, Write, Bash\]$/m);
+    assert.doesNotMatch(frontmatter, /^(?:cli|tools|deny-tools|spawning|system-prompt):/m);
+    const binding = bindNativeMcp(d.native, { home: f.home, node: '/trusted/node', parentCwd: '/captured/scope', managedSessionId: 'stable-actor', todoPathLiteral: 'literal store' }).tasks;
+    assert.equal(binding.command, '/trusted/node'); assert.deepEqual(binding.env, { HOME: f.home });
+    assert.ok(binding.args.includes('--store-override=literal store'));
+    assert.ok(binding.args.includes('/captured/scope')); assert.ok(binding.args.includes('stable-actor'));
+    assert.equal(binding.args.at(-1), readonly ? 'get,list,list-all' : 'get,claim,update,append,release');
+    assert.equal(binding.args.includes('--allow-force'), false);
+    assert.equal(parseAgentDefinition({ path: canonicalPath, content: text, origin: { kind: 'project', canonicalPath, canonicalRoot } }, { requiredFields: ['name', 'description'] }).ok, false);
+    if (!readonly) assert.ok(text.includes(normalize(f.render('.chezmoitemplates/worker-body')).trim()));
+  }
+  for (const name of ['claude-reviewer', 'claude-validator']) {
+    const legacy = read(`dot_pi/agent/agents/${name}.md`);
+    assert.match(legacy, /^cli: claude$/m); assert.doesNotMatch(legacy, /^runner:/m);
+  }
+});
+
 test('common guidance requires role/model defaults without per-call harness overrides', () => {
   const skill = read('dot_pi/agent/skills/atta-work/SKILL.md');
   const example = skill.split('```typescript')[1].split('```')[0];
@@ -102,7 +137,7 @@ test('baseline consumers ignore runner fields and can select Pi: characterizatio
   const show = (cwd, rev, file) => execFileSync('git', ['-C', cwd, 'show', `${rev}:${file}`], { encoding: 'utf8' });
   const require = createRequire(path.join(workflowRoot, 'node_modules/pi-agent-execution/package.json'));
   const yaml = await import(pathToFileURL(require.resolve('yaml')));
-  const js = source => stripTypeScriptTypes(source, { mode: 'transform', sourceMap: false }).replace(/^import .*?;\n/gm, '').replace(/export /g, '');
+  const js = source => stripTypeScriptTypes(source, { mode: 'strip', sourceMap: false }).replace(/^import .*?;\n/gm, '').replace(/export /g, '');
   const internal = show(executionSource, '091fada20c05470af558a5a121932e43186b8144', 'src/internal.ts');
   const isThinkingLevel = vm.runInNewContext(js(internal) + '\nisThinkingLevel');
   const parserSource = show(executionSource, '091fada20c05470af558a5a121932e43186b8144', 'src/definitions.ts');

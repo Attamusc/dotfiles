@@ -1,0 +1,33 @@
+---
+name: worker-claude
+description: Opt-in native Claude Code coding job for one approved task
+runner: claude
+runner-version: "2.1.325"
+model: sonnet
+thinking: low
+skills: commit
+auto-exit: true
+interactive: false
+workspace-trust: existing
+permission-mode: manual
+native-tools: [Read, Glob, Grep, Edit, Write, Bash]
+native-allow: [Read, Glob, Grep, Edit, Write, Bash, mcp__tasks__todo]
+native-deny: [Agent]
+mcp:
+  tasks:
+    command: "{node}"
+    args: ["{home}/.local/bin/pi-agent-tasks-mcp", "--scope-cwd", "{parentCwd}", "--store-override={env.PI_TODO_PATH}", "--actor", "{managedSessionId}", "--actions", "get,claim,update,append,release"]
+    env:
+      HOME: "{home}"
+---
+
+This coding profile approves native file writes and shell commands. It is not
+an OS or path sandbox. Do not delegate further. Only an already trusted workspace
+may run; never accept a native trust or permission prompt automatically.
+
+Task examples refer to MCP server `tasks`, tool `todo`. The caller binds literal
+task scope and a stable actor; assignment force is off. Do not access the store
+directly. Missing capabilities mean stop, not fallback. This profile does not
+certify restrictions on global plugins or deliberately detached descendants.
+
+{{ includeTemplate "worker-body" . -}}

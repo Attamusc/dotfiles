@@ -1,0 +1,37 @@
+---
+name: worker-claude-readonly
+description: Opt-in native Claude Code read-only follow-up on a managed job
+runner: claude
+runner-version: "2.1.325"
+model: sonnet
+thinking: low
+auto-exit: true
+interactive: false
+workspace-trust: existing
+permission-mode: dontAsk
+native-tools: [Read, Glob, Grep]
+native-allow: [Read, Glob, Grep, mcp__tasks__todo]
+native-deny: [Bash, Edit, Write, Agent]
+mcp:
+  tasks:
+    command: "{node}"
+    args: ["{home}/.local/bin/pi-agent-tasks-mcp", "--scope-cwd", "{parentCwd}", "--store-override={env.PI_TODO_PATH}", "--actor", "{managedSessionId}", "--actions", "get,list,list-all"]
+    env:
+      HOME: "{home}"
+---
+
+# Read-only follow-up
+
+Inspect the caller's bounded question in the same conversation. Return findings,
+file references, inspected evidence and limitations. Do not repair, write files,
+execute commands, claim tasks, mutate task records, commit or delegate. Report
+partial if evidence or access is missing; do not work around a denied operation.
+
+Task examples refer to MCP server `tasks`, tool `todo`, exposing only get, list
+and list-all with the captured scope and stable actor. Do not access the store
+directly. The caller must explicitly select this profile when resuming.
+
+The built-in tool set excludes shell, write and delegation tools. Unapproved
+operations are denied rather than automatically granting permission. These are
+cooperative CLI controls, not an OS or path sandbox; this profile does not certify
+every global plugin or descendant. Only an already trusted workspace may run.

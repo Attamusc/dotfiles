@@ -6,15 +6,16 @@ project or installed-package agent directory. No destination wrapper is added.
 Existing worker and reviewer defaults remain Pi. The coding role reuses the
 single worker-body partial; the follow-up is a separate reader role. Neither
 creates a second skill tree. The coding profile selects `skills: commit`; the
-read-only follow-up selects no skill. Activation must wait for T6 to compile that
-selected global/package skill into native instructions and T8 to verify the
-rendered profile end to end. A frontmatter declaration alone is not execution
-proof, and no commit-skill body is duplicated here.
+read-only follow-up selects no skill. The native host compiles that selected global/package skill into instructions.
+A frontmatter declaration alone is not execution proof, and no commit-skill body
+is duplicated here.
 
-Do not activate these definitions on current baseline consumers. Baseline
-subagent4e74606 and workflows1614faf ignore runner metadata and can route these
-roles as Pi. The updated workflow consumer rejects non-Pi intent and project
-shadows of trusted native roles; it does not execute foreign workflows.
+Do not activate these definitions on old consumers. Historical subagent4e74606
+and workflows1614faf ignore runner metadata and can route these roles as Pi.
+The updated workflow consumer rejects non-Pi intent and project shadows of
+trusted native roles; it does not execute foreign workflows. Claude definitions
+additionally require the Claude-enabled execution and subagent source changes;
+the pinned Copilot baseline alone is insufficient.
 
 A separately approved ordered rollout must install compatible task/execution/
 subagent/workflow packages and pins, verify every consuming owner has reloaded,
@@ -39,10 +40,21 @@ deny-tools, spawning or system-prompt-mode frontmatter is included. Role body is
 supplied as native instructions, not a system-prompt replacement. Unsupported
 Copilot controls must be rejected, never dropped.
 
-TODO-46aecbc9 must use these rendered definitions in isolated trusted-global
-resource roots for actual native argv and restricted-profile resume checks once
-those implementations are ready. Parser/binding/discovery fixtures here do not
-certify actual native CLI permissions, job completion or resume behavior.
+The staged `worker-claude` and `worker-claude-readonly` profiles target Claude
+Code 2.1.325, not the legacy opt-in `cli: claude` review seats. They use a native
+model name, explicit built-in tool sets and separate approval grants. The coding
+profile permits shell and writes; the follow-up exposes only Read/Glob/Grep plus
+the bounded task MCP. A resume must explicitly select the follow-up profile;
+conversation identity and task actor remain stable while policy is recompiled.
+Claude workspace trust must already exist: print mode skips its trust dialog,
+so missing trust is a blocked prerequisite, not permission to accept it silently.
+No bypass-permissions mode is part of either profile.
+
+Use rendered definitions in isolated trusted resource roots for actual native
+argv and restricted-profile resume checks. Parser/binding/discovery fixtures do
+not certify actual native CLI permissions, job completion or resume behavior.
+See `docs/native-runner-continuation.md` for source identities and
+`docs/claude-native-runner.md` for this slice's verification and rollout limits.
 
 Portable body-parity tests compare the rendered Pi worker with the rendered
 shared partial and `dot_pi/agent/test/fixtures/worker-body-golden.json`. The golden
