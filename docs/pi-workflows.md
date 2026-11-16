@@ -1,7 +1,7 @@
 # Pi workflows
 
 The managed package source is pinned exactly as
-`git:github.com/Attamusc/pi-workflows@6b53553a3c83fcb12002ae34c11f0802e84fd5b6`.
+`git:github.com/Attamusc/pi-workflows@193c9edf7f2104704877588cf40c4460b45c7e48`.
 Host package reconciliation and fresh-Pi smoke are separate gates. The pin
 in source does not establish whether a particular host has activated it.
 
@@ -81,15 +81,18 @@ push, or reply effects. Denial leaves the invoking tree unchanged.
 
 The isolated contract-2 workflow source preserves parsed runner/CLI intent and
 canonical origin through discovery and rejects foreign transports before Pi
-spawn. Under scope `both`, project Pi shadows of trusted native roles also fail
-before precedence can hide them. Ordinary project Pi overrides remain. This is
-a Pi-only workflow guard, not a foreign workflow executor or budget transfer.
-The installed pin at the top of this document remains unchanged until rollout.
+spawn. Under scope `both`, project Pi shadows of trusted native roles and foreign
+CLI user roles fail before precedence can hide them, including complete user
+roles. Ordinary Pi overrides and explicit `cli: pi` remain. This is a Pi-only
+workflow guard, not a foreign workflow executor or budget transfer. Changing the
+managed source pin does not reconcile an already running host installation.
 
 Common delegation guidance uses definition defaults for runner, model, thinking
 and permissions. Existing saved recipes retain intentional Pi-only phase
 model/tool overrides; unsupported Copilot controls are rejected, not dropped.
-Independent read-only Pi reviewer/validator gates remain unchanged.
+Ordinary reviewer/validator names inherit machine-selected profiles: public Pi
+defaults or private native Claude. Saved Pi-only review workflows bind the
+explicit `workflow-reviewer` role.
 
 Opt-in `worker-copilot` and `worker-copilot-readonly` templates live only under
 `.chezmoitemplates/native-agent-definitions/` and are never emitted into discovery

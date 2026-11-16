@@ -75,11 +75,17 @@ with its archive prefix removed, then run the guide's sequential consumer checks
 and `scripts/check-portability.sh`. No global apply or profile activation is
 needed. The historical parser fixture uses Node's strip-only TypeScript mode.
 
-Measured checks for this slice: execution contract 81 tests, native subagents
+Original native rollout checks: execution contract 81 tests, native subagents
 385 tests, workflow guard 391 tests, task consumers/guidance 17 tests, and neutral
 task package 27 tests passed. Public portability checks passed. A fixture-only
 `--noprofile --norc` repair isolates completion tests from shell startup files;
 production shell behavior is unchanged.
+
+The mainline Core/mobile integration passes 415 subagent tests and 392 workflow
+tests. Host SDK 1.5.0 loading and read-only placement preparation against actual
+Core were also verified without a desktop CLI. Live child adoption, termination
+and model runs on that combined source candidate remain deployment checks; the
+live observations below describe the earlier activated native rollout.
 
 A bounded live fixture exercised the registered launch/resume handlers, Core
 capture/cleanup, Claude and installed task MCP. Parent ExtensionAPI callback
