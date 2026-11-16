@@ -11,7 +11,7 @@ import { runPackageCheck } from "../../../scripts/check-pi-workflows-package.mjs
 const root = resolve(import.meta.dirname, "../../..");
 const workflowsDir = join(root, "dot_pi/agent/workflows");
 const candidate = process.env.PI_WORKFLOWS_CANDIDATE;
-const revision = "12a8c12005934c3409717c2fa91ce89e6906c2ca";
+const revision = "6b53553a3c83fcb12002ae34c11f0802e84fd5b6";
 const names = ["deep-review", "investigate", "iterate-pr", "jungle-book", "mine-workflows", "report-validate", "resume-status", "verify-claims"];
 const readOnly = ["deep-review", "investigate", "jungle-book", "mine-workflows", "report-validate", "resume-status", "verify-claims"];
 if (candidate) requireExactCandidate(candidate, revision);
@@ -474,7 +474,9 @@ if (!candidate) {
     }
   });
 
-  test("Node 25 executes dynamic read-only success and denial externally with no fallback", async () => {
+  test("Node 25+ executes dynamic read-only success and denial externally with no fallback", {
+    skip: Number(process.versions.node.split(".")[0]) < 25 && "requires an already installed Node 25+; no runtime installation attempted",
+  }, async () => {
     const directory = await mkdtemp(join(tmpdir(), "phase5-node25-"));
     const script = join(directory, "dynamic.test.mjs");
     const sandboxUrl = new URL(`file://${join(candidate, "src/sandbox.ts")}`).href;
@@ -498,7 +500,7 @@ if (!candidate) {
     `);
     try {
       const childEnv = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith("NODE_TEST")));
-      const output = execFileSync("mise", ["x", "node@25", "--", "node", script], { encoding: "utf8", timeout: 30_000, env: childEnv });
+      const output = execFileSync(process.execPath, [script], { encoding: "utf8", timeout: 30_000, env: childEnv });
       assert.match(output, /dynamic cases 2/);
       assert.match(output, /pass 2/);
       assert.match(output, /skipped 0/);

@@ -11,13 +11,13 @@
   },
   "packages": [
     "git:github.com/HazAT/glimpse",
-    "git:github.com/Attamusc/pi-interactive-subagents@ea874c8a01d4109ec0dd4eb372e44bef3b80442e",
+    "git:github.com/Attamusc/pi-interactive-subagents@4755e7715ef7d0f65d51431bf67ce823488f04f7",
     "git:github.com/HazAT/pi-autoresearch",
     "git:github.com/carderne/pi-nvim",
     "git:github.com/Attamusc/pi-television@c3826bc268e05a1045e1d2339fc5a0cd3fd17a7e",
     "git:github.com/Attamusc/pi-hunk-review@v0.1.1",
     "git:github.com/Attamusc/pi-lsp@c548647c1c627af33d8d62156bf88714207e0e00",
-    "git:github.com/Attamusc/pi-workflows@12a8c12005934c3409717c2fa91ce89e6906c2ca"
+    "git:github.com/Attamusc/pi-workflows@6b53553a3c83fcb12002ae34c11f0802e84fd5b6"
   ],
   "extensions": [
     "+extensions/smart-sessions/index.ts"

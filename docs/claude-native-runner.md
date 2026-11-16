@@ -76,7 +76,7 @@ and `scripts/check-portability.sh`. No global apply or profile activation is
 needed. The historical parser fixture uses Node's strip-only TypeScript mode.
 
 Measured checks for this slice: execution contract 81 tests, native subagents
-441 tests, workflow guard 391 tests, task consumers/guidance 17 tests, and neutral
+446 tests, workflow guard 391 tests, task consumers/guidance 17 tests, and neutral
 task package 27 tests passed. Public portability checks passed. A fixture-only
 `--noprofile --norc` repair isolates completion tests from shell startup files;
 production shell behavior is unchanged.

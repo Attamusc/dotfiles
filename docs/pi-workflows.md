@@ -1,7 +1,7 @@
 # Pi workflows
 
 The managed package source is pinned exactly as
-`git:github.com/Attamusc/pi-workflows@12a8c12005934c3409717c2fa91ce89e6906c2ca`.
+`git:github.com/Attamusc/pi-workflows@6b53553a3c83fcb12002ae34c11f0802e84fd5b6`.
 Host package reconciliation and fresh-Pi smoke are separate gates. The pin
 in source does not establish whether a particular host has activated it.
 
