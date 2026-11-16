@@ -73,7 +73,8 @@ test('draft review and execution consent remain distinct from post-code checks',
   for (const phrase of [/fresh read-only reviewer/, /without.*conversation/, /one re-review/, /explicit execution approval/, /planning-only/, /material change/, /contract validation/]) {
     assert.match(planner, phrase);
   }
-  assert.match(planner, /tools: "read"/);
+  assert.doesNotMatch(planner, /agent: "reviewer", tools:/);
+  assert.match(planner, /trusted profile policy/);
   assert.match(planner, /inline acceptance criteria/i);
 });
 test('routing removes BBQ, keeps explicit grilling and lightweight iterate', () => {

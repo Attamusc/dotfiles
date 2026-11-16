@@ -189,14 +189,13 @@ Slash commands are the user's to run. You have no way to invoke one; emitting `/
 | `planner` | Interactive planning collaborator when deliberately delegated; investigates facts and drafts a compact proposal and grounded tasks. | GPT-6.1-sol | high |
 | `scout` | Fast codebase reconnaissance | GPT-6-luna (fast, cheap) | low |
 | `worker` | Implements tasks from todos, makes polished commits. Reports back if a todo is missing examples/references. | GPT-6.1-sol | low |
-| `reviewer` | Default Pi-backed code reviewer for quality, security, and correctness | Claude Opus 5.5 — independent review of GPT-produced work | high |
-| `validator` | Default Pi-backed validator for declared integration contracts | Claude Opus 5.5 — independent contract gate | high |
-| `claude-reviewer` | Opt-in read-only Claude Code review via subscription; Pi supplies diff and tests | Sonnet (Claude Code CLI) | CLI-owned |
-| `claude-validator` | Opt-in read-only Claude Code contract check via subscription | Opus (Claude Code CLI) | CLI-owned |
+| `reviewer` | Code review for quality, security, and correctness; Pi by default, private native selection supported | Claude Opus 5.5 (Pi) / Opus (native Claude) | high |
+| `validator` | Declared integration contracts; Pi by default, private native selection supported | Claude Opus 5.5 (Pi) / Opus (native Claude) | high |
+| `workflow-reviewer` | Explicit Pi reviewer for saved Pi-only workflows, independent of private selection | Claude Opus 5.5 | high |
 | `researcher` | Deep research — fetches external sources, analyses code and telemetry, synthesises findings | GPT-5.6-terra | high |
 | `adversarial-reviewer` | Adversarial review of changes or research positions — proves the target wrong with tiered, well-cited evidence. Posture is structural, no balanced mode. | Claude Opus 5.5 — independent falsification of GPT-produced work | high |
 
-Every Pi-backed agent declares `thinking:` explicitly; Claude Code CLI seats must not set it.
+Every agent declares `thinking:` explicitly, including the native review profiles.
 Effort is a per-seat decision — `scout` spent months at `high` because nobody chose it. No seat runs `xhigh`: a sixteen-run sweep across three seats found
 no case where higher effort changed a correctness outcome, while `scout` at `high` cost
 +146% output tokens for identical findings. See
@@ -208,7 +207,7 @@ Subagents spawn visible pi sessions in Herdr panes. The user can watch progress 
 
 This repository configures and guarantees Herdr as its sole Pi/subagent multiplexer. External packages may retain other generic backends, but agents must not route through retired backends or treat tmux as a supported fallback. Herdr starts its per-user server automatically; do not add a second lifecycle manager. Herdr's managed Pi integration owns agent status and Session identity; do not add or restore a separate Pi-to-Herdr status reporter.
 
-For a retained controlled-agent collaborator, use the distinct persistent Herdr peer route in `control-cli`, not a Pi-child completion claim. Choose the task name separately from the host-discovered harness/provider/model. Before approved launch, establish native support and preflight the requested restriction configuration; after startup, separately observe actual runtime capabilities at startup or first turn. Neither help text nor model self-report proves enforcement. If the required preflight boundary is unknown, do not launch; if runtime capabilities are unexpected or ambiguous, stop substantive work and retain the peer for human review. Designate exactly one submitter and one outstanding prompt per peer. Post-submission working permits later settlement and bounded-answer assessment; immediately observed blocked needs no prior working and always pauses for a human. Retain the peer for the agreed window; separately approve cleanup and require Herdr removal/exit proof. Do not auto-accept trust or permission prompts. If the approved owner is unavailable, report `unsupported`. This route does not change the read-only, autonomous one-turn Claude review seats below.
+For a retained controlled-agent collaborator, use the distinct persistent Herdr peer route in `control-cli`, not a Pi-child completion claim. Choose the task name separately from the host-discovered harness/provider/model. Before approved launch, establish native support and preflight the requested restriction configuration; after startup, separately observe actual runtime capabilities at startup or first turn. Neither help text nor model self-report proves enforcement. If the required preflight boundary is unknown, do not launch; if runtime capabilities are unexpected or ambiguous, stop substantive work and retain the peer for human review. Designate exactly one submitter and one outstanding prompt per peer. Post-submission working permits later settlement and bounded-answer assessment; immediately observed blocked needs no prior working and always pauses for a human. Retain the peer for the agreed window; separately approve cleanup and require Herdr removal/exit proof. Do not auto-accept trust or permission prompts. If the approved owner is unavailable, report `unsupported`. This route does not change the read-only, autonomous native review profiles below.
 
 The `agent` parameter loads defaults from `~/.pi/agent/agents/<name>.md`. Model, tools, skills, thinking — all inherited. Explicit params override agent defaults.
 
@@ -216,20 +215,20 @@ Every delegation brief must state the target, scope, constraints, expected outpu
 
 Child handoffs flow upward as bounded findings, evidence, and blockers. The parent owns synthesis and decisions. Do not forward child transcripts or substitute transcript volume for a focused handoff.
 
-**Default review seats:** Use `reviewer` for code review and `validator` for integration/contract validation, including generic role references in skills, plans, and examples. Do not substitute `claude-reviewer` or `claude-validator` unless explicitly requested or selected by machine-local instructions. Machine-specific preferences must not change these shared defaults.
+**Review profiles:** Use `reviewer` for code review and `validator` for integration/contract validation, including generic role references in skills, plans, and examples. Public definitions default explicitly to Pi with their normal tools and provider mapping. The private `.data-private/pi/agent/review-runner.json` selector may render these same names as native Claude evidence-only profiles; see `docs/private-overlays.md`. Saved Pi-only workflows use `workflow-reviewer` regardless of this selector; preserve their Pi-only runner guard.
 
-**Claude Code review seats:** `claude-reviewer` and `claude-validator` are separate from the Pi-backed `reviewer` and `validator`. Pi resolves any todo, runs a bounded `git diff` and tests, and supplies changed paths, acceptance criteria or contract references, test argv/status/output, and labeled omissions in the task. For a larger diff, create a bounded evidence artifact inside the child's working directory and give its exact path; keep the task under 60 KiB.
+For portable evidence-only review, the parent resolves todos, captures a bounded diff, runs tests, and supplies changed paths, acceptance criteria or contract references, exact test argv/status/output, and labeled omissions. For larger diffs, prepare bounded evidence files in the child's working directory and give exact paths; keep the task under 60 KiB. Plan checks receive the proposal and resolved draft tasks instead of implementation evidence.
 
-Do not pass secrets, private transcripts, `tools`, `skills`, `thinking`, or `fork` overrides. These seats use only Read, Glob, and Grep; they cannot run tests or git. They are autonomous one-turn reviews, not interactive shells. Give them a reviewable cwd and the usual scope, expected output, evidence, and stop condition.
+Do not pass secrets, private transcripts, or `tools`, `model`, `skills`, `thinking`, or `fork` overrides to generic review launches. Native profiles use only Read, Glob, and Grep, with no MCP by default; they cannot run tests or Git, write reports, fetch todos, or delegate. Pi profiles retain their normal capabilities, so evidence-only instructions alone do not enforce tool isolation. Select an appropriate trusted profile when enforced restrictions are required. Native tool/permission controls are cooperative CLI controls, not an OS or path sandbox. Return findings inline; the parent owns report writes and synthesis.
 
-The result returns Claude's actual `claudeSessionId` after process exit. To follow up, launch the same Claude agent with `subagent({ name: "Review follow-up", agent: "claude-reviewer", task: "...", resumeSessionId: "<returned UUID>", interactive: false })`. `subagent_resume` takes a **Pi session path** and does not resume Claude Code. Treat a failed/unconfirmed child as incomplete; do not infer findings from a closed pane or reuse a session ID you did not receive from the completed run.
+Treat a failed/unconfirmed child as incomplete; do not infer findings from a closed pane. Use only the host's supported managed continuation route for follow-up; do not infer session identity from model output.
 
 ```typescript
 // Use existing agent definitions — full transparency
 subagent({ name: "Scout", agent: "scout", interactive: false, task: "Analyze the codebase..." })
 subagent({ name: "Worker", agent: "worker", interactive: false, task: "Implement TODO-xxxx.\n\nResolved task: [paste scope, constraints, references, acceptance criteria, and scope-mismatch-before-writes rule: fetch/claim in authoritative scope; pause/report mismatch before writes; never force/steal/copy tickets]" })
 // For read-only reviewers, collect a bounded diff and verification results first.
-subagent({ name: "Reviewer", agent: "reviewer", tools: "read", interactive: false, task: "Evidence-only review: read the prepared diff and test results; report findings inline." })
+subagent({ name: "Reviewer", agent: "reviewer", interactive: false, task: "Evidence-only review: read the prepared diff and test results; report findings inline." })
 subagent({ name: "Researcher", agent: "researcher", interactive: false, task: "Research [topic]..." })
 
 // Planner — clarifies WHAT to build and plans HOW (interactive, user collaborates)

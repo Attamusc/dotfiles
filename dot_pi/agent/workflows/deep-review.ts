@@ -99,7 +99,7 @@ export default async function (wf: WorkflowContext) {
   if (files.length <= FANOUT_THRESHOLD) {
     try {
       const review = await wf.spawn({
-        agent: "reviewer",
+        agent: "workflow-reviewer",
         label: "deep review (single)",
         tools: ["read"],
         task: [
@@ -145,7 +145,7 @@ export default async function (wf: WorkflowContext) {
     perFile = await wf.map(
       files,
       (file) => ({
-        agent: "reviewer" as const,
+        agent: "workflow-reviewer" as const,
         label: `review: ${file}`,
         tools: ["read"],
         task: [
@@ -197,7 +197,7 @@ export default async function (wf: WorkflowContext) {
   // Synthesis reviewer: cross-file structural view + overall verdict.
   try {
     const synthesis = await wf.spawn({
-      agent: "reviewer",
+      agent: "workflow-reviewer",
       label: "synthesise verdict",
       tools: ["read"],
       task: [

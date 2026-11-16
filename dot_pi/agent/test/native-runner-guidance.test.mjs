@@ -83,7 +83,7 @@ test('staged native roles render with actual contract2 parser and explicit curre
   }
 });
 
-test('staged Claude roles preserve explicit controls, task bindings and legacy review seats', async t => {
+test('staged Claude roles preserve explicit controls and task bindings', async t => {
   if (!workflowRoot) { t.skip('set PI_WORKFLOWS_GUARD_ROOT to the Claude-enabled contract overlay'); return; }
   const { parseAgentDefinition, bindNativeMcp } = await import(packageEntry());
   const f = fixture(t);
@@ -113,8 +113,7 @@ test('staged Claude roles preserve explicit controls, task bindings and legacy r
     if (!readonly) assert.ok(text.includes(normalize(f.render('.chezmoitemplates/worker-body')).trim()));
   }
   for (const name of ['claude-reviewer', 'claude-validator']) {
-    const legacy = read(`dot_pi/agent/agents/${name}.md`);
-    assert.match(legacy, /^cli: claude$/m); assert.doesNotMatch(legacy, /^runner:/m);
+    assert.equal(existsSync(path.join(root, `dot_pi/agent/agents/${name}.md`)), false);
   }
 });
 

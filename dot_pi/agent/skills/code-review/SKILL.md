@@ -61,7 +61,7 @@ Each smell reads *what it is* → *how to fix*; match it against the diff:
 
 ### 4. Spawn both sub-agents in parallel
 
-The orchestrator collects all evidence before delegating. If the spec is a todo, fetch it and include its full body in a readable evidence file. Include the captured diff, relevant untracked files, commit list, standards sources, and any test results in the bundle. Reviewers in this workflow receive **only `read`**, as required by repositories with a read-only reviewer policy. Their task must explicitly say **evidence-only review** so they return findings inline rather than trying to run commands or write reports.
+The orchestrator collects all evidence before delegating. If the spec is a todo, fetch it and include its full body in a readable evidence file. Include the captured diff, relevant untracked files, commit list, standards sources, and any test results in the bundle. Use the normal `reviewer` definition without tools, model, skills, thinking, or fork overrides so both public Pi and private native profiles work. The task must explicitly say **evidence-only review** so findings return inline. Native profiles enforce their configured Read/Glob/Grep tool policy with no MCP; public Pi profiles retain normal capabilities. Prompt text alone is not tool isolation: if a repository requires enforced read-only access, select an appropriately restricted trusted profile before launch. Supply exact test argv/status/output and label missing evidence; the parent owns tests and report writes.
 
 Start two independent `subagent` calls without waiting between them:
 
@@ -69,14 +69,12 @@ Start two independent `subagent` calls without waiting between them:
 subagent({
   name: "Standards Review",
   agent: "reviewer",
-  tools: "read",
   interactive: false,
   task: "Evidence-only review. Read the supplied diff, status, validation, and standards files. Read the smell baseline in ~/.pi/agent/skills/code-review/SKILL.md. Report documented-standard violations and possible baseline smells separately, with file/hunk evidence. Return findings inline, under 400 words."
 })
 subagent({
   name: "Spec Review",
   agent: "reviewer",
-  tools: "read",
   interactive: false,
   task: "Evidence-only review. Read the supplied diff, status, validation, and spec files. Report missing or partial requirements, scope creep, and incorrect implementations. Quote the spec for each finding. Return findings inline, under 400 words."
 })

@@ -196,7 +196,7 @@ export default async function (wf: WorkflowContext) {
 
   try {
     const synthesis = await wf.spawn({
-      agent: "reviewer",
+      agent: "workflow-reviewer",
       label: "reconcile safe frontier",
       tools: ["read"],
       timeoutMs: SPAWN_TIMEOUT_MS,

@@ -33,13 +33,14 @@ test('actual todo scope resolution distinguishes another checkout before any cla
 
 // Soft workflow contract checks only; these do not simulate or certify model decisions.
 test('managed and native reviewer instructions support pre-code evidence-only plan checks', () => {
-  for (const path of [`agents/reviewer.md${sourceLayout ? '.tmpl' : ''}`, 'agents/claude-reviewer.md']) {
+  const paths = sourceLayout ? ['../../.chezmoitemplates/reviewer-pi', '../../.chezmoitemplates/review-native-header'] : ['agents/reviewer.md'];
+  for (const path of paths) {
     const role = read(path);
-    for (const pattern of [/evidence-only plan check/i, /clarity, self-containment, consistency/, /source contracts.*readiness/, /without requiring implemented code, a diff, or passing test output/, /return findings inline/i, /do not run commands, fetch todos, or write files/i, /missing or truncated.*incomplete/i]) {
+    for (const pattern of [/evidence-only plan check/i, /clarity, self-containment, consistency/, /source contracts.*readiness/, /without requiring implemented code, a diff, or passing test output/, /return findings inline/i, /missing or truncated.*incomplete/is]) {
       assert.match(role, pattern, path);
     }
   }
-  const reviewer = read(`agents/reviewer.md${sourceLayout ? '.tmpl' : ''}`);
+  const reviewer = read(sourceLayout ? '../../.chezmoitemplates/reviewer-pi' : 'agents/reviewer.md');
   assert.match(reviewer, /steps below apply unless.*evidence-only review/i);
   assert.match(reviewer, /use the `write` tool to save the review/i);
   assert.match(reviewer, /tools: read, bash, write, todo/);
