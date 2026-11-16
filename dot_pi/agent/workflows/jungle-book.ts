@@ -176,7 +176,7 @@ export default async function (wf: WorkflowContext) {
   // ---- Phase 3: Classify — SEPARATE judge with a self-contained contract ----
   try {
     const classification = await wf.spawn({
-    agent: "reviewer",
+    agent: "workflow-reviewer",
     label: "classify + migrate",
     tools: ["read"],
     task: [

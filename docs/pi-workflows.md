@@ -1,7 +1,7 @@
 # Pi workflows
 
 The managed package source is pinned exactly as
-`git:github.com/Attamusc/pi-workflows@1614faf29c6ad1d0fcc9fe6db86a770f34e2b129`.
+`git:github.com/Attamusc/pi-workflows@193c9edf7f2104704877588cf40c4460b45c7e48`.
 Host package reconciliation and fresh-Pi smoke are separate gates. The pin
 in source does not establish whether a particular host has activated it.
 
@@ -76,6 +76,42 @@ status can execute repository-configured programs; it never resumes work.
 No retained workflow calls package isolation, integration, or isolation cleanup.
 `iterate-pr` preserves its approval boundary before network, credential, commit,
 push, or reply effects. Denial leaves the invoking tree unchanged.
+
+## Pi-only workflow guard and staged native roles
+
+The isolated contract-2 workflow source preserves parsed runner/CLI intent and
+canonical origin through discovery and rejects foreign transports before Pi
+spawn. Under scope `both`, project Pi shadows of trusted native roles and foreign
+CLI user roles fail before precedence can hide them, including complete user
+roles. Ordinary Pi overrides and explicit `cli: pi` remain. This is a Pi-only
+workflow guard, not a foreign workflow executor or budget transfer. Changing the
+managed source pin does not reconcile an already running host installation.
+
+Common delegation guidance uses definition defaults for runner, model, thinking
+and permissions. Existing saved recipes retain intentional Pi-only phase
+model/tool overrides; unsupported Copilot controls are rejected, not dropped.
+Ordinary reviewer/validator names inherit machine-selected profiles: public Pi
+defaults or private native Claude. Saved Pi-only review workflows bind the
+explicit `workflow-reviewer` role.
+
+Opt-in `worker-copilot` and `worker-copilot-readonly` templates live only under
+`.chezmoitemplates/native-agent-definitions/` and are never emitted into discovery
+roots by ordinary apply. The coding role reuses the ordinary worker-body partial;
+the follow-up has separate reader instructions. Current baseline subagent4e74606
+and workflows1614faf ignore new runner fields and can route these roles as Pi;
+they are not fail-closed native consumers. Do not activate templates until all
+compatible packages are installed and every consuming owner confirms reload,
+under the separately approved ordered rollout. Deactivate native definitions
+before any consumer downgrade. No autoloaded destination wrapper is supplied.
+
+Native task MCP bindings explicitly use the current trusted host's absolute
+Node and HOME, never saved-record or project runtime values. Captured scope cwd,
+single-token store override (including empty) and stable managed actor bind the
+same store without child environment inheritance. File/shell approvals are
+broad trusted-job grants, not an OS/path sandbox or certification of all global
+native plugins. Later native acceptance must use these rendered staged templates
+in isolated trusted-global resource roots; parser fixtures do not prove actual
+CLI argv, permissions or restricted-profile resume.
 
 ## Candidate checks and host activation
 

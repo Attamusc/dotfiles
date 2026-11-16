@@ -20,18 +20,29 @@ An idle `$atta-task` or `$atta-push` request grants that saved entry once. Ordin
 
 ## Assign roles and finish criteria
 
-Use `github-copilot/gpt-6.1-sol`, high, for caller/maker/evidence working passes; `github-copilot/claude-opus-5.5`, high, for judge/prose; `github-copilot/gpt-6-luna`, high, for alternative facts. Parent provides evidence, maker, judge, checker, prose-checker definitions. Override models explicitly; never reroute provider to rescue availability.
+Use definition defaults for runner, model, thinking and permissions. The parent supplies evidence, maker, judge, checker and prose-checker definitions; machine binding belongs in trusted definitions, not skill copies or model-supplied command/grant overrides. Existing Pi phase roles keep their configured provider/model policy. Never reroute a provider to rescue availability. Independent reviewer/validator gates remain explicitly read-only Pi seats; selecting a native worker does not replace them.
+
+Parent-provided definitions MUST declare these role/model/thinking defaults before dispatch, rather than injecting harness-specific per-call overrides:
+
+| Parent-provided role | Required Pi default | Required native equivalent | Thinking |
+|---|---|---|---|
+| caller, maker, evidence | `github-copilot/gpt-6.1-sol` | `gpt-6.1-sol` | high |
+| judge, prose-checker | `github-copilot/claude-opus-5.5` | `claude-opus-5.5` | high |
+| alternative facts | `github-copilot/gpt-6-luna` | `gpt-6-luna` | high |
+
+Pi uses the provider-qualified IDs; native definitions use the runner-native equivalent IDs only with a compatible consumer. Keep the existing checker definition and independent read-only Pi reviewer/validator safety gates. If the selected runner cannot honor the required model or controls, stop/report unsupported; never rescue availability by changing provider, model or harness. This phase-role policy does not retune the separately selected general worker or read-only follow-up profile.
+
+The saved workflow engine is Pi-only: foreign runners, legacy foreign CLI roles and project shadows of trusted native roles must fail before Pi spawn. Per-spawn Pi model/tools overrides are Pi-only and must be intentional, labeled and supported by that consumer. Unsupported Copilot controls are rejected, never dropped or translated. Use a compatible native delegation route for explicitly selected native definitions; staged templates are not active definitions.
 
 Keep decomposition in the native caller. Each child gets one role, owned cwd, finish condition, bounded scope, tools and evidence request; no nested delegation. A concrete visible example:
 
 ```typescript
 subagent({ name: "Evidence", agent: "evidence", interactive: false,
-  model: "github-copilot/gpt-6.1-sol", tools: "read,bash,codemode",
   cwd: assignedWorkspace,
   task: "Investigate the stated symptom in one evidence pass. Read the relevant domain skill before commands. No mutation, delegation or repair. Return hypotheses with cited evidence, next checks/actions, exact argv/status/output and missing access. Stop after this bounded handoff; do not claim completion from unsupported checks." })
 ```
 
-Thinking is set by the provided role definition; the visible subagent tool does not expose a thinking override. Read the installed native tool schema before supplying overrides; do not turn an unsupported option into a claimed restriction. Bash/MCP/codemode availability is not OS read-only enforcement. Direct live investigations require already approved domain access, unlike the automatic read-only file recipe.
+Runner, model, thinking and permissions come from the selected role definition; the visible subagent tool does not expose a thinking override. Read the installed native tool schema before supplying overrides; do not turn an unsupported option into a claimed restriction. Bash/MCP/codemode availability is not OS read-only enforcement. Direct live investigations require already approved domain access, unlike the automatic read-only file recipe.
 
 - **Investigate:** one evidence role. Finish with hypotheses/evidence/next checks/actions; no forced repair/review or giant risk report.
 - **Recurring:** maker reads the accepted reference and named specialist skill, produces the artifact; one checker checks evidence gaps/conformity only. Do not reopen format/renderer design. Missing reference/skill means blocked.
@@ -44,7 +55,7 @@ For investigate and recurring work, collect evidence to close the decision, not 
 - Record cited direct answers, remaining required reads and uncertainty in the existing report/gap list (maker only) or returned evidence handoff; do not create a new tracker or require a report for ordinary investigation. Required reads come from the task, acceptance or applicable domain contract; suggested human next checks do not make an investigation incomplete. No exhaustive packet unless required. Unresolved required reads cannot be complete.
 - The recurring checker flags direct answers and remaining required reads against acceptance; only concrete changed claims warrant recheck. This adds no forced review to ordinary investigation or automatic recurring repair/recheck loop.
 
-The saved recipe uses native per-child `timeoutMs`, workflow run ceiling and usage budget gates. Budget is checked between completed phases, not a hard dollar sandbox. Visible children do not inherit these saved-engine timers; do not claim a visible hard execution ceiling. Checkpoints are write-only, not restart resume.
+The existing Pi-only saved recipes retain their explicit phase-specific Pi model/tool overrides; those are not portable Copilot launch controls. The saved recipe uses native per-child `timeoutMs`, workflow run ceiling and usage budget gates. Budget is checked between completed phases, not a hard dollar sandbox. Visible children do not inherit these saved-engine timers; do not claim a visible hard execution ceiling. Checkpoints are write-only, not restart resume.
 
 ## Preserve the useful handoff
 

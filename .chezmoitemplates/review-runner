@@ -1,0 +1,16 @@
+{{- $runner := "pi" -}}
+{{- $path := joinPath .chezmoi.sourceDir ".data-private/pi/agent/review-runner.json" -}}
+{{- if stat $path -}}
+{{-   $config := include ".data-private/pi/agent/review-runner.json" | mustFromJson -}}
+{{-   if not (kindIs "map" $config) -}}
+{{-     fail "review-runner.json must contain runner: pi or claude" -}}
+{{-   end -}}
+{{-   if ne (len $config) 1 -}}
+{{-     fail "review-runner.json must contain only runner" -}}
+{{-   end -}}
+{{-   $runner = get $config "runner" -}}
+{{-   if not (or (eq $runner "pi") (eq $runner "claude")) -}}
+{{-     fail "review-runner.json runner must be pi or claude" -}}
+{{-   end -}}
+{{- end -}}
+{{- $runner -}}

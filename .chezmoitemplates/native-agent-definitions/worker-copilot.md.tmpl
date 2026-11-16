@@ -1,0 +1,30 @@
+---
+name: worker-copilot
+description: Opt-in native Copilot coding job for one approved task
+runner: copilot
+runner-version: "1.0.106-3"
+model: gpt-6.1-sol
+thinking: low
+skills: commit
+auto-exit: true
+interactive: false
+workspace-trust: session
+native-allow: [write, shell, "tasks(todo)"]
+native-deny: []
+mcp:
+  tasks:
+    command: "{node}"
+    args: ["{home}/.local/bin/pi-agent-tasks-mcp", "--scope-cwd", "{parentCwd}", "--store-override={env.PI_TODO_PATH}", "--actor", "{managedSessionId}", "--actions", "get,claim,update,append,release"]
+    env:
+      HOME: "{home}"
+---
+
+This coding profile grants broad native file-write and shell approval. It is not
+an OS or path sandbox. Global native plugins may have additional permissions;
+this profile does not certify their restrictions. Do not delegate further.
+
+The `todo(...)` examples below refer to MCP server `tasks`, tool `todo`. Task
+scope and stable actor are bound by the caller; assignment force is off. Do not
+read or edit the store directly. Missing capabilities mean stop, not fallback.
+
+{{ includeTemplate "worker-body" . -}}

@@ -53,6 +53,38 @@ set the matching `defaultProvider` and exclude the Copilot discovery extension:
 Provider authentication remains in Pi's mode-0600 `auth.json`, not in chezmoi
 source data.
 
+### Review runner
+
+Public `reviewer` and `validator` definitions explicitly use Pi and retain the
+Claude provider mapping above. To select native Claude for these ordinary role
+names on one machine, create `.data-private/pi/agent/review-runner.json`:
+
+```json
+{ "runner": "claude" }
+```
+
+The object must contain only `runner`, set to `pi` or `claude`. Absent
+configuration means Pi; invalid configuration fails rendering rather than falling back. This selector is
+independent of model providers and does not select runners for other roles.
+`workflow-reviewer` always uses Pi with the existing reviewer capabilities and
+provider mapping. The four saved review/synthesis workflows bind that explicit
+role because their host remains Pi-only; do not relax the workflow runner guard.
+
+Native review profiles pin runner version `2.1.325`, model `opus`, and high
+thinking. They are autonomous, noninteractive, existing-trust-only profiles with
+`dontAsk` permissions, Read/Glob/Grep tools and allowlist, Bash/Edit/Write/Agent
+denied, and no MCP by default. Validator selects the trusted `verify-integration`
+skill through the existing skill mechanism, applying its methodology within the
+evidence-only policy. The parent supplies bounded diffs, resolved todos/contracts,
+and test argv/status/output; children inspect source and return findings inline.
+They do not run tests, write reports, access todo backends, or delegate.
+
+Generic review launches inherit profile policy without tools/model/skills/thinking/
+fork overrides. Pi profiles retain normal tools; an evidence-only prompt is not
+hard isolation. Native controls are cooperative CLI policy, not an OS or path
+sandbox or proof about global plugins. Rendering tests verify configuration, not
+live CLI enforcement or skill loading; deployment must verify those separately.
+
 ## MCP settings
 
 MCP maps merge by server key. A private key adds a server or replaces the

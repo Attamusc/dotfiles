@@ -31,14 +31,11 @@
  * naturally.
  */
 import { DynamicBorder, copyToClipboard, getMarkdownTheme, keyHint, type ExtensionAPI, type ExtensionContext, type Theme } from "@mariozechner/pi-coding-agent";
-import { StringEnum } from "@mariozechner/pi-ai";
-import { Type } from "@sinclair/typebox";
 import path from "node:path";
-import fs from "node:fs/promises";
-import { existsSync, readFileSync, readdirSync } from "node:fs";
-import crypto from "node:crypto";
 import os from "node:os";
-import { migrateLegacyTodos, projectScopeSlug, scopedTodosDir } from "./scope.ts";
+import { migrateLegacyTodos, projectScopeSlug, resolveTaskStore } from "./scope.ts";
+import { loadTaskPackage } from "./package.mjs";
+import { runPiTask } from "./client.mjs";
 import {
 	Container,
 	type Focusable,
@@ -59,74 +56,10 @@ import {
 
 const TODO_PATH_ENV = "PI_TODO_PATH";
 const GLOBAL_PI_DIR = path.join(os.homedir(), ".pi", "history");
-const TODO_SETTINGS_NAME = "settings.json";
 const TODO_ID_PREFIX = "TODO-";
-const TODO_ID_PATTERN = /^[a-f0-9]{8}$/i;
-const DEFAULT_TODO_SETTINGS = {
-	gc: true,
-	gcDays: 7,
-};
-const LOCK_TTL_MS = 30 * 60 * 1000;
-
-interface TodoFrontMatter {
-	id: string;
-	title: string;
-	tags: string[];
-	status: string;
-	created_at: string;
-	assigned_to_session?: string;
-}
-
-interface TodoRecord extends TodoFrontMatter {
-	body: string;
-}
-
-interface LockInfo {
-	id: string;
-	pid: number;
-	session?: string | null;
-	created_at: string;
-}
-
-interface TodoSettings {
-	gc: boolean;
-	gcDays: number;
-}
-
-const TodoParams = Type.Object({
-	action: StringEnum([
-		"list",
-		"list-all",
-		"get",
-		"create",
-		"update",
-		"append",
-		"delete",
-		"claim",
-		"release",
-	] as const),
-	id: Type.Optional(
-		Type.String({ description: "Todo id (TODO-<hex> or raw hex filename)" }),
-	),
-	title: Type.Optional(Type.String({ description: "Short summary shown in lists" })),
-	status: Type.Optional(Type.String({ description: "Todo status" })),
-	tags: Type.Optional(Type.Array(Type.String({ description: "Todo tag" }))),
-	body: Type.Optional(
-		Type.String({ description: "Long-form details (markdown). Update replaces; append adds." }),
-	),
-	force: Type.Optional(Type.Boolean({ description: "Override another session's assignment" })),
-});
-
-type TodoAction =
-	| "list"
-	| "list-all"
-	| "get"
-	| "create"
-	| "update"
-	| "append"
-	| "delete"
-	| "claim"
-	| "release";
+type TodoFrontMatter = import("./types.ts").TodoFrontMatter;
+type TodoRecord = import("./types.ts").TodoRecord;
+type TodoAction = import("./types.ts").TodoAction;
 
 type TodoOverlayAction = "back" | "work";
 
@@ -164,38 +97,8 @@ function normalizeTodoId(id: string): string {
 	return trimmed;
 }
 
-function validateTodoId(id: string): { id: string } | { error: string } {
-	const normalized = normalizeTodoId(id);
-	if (!normalized || !TODO_ID_PATTERN.test(normalized)) {
-		return { error: "Invalid todo id. Expected TODO-<hex>." };
-	}
-	return { id: normalized.toLowerCase() };
-}
-
-function displayTodoId(id: string): string {
-	return formatTodoId(normalizeTodoId(id));
-}
-
 function isTodoClosed(status: string): boolean {
 	return ["closed", "done"].includes(status.toLowerCase());
-}
-
-function clearAssignmentIfClosed(todo: TodoFrontMatter): void {
-	if (isTodoClosed(getTodoStatus(todo))) {
-		todo.assigned_to_session = undefined;
-	}
-}
-
-function sortTodos(todos: TodoFrontMatter[]): TodoFrontMatter[] {
-	return [...todos].sort((a, b) => {
-		const aClosed = isTodoClosed(a.status);
-		const bClosed = isTodoClosed(b.status);
-		if (aClosed !== bClosed) return aClosed ? 1 : -1;
-		const aAssigned = !aClosed && Boolean(a.assigned_to_session);
-		const bAssigned = !bClosed && Boolean(b.assigned_to_session);
-		if (aAssigned !== bAssigned) return aAssigned ? -1 : 1;
-		return (a.created_at || "").localeCompare(b.created_at || "");
-	});
 }
 
 function buildTodoSearchText(todo: TodoFrontMatter): string {
@@ -708,379 +611,28 @@ class TodoDetailOverlayComponent {
 }
 
 function getTodosDir(cwd: string): string {
-	const overridePath = process.env[TODO_PATH_ENV];
-	if (overridePath && overridePath.trim()) {
-		return path.resolve(cwd, overridePath.trim());
-	}
-	return scopedTodosDir(cwd, GLOBAL_PI_DIR);
+	return resolveTaskStore(cwd, process.env[TODO_PATH_ENV] ?? "", GLOBAL_PI_DIR);
 }
 
 function getTodosDirLabel(cwd: string): string {
-	const overridePath = process.env[TODO_PATH_ENV];
-	if (overridePath && overridePath.trim()) {
-		return path.resolve(cwd, overridePath.trim());
-	}
+	if (process.env[TODO_PATH_ENV]?.trim()) return getTodosDir(cwd);
 	return path.join("~/.pi/history", projectScopeSlug(cwd), "todos");
-}
-
-function getTodoSettingsPath(todosDir: string): string {
-	return path.join(todosDir, TODO_SETTINGS_NAME);
-}
-
-function normalizeTodoSettings(raw: Partial<TodoSettings>): TodoSettings {
-	const gc = raw.gc ?? DEFAULT_TODO_SETTINGS.gc;
-	const gcDays = Number.isFinite(raw.gcDays) ? raw.gcDays : DEFAULT_TODO_SETTINGS.gcDays;
-	return {
-		gc: Boolean(gc),
-		gcDays: Math.max(0, Math.floor(gcDays)),
-	};
-}
-
-async function readTodoSettings(todosDir: string): Promise<TodoSettings> {
-	const settingsPath = getTodoSettingsPath(todosDir);
-	let data: Partial<TodoSettings> = {};
-
-	try {
-		const raw = await fs.readFile(settingsPath, "utf8");
-		data = JSON.parse(raw) as Partial<TodoSettings>;
-	} catch {
-		data = {};
-	}
-
-	return normalizeTodoSettings(data);
-}
-
-async function garbageCollectTodos(todosDir: string, settings: TodoSettings): Promise<void> {
-	if (!settings.gc) return;
-
-	let entries: string[] = [];
-	try {
-		entries = await fs.readdir(todosDir);
-	} catch {
-		return;
-	}
-
-	const cutoff = Date.now() - settings.gcDays * 24 * 60 * 60 * 1000;
-	await Promise.all(
-		entries
-			.filter((entry) => entry.endsWith(".md"))
-			.map(async (entry) => {
-				const id = entry.slice(0, -3);
-				const filePath = path.join(todosDir, entry);
-				try {
-					const content = await fs.readFile(filePath, "utf8");
-					const { frontMatter } = splitFrontMatter(content);
-					const parsed = parseFrontMatter(frontMatter, id);
-					if (!isTodoClosed(parsed.status)) return;
-					const createdAt = Date.parse(parsed.created_at);
-					if (!Number.isFinite(createdAt)) return;
-					if (createdAt < cutoff) {
-						await fs.unlink(filePath);
-					}
-				} catch {
-					// ignore unreadable todo
-				}
-			}),
-	);
 }
 
 function getTodoPath(todosDir: string, id: string): string {
 	return path.join(todosDir, `${id}.md`);
 }
 
-function getLockPath(todosDir: string, id: string): string {
-	return path.join(todosDir, `${id}.lock`);
-}
-
-function parseFrontMatter(text: string, idFallback: string): TodoFrontMatter {
-	const data: TodoFrontMatter = {
-		id: idFallback,
-		title: "",
-		tags: [],
-		status: "open",
-		created_at: "",
-		assigned_to_session: undefined,
-	};
-
-	const trimmed = text.trim();
-	if (!trimmed) return data;
-
-	try {
-		const parsed = JSON.parse(trimmed) as Partial<TodoFrontMatter> | null;
-		if (!parsed || typeof parsed !== "object") return data;
-		if (typeof parsed.id === "string" && parsed.id) data.id = parsed.id;
-		if (typeof parsed.title === "string") data.title = parsed.title;
-		if (typeof parsed.status === "string" && parsed.status) data.status = parsed.status;
-		if (typeof parsed.created_at === "string") data.created_at = parsed.created_at;
-		if (typeof parsed.assigned_to_session === "string" && parsed.assigned_to_session.trim()) {
-			data.assigned_to_session = parsed.assigned_to_session;
-		}
-		if (Array.isArray(parsed.tags)) {
-			data.tags = parsed.tags.filter((tag): tag is string => typeof tag === "string");
-		}
-	} catch {
-		return data;
-	}
-
-	return data;
-}
-
-function findJsonObjectEnd(content: string): number {
-	let depth = 0;
-	let inString = false;
-	let escaped = false;
-
-	for (let i = 0; i < content.length; i += 1) {
-		const char = content[i];
-
-		if (inString) {
-			if (escaped) {
-				escaped = false;
-				continue;
-			}
-			if (char === "\\") {
-				escaped = true;
-				continue;
-			}
-			if (char === "\"") {
-				inString = false;
-			}
-			continue;
-		}
-
-		if (char === "\"") {
-			inString = true;
-			continue;
-		}
-
-		if (char === "{") {
-			depth += 1;
-			continue;
-		}
-
-		if (char === "}") {
-			depth -= 1;
-			if (depth === 0) return i;
-		}
-	}
-
-	return -1;
-}
-
-function splitFrontMatter(content: string): { frontMatter: string; body: string } {
-	if (!content.startsWith("{")) {
-		return { frontMatter: "", body: content };
-	}
-
-	const endIndex = findJsonObjectEnd(content);
-	if (endIndex === -1) {
-		return { frontMatter: "", body: content };
-	}
-
-	const frontMatter = content.slice(0, endIndex + 1);
-	const body = content.slice(endIndex + 1).replace(/^\r?\n+/, "");
-	return { frontMatter, body };
-}
-
-function parseTodoContent(content: string, idFallback: string): TodoRecord {
-	const { frontMatter, body } = splitFrontMatter(content);
-	const parsed = parseFrontMatter(frontMatter, idFallback);
-	return {
-		id: idFallback,
-		title: parsed.title,
-		tags: parsed.tags ?? [],
-		status: parsed.status,
-		created_at: parsed.created_at,
-		assigned_to_session: parsed.assigned_to_session,
-		body: body ?? "",
-	};
-}
-
-function serializeTodo(todo: TodoRecord): string {
-	const frontMatter = JSON.stringify(
-		{
-			id: todo.id,
-			title: todo.title,
-			tags: todo.tags ?? [],
-			status: todo.status,
-			created_at: todo.created_at,
-			assigned_to_session: todo.assigned_to_session || undefined,
-		},
-		null,
-		2,
-	);
-
-	const body = todo.body ?? "";
-	const trimmedBody = body.replace(/^\n+/, "").replace(/\s+$/, "");
-	if (!trimmedBody) return `${frontMatter}\n`;
-	return `${frontMatter}\n\n${trimmedBody}\n`;
-}
-
-async function ensureTodosDir(todosDir: string) {
-	await fs.mkdir(todosDir, { recursive: true });
-}
-
-async function readTodoFile(filePath: string, idFallback: string): Promise<TodoRecord> {
-	const content = await fs.readFile(filePath, "utf8");
-	return parseTodoContent(content, idFallback);
-}
-
-async function writeTodoFile(filePath: string, todo: TodoRecord) {
-	await fs.writeFile(filePath, serializeTodo(todo), "utf8");
-}
-
-async function generateTodoId(todosDir: string): Promise<string> {
-	for (let attempt = 0; attempt < 10; attempt += 1) {
-		const id = crypto.randomBytes(4).toString("hex");
-		const todoPath = getTodoPath(todosDir, id);
-		if (!existsSync(todoPath)) return id;
-	}
-	throw new Error("Failed to generate unique todo id");
-}
-
-async function readLockInfo(lockPath: string): Promise<LockInfo | null> {
-	try {
-		const raw = await fs.readFile(lockPath, "utf8");
-		return JSON.parse(raw) as LockInfo;
-	} catch {
-		return null;
-	}
-}
-
-async function acquireLock(
-	todosDir: string,
-	id: string,
-	ctx: ExtensionContext,
-): Promise<(() => Promise<void>) | { error: string }> {
-	const lockPath = getLockPath(todosDir, id);
-	const now = Date.now();
-	const session = ctx.sessionManager.getSessionFile();
-
-	for (let attempt = 0; attempt < 2; attempt += 1) {
-		try {
-			const handle = await fs.open(lockPath, "wx");
-			const info: LockInfo = {
-				id,
-				pid: process.pid,
-				session,
-				created_at: new Date(now).toISOString(),
-			};
-			await handle.writeFile(JSON.stringify(info, null, 2), "utf8");
-			await handle.close();
-			return async () => {
-				try {
-					await fs.unlink(lockPath);
-				} catch {
-					// ignore
-				}
-			};
-		} catch (error: any) {
-			if (error?.code !== "EEXIST") {
-				return { error: `Failed to acquire lock: ${error?.message ?? "unknown error"}` };
-			}
-			const stats = await fs.stat(lockPath).catch(() => null);
-			const lockAge = stats ? now - stats.mtimeMs : LOCK_TTL_MS + 1;
-			if (lockAge <= LOCK_TTL_MS) {
-				const info = await readLockInfo(lockPath);
-				const owner = info?.session ? ` (session ${info.session})` : "";
-				return { error: `Todo ${displayTodoId(id)} is locked${owner}. Try again later.` };
-			}
-			if (!ctx.hasUI) {
-				return { error: `Todo ${displayTodoId(id)} lock is stale; rerun in interactive mode to steal it.` };
-			}
-			const ok = await ctx.ui.confirm(
-				"Todo locked",
-				`Todo ${displayTodoId(id)} appears locked. Steal the lock?`,
-			);
-			if (!ok) {
-				return { error: `Todo ${displayTodoId(id)} remains locked.` };
-			}
-			await fs.unlink(lockPath).catch(() => undefined);
-		}
-	}
-
-	return { error: `Failed to acquire lock for todo ${displayTodoId(id)}.` };
-}
-
-async function withTodoLock<T>(
-	todosDir: string,
-	id: string,
-	ctx: ExtensionContext,
-	fn: () => Promise<T>,
-): Promise<T | { error: string }> {
-	const lock = await acquireLock(todosDir, id, ctx);
-	if (typeof lock === "object" && "error" in lock) return lock;
-	try {
-		return await fn();
-	} finally {
-		await lock();
-	}
-}
-
 async function listTodos(todosDir: string): Promise<TodoFrontMatter[]> {
-	let entries: string[] = [];
-	try {
-		entries = await fs.readdir(todosDir);
-	} catch {
-		return [];
-	}
-
-	const todos: TodoFrontMatter[] = [];
-	for (const entry of entries) {
-		if (!entry.endsWith(".md")) continue;
-		const id = entry.slice(0, -3);
-		const filePath = path.join(todosDir, entry);
-		try {
-			const content = await fs.readFile(filePath, "utf8");
-			const { frontMatter } = splitFrontMatter(content);
-			const parsed = parseFrontMatter(frontMatter, id);
-			todos.push({
-				id,
-				title: parsed.title,
-				tags: parsed.tags ?? [],
-				status: parsed.status,
-				created_at: parsed.created_at,
-				assigned_to_session: parsed.assigned_to_session,
-			});
-		} catch {
-			// ignore unreadable todo
-		}
-	}
-
-	return sortTodos(todos);
+	const core = await loadTaskPackage("core");
+	const result = await core.executeTask({ action: "list-all" }, {
+		storeRoot: todosDir, actorId: "pi-ui-list", allowForce: false, allowedActions: ["list-all"],
+	});
+	return result.todos;
 }
 
-function listTodosSync(todosDir: string): TodoFrontMatter[] {
-	let entries: string[] = [];
-	try {
-		entries = readdirSync(todosDir);
-	} catch {
-		return [];
-	}
-
-	const todos: TodoFrontMatter[] = [];
-	for (const entry of entries) {
-		if (!entry.endsWith(".md")) continue;
-		const id = entry.slice(0, -3);
-		const filePath = path.join(todosDir, entry);
-		try {
-			const content = readFileSync(filePath, "utf8");
-			const { frontMatter } = splitFrontMatter(content);
-			const parsed = parseFrontMatter(frontMatter, id);
-			todos.push({
-				id,
-				title: parsed.title,
-				tags: parsed.tags ?? [],
-				status: parsed.status,
-				created_at: parsed.created_at,
-				assigned_to_session: parsed.assigned_to_session,
-			});
-		} catch {
-			// ignore
-		}
-	}
-
-	return sortTodos(todos);
+async function runTodo(input, todosDir: string, ctx: ExtensionContext) {
+	return runPiTask(await loadTaskPackage("core"), input, todosDir, ctx);
 }
 
 function getTodoTitle(todo: TodoFrontMatter): string {
@@ -1262,170 +814,31 @@ function appendExpandHint(theme: Theme, text: string): string {
 	return `${text}\n${theme.fg("dim", `(${keyHint("expandTools", "to expand")})`)}`;
 }
 
-async function ensureTodoExists(filePath: string, id: string): Promise<TodoRecord | null> {
-	if (!existsSync(filePath)) return null;
-	return readTodoFile(filePath, id);
+async function updateTodoStatus(todosDir: string, id: string, status: string, ctx: ExtensionContext) {
+	const result = await runTodo({ action: "update", id, status }, todosDir, ctx);
+	return "error" in result ? result : result.todo;
 }
 
-async function appendTodoBody(filePath: string, todo: TodoRecord, text: string): Promise<TodoRecord> {
-	const spacer = todo.body.trim().length ? "\n\n" : "";
-	todo.body = `${todo.body.replace(/\s+$/, "")}${spacer}${text.trim()}\n`;
-	await writeTodoFile(filePath, todo);
-	return todo;
+async function releaseTodoAssignment(todosDir: string, id: string, ctx: ExtensionContext, force = false) {
+	const result = await runTodo({ action: "release", id, force }, todosDir, ctx);
+	return "error" in result ? result : result.todo;
 }
 
-async function updateTodoStatus(
-	todosDir: string,
-	id: string,
-	status: string,
-	ctx: ExtensionContext,
-): Promise<TodoRecord | { error: string }> {
-	const validated = validateTodoId(id);
-	if ("error" in validated) {
-		return { error: validated.error };
-	}
-	const normalizedId = validated.id;
-	const filePath = getTodoPath(todosDir, normalizedId);
-	if (!existsSync(filePath)) {
-		return { error: `Todo ${displayTodoId(id)} not found` };
-	}
-
-	const result = await withTodoLock(todosDir, normalizedId, ctx, async () => {
-		const existing = await ensureTodoExists(filePath, normalizedId);
-		if (!existing) return { error: `Todo ${displayTodoId(id)} not found` } as const;
-		existing.status = status;
-		clearAssignmentIfClosed(existing);
-		await writeTodoFile(filePath, existing);
-		return existing;
-	});
-
-	if (typeof result === "object" && "error" in result) {
-		return { error: result.error };
-	}
-
-	return result;
+async function deleteTodo(todosDir: string, id: string, ctx: ExtensionContext) {
+	const result = await runTodo({ action: "delete", id }, todosDir, ctx);
+	return "error" in result ? result : result.todo;
 }
 
-async function claimTodoAssignment(
-	todosDir: string,
-	id: string,
-	ctx: ExtensionContext,
-	force = false,
-): Promise<TodoRecord | { error: string }> {
-	const validated = validateTodoId(id);
-	if ("error" in validated) {
-		return { error: validated.error };
-	}
-	const normalizedId = validated.id;
-	const filePath = getTodoPath(todosDir, normalizedId);
-	if (!existsSync(filePath)) {
-		return { error: `Todo ${displayTodoId(id)} not found` };
-	}
-	const sessionId = ctx.sessionManager.getSessionId();
-	const result = await withTodoLock(todosDir, normalizedId, ctx, async () => {
-		const existing = await ensureTodoExists(filePath, normalizedId);
-		if (!existing) return { error: `Todo ${displayTodoId(id)} not found` } as const;
-		if (isTodoClosed(existing.status)) {
-			return { error: `Todo ${displayTodoId(id)} is closed` } as const;
-		}
-		const assigned = existing.assigned_to_session;
-		if (assigned && assigned !== sessionId && !force) {
-			return {
-				error: `Todo ${displayTodoId(id)} is already assigned to session ${assigned}. Use force to override.`,
-			} as const;
-		}
-		if (assigned !== sessionId) {
-			existing.assigned_to_session = sessionId;
-			await writeTodoFile(filePath, existing);
-		}
-		return existing;
-	});
-
-	if (typeof result === "object" && "error" in result) {
-		return { error: result.error };
-	}
-
-	return result;
-}
-
-async function releaseTodoAssignment(
-	todosDir: string,
-	id: string,
-	ctx: ExtensionContext,
-	force = false,
-): Promise<TodoRecord | { error: string }> {
-	const validated = validateTodoId(id);
-	if ("error" in validated) {
-		return { error: validated.error };
-	}
-	const normalizedId = validated.id;
-	const filePath = getTodoPath(todosDir, normalizedId);
-	if (!existsSync(filePath)) {
-		return { error: `Todo ${displayTodoId(id)} not found` };
-	}
-	const sessionId = ctx.sessionManager.getSessionId();
-	const result = await withTodoLock(todosDir, normalizedId, ctx, async () => {
-		const existing = await ensureTodoExists(filePath, normalizedId);
-		if (!existing) return { error: `Todo ${displayTodoId(id)} not found` } as const;
-		const assigned = existing.assigned_to_session;
-		if (!assigned) {
-			return existing;
-		}
-		if (assigned !== sessionId && !force) {
-			return {
-				error: `Todo ${displayTodoId(id)} is assigned to session ${assigned}. Use force to release.`,
-			} as const;
-		}
-		existing.assigned_to_session = undefined;
-		await writeTodoFile(filePath, existing);
-		return existing;
-	});
-
-	if (typeof result === "object" && "error" in result) {
-		return { error: result.error };
-	}
-
-	return result;
-}
-
-async function deleteTodo(
-	todosDir: string,
-	id: string,
-	ctx: ExtensionContext,
-): Promise<TodoRecord | { error: string }> {
-	const validated = validateTodoId(id);
-	if ("error" in validated) {
-		return { error: validated.error };
-	}
-	const normalizedId = validated.id;
-	const filePath = getTodoPath(todosDir, normalizedId);
-	if (!existsSync(filePath)) {
-		return { error: `Todo ${displayTodoId(id)} not found` };
-	}
-
-	const result = await withTodoLock(todosDir, normalizedId, ctx, async () => {
-		const existing = await ensureTodoExists(filePath, normalizedId);
-		if (!existing) return { error: `Todo ${displayTodoId(id)} not found` } as const;
-		await fs.unlink(filePath);
-		return existing;
-	});
-
-	if (typeof result === "object" && "error" in result) {
-		return { error: result.error };
-	}
-
-	return result;
-}
-
-export default function todosExtension(pi: ExtensionAPI) {
+export default async function todosExtension(pi: ExtensionAPI) {
+	const core = await loadTaskPackage("core");
 	pi.on("session_start", async (_event, ctx) => {
 		if (!process.env[TODO_PATH_ENV]?.trim()) {
 			await migrateLegacyTodos(ctx.cwd, GLOBAL_PI_DIR);
 		}
 		const todosDir = getTodosDir(ctx.cwd);
-		await ensureTodosDir(todosDir);
-		const settings = await readTodoSettings(todosDir);
-		await garbageCollectTodos(todosDir, settings);
+		await core.initializeStore(todosDir);
+		const settings = await core.readTodoSettings(todosDir);
+		await core.garbageCollectTodos(todosDir, settings);
 	});
 
 	const todosDirLabel = getTodosDirLabel(process.cwd());
@@ -1446,283 +859,30 @@ export default function todosExtension(pi: ExtensionAPI) {
 		promptGuidelines: [
 			"Use todo to retrieve TODO-<hex> references; never search for or edit the todo storage backend directly.",
 		],
-		parameters: TodoParams,
+		parameters: core.taskInputJsonSchema,
 
 		async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
-			const todosDir = getTodosDir(ctx.cwd);
 			const action: TodoAction = params.action;
-
-			switch (action) {
-				case "list": {
-					const todos = await listTodos(todosDir);
-					const { assignedTodos, openTodos } = splitTodosByAssignment(todos);
-					const listedTodos = [...assignedTodos, ...openTodos];
-					const currentSessionId = ctx.sessionManager.getSessionId();
-					return {
-						content: [{ type: "text", text: serializeTodoListForAgent(listedTodos) }],
-						details: { action: "list", todos: listedTodos, currentSessionId },
-					};
-				}
-
-				case "list-all": {
-					const todos = await listTodos(todosDir);
-					const currentSessionId = ctx.sessionManager.getSessionId();
-					return {
-						content: [{ type: "text", text: serializeTodoListForAgent(todos) }],
-						details: { action: "list-all", todos, currentSessionId },
-					};
-				}
-
-				case "get": {
-					if (!params.id) {
-						return {
-							content: [{ type: "text", text: "Error: id required" }],
-							details: { action: "get", error: "id required" },
-						};
-					}
-					const validated = validateTodoId(params.id);
-					if ("error" in validated) {
-						return {
-							content: [{ type: "text", text: validated.error }],
-							details: { action: "get", error: validated.error },
-						};
-					}
-					const normalizedId = validated.id;
-					const displayId = formatTodoId(normalizedId);
-					const filePath = getTodoPath(todosDir, normalizedId);
-					const todo = await ensureTodoExists(filePath, normalizedId);
-					if (!todo) {
-						return {
-							content: [{ type: "text", text: `Todo ${displayId} not found` }],
-							details: { action: "get", error: "not found" },
-						};
-					}
-					return {
-						content: [{ type: "text", text: serializeTodoForAgent(todo) }],
-						details: { action: "get", todo },
-					};
-				}
-
-				case "create": {
-					if (!params.title) {
-						return {
-							content: [{ type: "text", text: "Error: title required" }],
-							details: { action: "create", error: "title required" },
-						};
-					}
-					await ensureTodosDir(todosDir);
-					const id = await generateTodoId(todosDir);
-					const filePath = getTodoPath(todosDir, id);
-					const todo: TodoRecord = {
-						id,
-						title: params.title,
-						tags: params.tags ?? [],
-						status: params.status ?? "open",
-						created_at: new Date().toISOString(),
-						body: params.body ?? "",
-					};
-
-					const result = await withTodoLock(todosDir, id, ctx, async () => {
-						await writeTodoFile(filePath, todo);
-						return todo;
-					});
-
-					if (typeof result === "object" && "error" in result) {
-						return {
-							content: [{ type: "text", text: result.error }],
-							details: { action: "create", error: result.error },
-						};
-					}
-
-					return {
-						content: [{ type: "text", text: serializeTodoForAgent(todo) }],
-						details: { action: "create", todo },
-					};
-				}
-
-				case "update": {
-					if (!params.id) {
-						return {
-							content: [{ type: "text", text: "Error: id required" }],
-							details: { action: "update", error: "id required" },
-						};
-					}
-					const validated = validateTodoId(params.id);
-					if ("error" in validated) {
-						return {
-							content: [{ type: "text", text: validated.error }],
-							details: { action: "update", error: validated.error },
-						};
-					}
-					const normalizedId = validated.id;
-					const displayId = formatTodoId(normalizedId);
-					const filePath = getTodoPath(todosDir, normalizedId);
-					if (!existsSync(filePath)) {
-						return {
-							content: [{ type: "text", text: `Todo ${displayId} not found` }],
-							details: { action: "update", error: "not found" },
-						};
-					}
-					const result = await withTodoLock(todosDir, normalizedId, ctx, async () => {
-						const existing = await ensureTodoExists(filePath, normalizedId);
-						if (!existing) return { error: `Todo ${displayId} not found` } as const;
-
-						existing.id = normalizedId;
-						if (params.title !== undefined) existing.title = params.title;
-						if (params.status !== undefined) existing.status = params.status;
-						if (params.tags !== undefined) existing.tags = params.tags;
-						if (params.body !== undefined) existing.body = params.body;
-						if (!existing.created_at) existing.created_at = new Date().toISOString();
-						clearAssignmentIfClosed(existing);
-
-						await writeTodoFile(filePath, existing);
-						return existing;
-					});
-
-					if (typeof result === "object" && "error" in result) {
-						return {
-							content: [{ type: "text", text: result.error }],
-							details: { action: "update", error: result.error },
-						};
-					}
-
-					const updatedTodo = result as TodoRecord;
-					return {
-						content: [{ type: "text", text: serializeTodoForAgent(updatedTodo) }],
-						details: { action: "update", todo: updatedTodo },
-					};
-				}
-
-				case "append": {
-					if (!params.id) {
-						return {
-							content: [{ type: "text", text: "Error: id required" }],
-							details: { action: "append", error: "id required" },
-						};
-					}
-					const validated = validateTodoId(params.id);
-					if ("error" in validated) {
-						return {
-							content: [{ type: "text", text: validated.error }],
-							details: { action: "append", error: validated.error },
-						};
-					}
-					const normalizedId = validated.id;
-					const displayId = formatTodoId(normalizedId);
-					const filePath = getTodoPath(todosDir, normalizedId);
-					if (!existsSync(filePath)) {
-						return {
-							content: [{ type: "text", text: `Todo ${displayId} not found` }],
-							details: { action: "append", error: "not found" },
-						};
-					}
-					const result = await withTodoLock(todosDir, normalizedId, ctx, async () => {
-						const existing = await ensureTodoExists(filePath, normalizedId);
-						if (!existing) return { error: `Todo ${displayId} not found` } as const;
-						if (!params.body || !params.body.trim()) {
-							return existing;
-						}
-						const updated = await appendTodoBody(filePath, existing, params.body);
-						return updated;
-					});
-
-					if (typeof result === "object" && "error" in result) {
-						return {
-							content: [{ type: "text", text: result.error }],
-							details: { action: "append", error: result.error },
-						};
-					}
-
-					const updatedTodo = result as TodoRecord;
-					return {
-						content: [{ type: "text", text: serializeTodoForAgent(updatedTodo) }],
-						details: { action: "append", todo: updatedTodo },
-					};
-				}
-
-				case "claim": {
-					if (!params.id) {
-						return {
-							content: [{ type: "text", text: "Error: id required" }],
-							details: { action: "claim", error: "id required" },
-						};
-					}
-					const result = await claimTodoAssignment(
-						todosDir,
-						params.id,
-						ctx,
-						Boolean(params.force),
-					);
-					if (typeof result === "object" && "error" in result) {
-						return {
-							content: [{ type: "text", text: result.error }],
-							details: { action: "claim", error: result.error },
-						};
-					}
-					const updatedTodo = result as TodoRecord;
-					return {
-						content: [{ type: "text", text: serializeTodoForAgent(updatedTodo) }],
-						details: { action: "claim", todo: updatedTodo },
-					};
-				}
-
-				case "release": {
-					if (!params.id) {
-						return {
-							content: [{ type: "text", text: "Error: id required" }],
-							details: { action: "release", error: "id required" },
-						};
-					}
-					const result = await releaseTodoAssignment(
-						todosDir,
-						params.id,
-						ctx,
-						Boolean(params.force),
-					);
-					if (typeof result === "object" && "error" in result) {
-						return {
-							content: [{ type: "text", text: result.error }],
-							details: { action: "release", error: result.error },
-						};
-					}
-					const updatedTodo = result as TodoRecord;
-					return {
-						content: [{ type: "text", text: serializeTodoForAgent(updatedTodo) }],
-						details: { action: "release", todo: updatedTodo },
-					};
-				}
-
-				case "delete": {
-					if (!params.id) {
-						return {
-							content: [{ type: "text", text: "Error: id required" }],
-							details: { action: "delete", error: "id required" },
-						};
-					}
-
-					const validated = validateTodoId(params.id);
-					if ("error" in validated) {
-						return {
-							content: [{ type: "text", text: validated.error }],
-							details: { action: "delete", error: validated.error },
-						};
-					}
-					const result = await deleteTodo(todosDir, validated.id, ctx);
-					if (typeof result === "object" && "error" in result) {
-						return {
-							content: [{ type: "text", text: result.error }],
-							details: { action: "delete", error: result.error },
-						};
-					}
-
-					return {
-						content: [{ type: "text", text: serializeTodoForAgent(result as TodoRecord) }],
-						details: { action: "delete", todo: result as TodoRecord },
-					};
-				}
+			const result = await runTodo(params, getTodosDir(ctx.cwd), ctx);
+			if ("error" in result) {
+				const required = result.error === "id required" || result.error === "title required";
+				const missing = result.code === "missing" && ["get", "update", "append"].includes(action);
+				return {
+					content: [{ type: "text", text: required ? `Error: ${result.error}` : result.error }],
+					details: { action, error: missing ? "not found" : result.error },
+				};
 			}
+			if ("todos" in result) {
+				return {
+					content: [{ type: "text", text: serializeTodoListForAgent(result.todos) }],
+					details: { action, todos: result.todos, currentSessionId: ctx.sessionManager.getSessionId() },
+				};
+			}
+			return {
+				content: [{ type: "text", text: serializeTodoForAgent(result.todo) }],
+				details: { action, todo: result.todo },
+			};
 		},
-
 
 		renderCall(args, theme) {
 			const action = typeof args.action === "string" ? args.action : "";
@@ -1798,8 +958,8 @@ export default function todosExtension(pi: ExtensionAPI) {
 
 	pi.registerCommand("todos", {
 		description: "List todos from ~/.pi/history/<project>/todos",
-		getArgumentCompletions: (argumentPrefix: string) => {
-			const todos = listTodosSync(getTodosDir(process.cwd()));
+		getArgumentCompletions: async (argumentPrefix: string) => {
+			const todos = await listTodos(getTodosDir(process.cwd()));
 			if (!todos.length) return null;
 			const matches = filterTodos(todos, argumentPrefix);
 			if (!matches.length) return null;
@@ -1888,13 +1048,12 @@ export default function todosExtension(pi: ExtensionAPI) {
 				};
 
 				const resolveTodoRecord = async (todo: TodoFrontMatter): Promise<TodoRecord | null> => {
-					const filePath = getTodoPath(todosDir, todo.id);
-					const record = await ensureTodoExists(filePath, todo.id);
-					if (!record) {
+					const result = await runTodo({ action: "get", id: todo.id }, todosDir, ctx);
+					if ("error" in result) {
 						ctx.ui.notify(`Todo ${formatTodoId(todo.id)} not found`, "error");
 						return null;
 					}
-					return record;
+					return result.todo;
 				};
 
 				const openTodoOverlay = async (record: TodoRecord): Promise<TodoOverlayAction> => {

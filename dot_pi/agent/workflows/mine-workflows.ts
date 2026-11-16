@@ -149,7 +149,7 @@ export default async function (wf: WorkflowContext) {
 
   try {
     const synthesis = await wf.spawn({
-      agent: "reviewer",
+      agent: "workflow-reviewer",
       label: "deduplicate proposals",
       tools: ["read"],
       timeoutMs: SPAWN_TIMEOUT_MS,

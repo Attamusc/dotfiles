@@ -1,0 +1,32 @@
+#!/bin/bash
+set -euo pipefail
+# Release pin: {{ include "dot_pi/agent/extensions/todos/package-pin.json" | sha256sum }}
+# Installer: {{ include "dot_local/bin/executable_install-pi-agent-tasks" | sha256sum }}
+# Unpublished pins deliberately stop here; publication/host rollout is separately gated.
+{{ if eq .chezmoi.os "darwin" -}}
+if [ -x /opt/homebrew/bin/brew ]; then
+  brew=/opt/homebrew/bin/brew
+elif [ -x /usr/local/bin/brew ]; then
+  brew=/usr/local/bin/brew
+else
+  echo "Homebrew is required to resolve its mise installation." >&2
+  exit 1
+fi
+mise_prefix=$("$brew" --prefix mise)
+mise_bin="$mise_prefix/bin/mise"
+{{ else if and (eq .chezmoi.os "linux") (eq .chezmoi.osRelease.id "fedora") (eq .chezmoi.osRelease.versionID "44") -}}
+mise_bin="$HOME/.local/bin/mise"
+{{ else -}}
+echo "Unsupported platform reached task package setup." >&2
+exit 1
+{{ end -}}
+# after-10 installs tools but cannot activate PATH for this separate hook.
+cd "$HOME"
+unset MISE_GLOBAL_CONFIG_FILE
+export MISE_CONFIG_DIR="$HOME/.config/mise"
+export MISE_UPGRADE_AUTO_PRUNE=false
+[[ -x "$mise_bin" && -f "$HOME/.config/mise/config.toml" ]] || {
+  echo "mise must install the pinned Node toolchain before task package setup." >&2
+  exit 1
+}
+"$mise_bin" exec -- python3 "$HOME/.local/bin/install-pi-agent-tasks"
