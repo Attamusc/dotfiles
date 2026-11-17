@@ -70,12 +70,20 @@ test('planning investigates facts and offers a compact proposal without ceremoni
   assert.doesNotMatch(planner, /## Phase \d|MUST follow all phases|one phase per message/);
 });
 test('draft review and execution consent remain distinct from post-code checks', () => {
-  for (const phrase of [/fresh read-only reviewer/, /without.*conversation/, /one re-review/, /explicit execution approval/, /planning-only/, /material change/, /contract validation/]) {
+  for (const phrase of [/fresh read-only reviewer/, /without.*conversation/, /Continue focused fresh read-only review/, /explicit execution approval/, /planning-only/, /material change/, /contract validation/]) {
     assert.match(planner, phrase);
   }
   assert.doesNotMatch(planner, /agent: "reviewer", tools:/);
   assert.match(planner, /trusted profile policy/);
   assert.match(planner, /inline acceptance criteria/i);
+});
+test('review corrections are autonomous, progress-bounded and separate from execution consent', () => {
+  assert.match(planner, /Resolve review findings autonomously within the requested scope/);
+  assert.match(planner, /each pass makes useful progress/);
+  assert.match(planner, /do not impose a review-count allowance/);
+  assert.match(planner, /Pause for an unresolved consequential decision, a scope or safety boundary, missing ownership, or repeated lack of progress/);
+  assert.match(planner, /do not authorize execution or replace the separate explicit execution approval/);
+  assert.doesNotMatch(planner, /Allow at most.*(?:re-review|review round)|after that re-review also pause|retry cap never/);
 });
 test('routing removes BBQ, keeps explicit grilling and lightweight iterate', () => {
   assert.equal(existsSync(new URL('prompts/bbq.md', root)), false);

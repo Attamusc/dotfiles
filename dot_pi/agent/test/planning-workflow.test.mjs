@@ -58,7 +58,7 @@ test('resolved worker brief carries authoritative-scope pause before writes', ()
   assert.match(routing, /Proposal path:.*Draft task artifact paths:.*Stop after.*do not ask for build approval/);
 });
 test('review checks task-only commitments and incomplete/stale consent without replacing code review', () => {
-  for (const pattern of [/resolved draft task bodies plus allowed source references/, /cannot hide commitments/, /Failed, missing, empty, or incomplete review is not approval/, /one re-review/, /Unresolved material blockers.*pause/, /planning-only request stops with drafts and no worker launch/, /Only the main author\/orchestrator may activate/, /material change.*invalidates/, /cosmetic edits do not require another ceremony/, /stale summary is not execution permission/, /independent post-code review/, /contract validation/]) {
+  for (const pattern of [/resolved draft task bodies plus allowed source references/, /cannot hide commitments/, /Failed, missing, empty, or incomplete review is not approval/, /Continue focused fresh read-only review/, /Never silently accept a material blocker/, /planning-only request stops with drafts and no worker launch/, /Only the main author\/orchestrator may activate/, /material change.*invalidates/, /cosmetic edits do not require another ceremony/, /stale summary is not execution permission/, /independent post-code review/, /contract validation/]) {
     assert.match(planner, pattern);
   }
 });
