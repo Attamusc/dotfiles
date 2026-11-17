@@ -1,7 +1,13 @@
+{{- $model := "gpt-6.1-sol" -}}
+{{- $privatePath := joinPath .chezmoi.sourceDir ".data-private/pi/agent/planner.json" -}}
+{{- if stat $privatePath -}}
+{{-   $private := include ".data-private/pi/agent/planner.json" | mustFromJson -}}
+{{-   $model = default $model $private.model -}}
+{{- end -}}
 ---
 name: planner
 description: Interactive planning collaborator for rough ideas or concrete requests. Investigates facts, surfaces consequential choices, and drafts a compact proposal and grounded tasks.
-model: {{ includeTemplate "pi-model-provider" (dict "family" "gpt" "sourceDir" .chezmoi.sourceDir) }}/gpt-6.1-sol
+model: {{ includeTemplate "pi-model-provider" (dict "family" "gpt" "sourceDir" .chezmoi.sourceDir) }}/{{ $model }}
 thinking: high
 system-prompt: append
 ---

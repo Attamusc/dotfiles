@@ -85,6 +85,34 @@ hard isolation. Native controls are cooperative CLI policy, not an OS or path
 sandbox or proof about global plugins. Rendering tests verify configuration, not
 live CLI enforcement or skill loading; deployment must verify those separately.
 
+### Planner model
+
+The shared planner defaults to GPT-6.1 Sol at high effort. Override only its
+model on one machine in `.data-private/pi/agent/planner.json`:
+
+```json
+{
+  "model": "gpt-6-astra"
+}
+```
+
+Use a model ID without a provider prefix; the planner still uses the GPT
+provider mapping above. This does not change the main assistant, other agents,
+effort, or ordinary `/plan` routing. It affects newly spawned planner subagents
+unless the spawn explicitly overrides the model; existing sessions are unchanged.
+Project-local planner definitions still take precedence over this global one.
+
+Preview and apply only the planner file, without running chezmoi scripts:
+
+```sh
+chezmoi diff ~/.pi/agent/agents/planner.md
+chezmoi apply --include=files ~/.pi/agent/agents/planner.md
+```
+
+The override is gitignored and not synchronized. Machines without it retain
+Sol. To end the trial, remove the local file and apply the planner again. Keep
+private files mode `0600` where practical.
+
 ## MCP settings
 
 MCP maps merge by server key. A private key adds a server or replaces the

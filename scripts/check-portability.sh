@@ -1114,6 +1114,7 @@ check_agent_contract() {
   local opencode_private="$WORK/opencode-private.json"
   local pi_routing_public="$WORK/pi-routing-public"
   local pi_routing_private="$WORK/pi-routing-private"
+  local pi_routing_planner_private="$WORK/pi-routing-planner-private"
   local private_providers="$PUBLIC_SOURCE/.data-private/pi/agent/model-providers.json"
   local private_settings="$PUBLIC_SOURCE/.data-private/pi/agent/settings.json"
   local agent
@@ -1274,19 +1275,27 @@ EOF
     dot_pi/agent/extensions/smart-sessions/index.ts.tmpl "$pi_routing_private/smart-sessions.ts"
   render_source_template darwin arm64 '' '' \
     dot_pi/agent/settings.json.tmpl "$pi_routing_private/settings.json"
+  cp -R "$pi_routing_private" "$pi_routing_planner_private"
+  printf '%s\n' '{"model":"synthetic-planner"}' >"$PUBLIC_SOURCE/.data-private/pi/agent/planner.json"
+  for agent in adversarial-reviewer planner researcher reviewer scout validator worker; do
+    render_source_template darwin arm64 '' '' \
+      "dot_pi/agent/agents/$agent.md.tmpl" "$pi_routing_planner_private/$agent.md"
+  done
+  render_source_template darwin arm64 '' '' \
+    dot_pi/agent/settings.json.tmpl "$pi_routing_planner_private/settings.json"
   rm -rf -- "$PUBLIC_SOURCE/.data-private"
 
-  python3 - "$pi_routing_public" "$pi_routing_private" <<'PY'
+  python3 - "$pi_routing_public" "$pi_routing_private" "$pi_routing_planner_private" <<'PY'
 import json
 import pathlib
 import re
 import sys
 
-def check(root, gpt_provider, claude_provider, expected_extensions):
+def check(root, gpt_provider, claude_provider, expected_extensions, planner_model="gpt-6.1-sol"):
     root = pathlib.Path(root)
     expected_models = {
         "adversarial-reviewer.md": f"{claude_provider}/claude-opus-5.5",
-        "planner.md": f"{gpt_provider}/gpt-6.1-sol",
+        "planner.md": f"{gpt_provider}/{planner_model}",
         "researcher.md": f"{gpt_provider}/gpt-5.6-terra",
         "reviewer.md": f"{claude_provider}/claude-opus-5.5",
         "scout.md": f"{gpt_provider}/gpt-6-luna",
@@ -1312,7 +1321,7 @@ def check(root, gpt_provider, claude_provider, expected_extensions):
     assert settings["extensions"] == expected_extensions
     managed = "git:github.com/Attamusc/pi-workflows@193c9edf7f2104704877588cf40c4460b45c7e48"
     assert settings["packages"].count(managed) == 1
-    if root.name == "pi-routing-private":
+    if root.name in ("pi-routing-private", "pi-routing-planner-private"):
         assert settings["packages"][-1] == "git:github.com/example/private-package@0123456789abcdef0123456789abcdef01234567"
         assert settings["packages"].index(managed) < len(settings["packages"]) - 1
 
@@ -1330,6 +1339,16 @@ check(
         "+extensions/smart-sessions/index.ts",
         "-extensions/github-copilot-dynamic/index.ts",
     ],
+)
+check(
+    sys.argv[3],
+    "openai-codex",
+    "anthropic",
+    [
+        "+extensions/smart-sessions/index.ts",
+        "-extensions/github-copilot-dynamic/index.ts",
+    ],
+    planner_model="synthetic-planner",
 )
 PY
 

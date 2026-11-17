@@ -244,9 +244,13 @@ test("all agents declare explicit effort", () => {
 
 test("fleet routes GPT producers to independent Claude reviewers", () => {
   const providers = modelProviders();
+  const privatePlannerPath = join(sourceTreeRoot, ".data-private", "pi", "agent", "planner.json");
+  const plannerModel = runningFromSource && existsSync(privatePlannerPath)
+    ? JSON.parse(readFileSync(privatePlannerPath, "utf8")).model || "gpt-6.1-sol"
+    : "gpt-6.1-sol";
   const expectedModels = {
     "adversarial-reviewer.md": `${providers.claude}/claude-opus-5.5`,
-    "planner.md": `${providers.gpt}/gpt-6.1-sol`,
+    "planner.md": `${providers.gpt}/${plannerModel}`,
     "researcher.md": `${providers.gpt}/gpt-5.6-terra`,
     "reviewer.md": parseAgent("reviewer.md").runner === "claude" ? "opus" : `${providers.claude}/claude-opus-5.5`,
     "scout.md": `${providers.gpt}/gpt-6-luna`,
@@ -256,7 +260,14 @@ test("fleet routes GPT producers to independent Claude reviewers", () => {
   };
 
   for (const [file, model] of Object.entries(expectedModels)) {
-    assert.equal(parseAgent(file).model, model, file);
+    const actual = parseAgent(file).model;
+    if (!runningFromSource && file === "planner.md") {
+      // Applied copies cannot recover the private model selection. Exact defaults
+      // and arbitrary overrides are checked by isolated portability renders.
+      assert.match(actual, /^[^/\s]+\/[^/\s]+$/, file);
+    } else {
+      assert.equal(actual, model, file);
+    }
   }
 
   const settings = JSON.parse(readManagedPiFile("settings.json"));
