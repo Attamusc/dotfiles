@@ -20,9 +20,9 @@ managed home path on Fedora, selects the canonical global config from HOME and
 uses `mise exec -- python3` so npm and Node are available without activated shims.
 It does not install mise or upgrade tools.
 
-**Do not apply this source branch before approved ordered rollout.** Chezmoi
-writes destination files before after-scripts. Applying this feature can therefore
-partially reconcile files, then fail closed at after-17 and disable todo until
+**Apply through the approved ordered rollout.** Chezmoi writes destination files
+before after-scripts. A failed capability install can therefore partially
+reconcile files, then fail closed at after-17 and disable todo until
 the pinned capability is installed. Explicit unpublished pins are refused before
 any remote attempt, not before those earlier file writes.
 There is no legacy fallback. Do not run full after-30 setup to test this consumer.
