@@ -746,7 +746,7 @@ fedora = fedora_config["tools"]
 shared = {
     "go": "1.26",
     "go:github.com/attamusc/spin": {
-        "version": "0.0.0-20261026222442-d77cc8fdb7b1",
+        "version": "0.1.0",
         "depends": "go",
     },
     "node": "25.8.1",
