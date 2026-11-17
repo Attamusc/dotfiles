@@ -42,6 +42,7 @@ done < <(
        -o -path "$ROOT/.pi" \
        -o -path "$ROOT/.artifacts" \
        -o -path "$ROOT/.ruff_cache" \
+       -o -name '__pycache__' \
        -o -path "$ROOT/.local-skills" \
        -o -path "$ROOT/.data-private" \) -prune \
     -o \( -type f -o -type l \) -print0

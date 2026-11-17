@@ -8,4 +8,5 @@
 /.pi/
 /.opencode/
 /.artifacts/
+/.playwright-cli/
 __pycache__/
