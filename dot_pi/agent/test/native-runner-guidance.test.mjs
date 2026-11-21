@@ -28,7 +28,7 @@ function fixture(t) {
   return { home, render: file => execFileSync('chezmoi', [...args, 'execute-template', '--init', '--file', path.join(root, file)], { env, encoding: 'utf8' }), managed: () => execFileSync('chezmoi', [...args, 'managed'], { env, encoding: 'utf8' }) };
 }
 
-test('Pi worker body matches its rendered partial and committed pre-extraction golden without VCS', t => {
+test('Pi worker body matches its rendered partial and checked-in golden without VCS', t => {
   const goldenPath = 'dot_pi/agent/test/fixtures/worker-body-golden.json';
   assert.ok(existsSync(path.join(root, goldenPath)), 'committed worker-body golden must exist');
   const golden = JSON.parse(read(goldenPath));

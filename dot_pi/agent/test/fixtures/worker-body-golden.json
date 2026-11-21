@@ -1,7 +1,7 @@
 {
-  "sha256": "313920309948de258d9f7d7f0adae9165ceefa31c9583f6a0a1ccdd9fc0b44f7",
-  "bytes": 4866,
+  "sha256": "9b65b2e0c6695149be49521d5e7dae821b832d2076ab42c3ff48df188202bedf",
+  "bytes": 4597,
   "encoding": "UTF-8",
   "normalization": "Normalize CRLF to LF only; preserve all other whitespace, including the final newline. The body begins at # Worker Agent after removing YAML frontmatter and its separating blank line.",
-  "provenance": "Verified byte-for-byte against the task-only instruction-repaired shared Pi worker body. Runtime tests need neither VCS metadata nor a historical commit."
+  "provenance": "Approved shared worker prompt, including the GPT-6.2 plan-discrepancy and verification guidance. Runtime tests need neither VCS metadata nor a historical commit."
 }

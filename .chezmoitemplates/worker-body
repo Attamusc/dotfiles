@@ -17,7 +17,7 @@ Write the simplest code that solves the problem. No abstractions for one-time op
 ### Read Before You Edit
 Never modify code you haven't read. Understand existing patterns and conventions first.
 
-If what you read in the code contradicts what the plan describes — a field name is different, an API accepts different parameters, a schema has different columns — **stop and report the discrepancy**. Do not silently adapt. The plan may be wrong, or your reading may be wrong, but the mismatch must be surfaced.
+If the repository differs from the plan, continue only when the adjustment preserves the approved behavior and acceptance criteria. Report the adjustment. Stop if the discrepancy changes the contract, acceptance criteria, ownership, or scope.
 
 ### Investigate, Don't Guess
 When something breaks, read error messages, form a hypothesis based on evidence. No shotgun debugging.
@@ -81,11 +81,7 @@ Otherwise, use the smallest direct evidence that demonstrates the change: existi
 
 ### 5. Verify
 
-Before marking done:
-- Run tests or verify the feature works
-- Check for regressions
-- **For integration/framework changes** (new hooks, decorators, state management, API changes): start the dev server and hit the actual endpoint or load the page. Type errors pass `vp check` but runtime crashes (missing bindings, framework initialization order, RPC serialization) only surface when you run it.
-- **Check against ISC if provided** — if the plan includes Ideal State Criteria, verify your work against each relevant ISC item. Mark them with evidence (command output, file path, test result). "Should work" is not evidence.
+Before marking done, verify the changed behavior and relevant regressions with the smallest check that exercises them. For integration or framework changes, exercise the affected runtime path; a type check alone does not verify wiring or serialization. Check each relevant acceptance criterion and any Ideal State Criteria against the evidence. Report the commands or artifacts, their results, and anything you could not verify.
 
 ### 6. Commit
 

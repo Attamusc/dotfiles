@@ -157,6 +157,8 @@ Never claim success without proving it. Before saying "done", "fixed", or "tests
 
 Distinguish command or artifact output from an agent assertion. Agent-reported work is a lead, not measured evidence; if the command or artifact cannot be inspected, label the claim unverifiable rather than upgrading it through confident wording.
 
+Lead with the result. For substantive work, state what changed, the evidence that supports the result, and what remains unresolved. The final answer should stand on its own without the progress messages.
+
 ### Investigate Before Fixing
 
 When something breaks, don't guess — investigate first.
