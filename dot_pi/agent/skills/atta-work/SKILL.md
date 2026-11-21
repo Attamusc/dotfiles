@@ -26,7 +26,7 @@ Parent-provided definitions MUST declare these role/model/thinking defaults befo
 
 | Parent-provided role | Required Pi default | Required native equivalent | Thinking |
 |---|---|---|---|
-| caller, maker, evidence | `github-copilot/gpt-6.1-sol` | `gpt-6.1-sol` | high |
+| caller, maker, evidence | `github-copilot/gpt-6.2-sol` | `gpt-6.2-sol` | high |
 | judge, prose-checker | `github-copilot/claude-opus-5.5` | `claude-opus-5.5` | high |
 | alternative facts | `github-copilot/gpt-6-luna` | `gpt-6-luna` | high |
 

@@ -82,7 +82,7 @@ function parseAgent(file) {
 
 test("dynamic Copilot models use their advertised endpoint", () => {
   assert.equal(
-    getApi({ id: "gpt-6-astra", supported_endpoints: ["/responses", "ws:/responses"] }),
+    getApi({ id: "gpt-6.2-astra", supported_endpoints: ["/responses"] }),
     "openai-responses",
   );
   assert.equal(
@@ -125,10 +125,10 @@ test("dynamic Copilot models use live adaptive-thinking and effort capabilities"
     },
   };
   const gpt6 = {
-    id: "gpt-6-sol",
+    id: "gpt-6.2-sol",
     capabilities: {
       supports: {
-        reasoning_effort: ["none", "low", "medium", "high", "xhigh", "max"],
+        reasoning_effort: ["low", "medium", "high", "xhigh", "max"],
       },
     },
   };
@@ -246,16 +246,16 @@ test("fleet routes GPT producers to independent Claude reviewers", () => {
   const providers = modelProviders();
   const privatePlannerPath = join(sourceTreeRoot, ".data-private", "pi", "agent", "planner.json");
   const plannerModel = runningFromSource && existsSync(privatePlannerPath)
-    ? JSON.parse(readFileSync(privatePlannerPath, "utf8")).model || "gpt-6.1-sol"
-    : "gpt-6.1-sol";
+    ? JSON.parse(readFileSync(privatePlannerPath, "utf8")).model || "gpt-6.2-sol"
+    : "gpt-6.2-sol";
   const expectedModels = {
     "adversarial-reviewer.md": `${providers.claude}/claude-opus-5.5`,
     "planner.md": `${providers.gpt}/${plannerModel}`,
-    "researcher.md": `${providers.gpt}/gpt-5.6-terra`,
+    "researcher.md": `${providers.gpt}/gpt-6.1-terra`,
     "reviewer.md": parseAgent("reviewer.md").runner === "claude" ? "opus" : `${providers.claude}/claude-opus-5.5`,
     "scout.md": `${providers.gpt}/gpt-6-luna`,
     "validator.md": parseAgent("validator.md").runner === "claude" ? "opus" : `${providers.claude}/claude-opus-5.5`,
-    "worker.md": `${providers.gpt}/gpt-6.1-sol`,
+    "worker.md": `${providers.gpt}/gpt-6.2-sol`,
     "workflow-reviewer.md": `${providers.claude}/claude-opus-5.5`,
   };
 
@@ -272,14 +272,14 @@ test("fleet routes GPT producers to independent Claude reviewers", () => {
 
   const settings = JSON.parse(readManagedPiFile("settings.json"));
   assert.equal(settings.defaultProvider, providers.gpt);
-  assert.match(settings.defaultModel, /^gpt-6(?:\.1)?-sol$/);
+  assert.equal(settings.defaultModel, "gpt-6.2-sol");
 });
 
-test("managed compaction raises the reserve only for GPT-6.1 Sol", () => {
+test("managed compaction raises the reserve only for GPT-6.2 Sol", () => {
   const settings = JSON.parse(readManagedPiFile("settings.json"));
   assert.deepEqual(settings.compaction, {
     modelOverrides: {
-      "github-copilot/gpt-6.1-sol": { reserveTokens: 65536 },
+      "github-copilot/gpt-6.2-sol": { reserveTokens: 65536 },
     },
   });
 });
@@ -318,10 +318,10 @@ test("OpenCode and Copilot prefer GPT with a Claude advisor boundary", () => {
     ? join(sourceTreeRoot, "dot_copilot", "private_settings.json")
     : join(homedir(), ".copilot", "settings.json");
   const copilotSettings = JSON.parse(readFileSync(copilotSettingsPath, "utf8"));
-  assert.equal(copilotSettings.model, "gpt-6-sol");
+  assert.equal(copilotSettings.model, "gpt-6.2-sol");
   assert.equal(copilotSettings.subagents.agents.advisor.model, "claude-opus-5.5");
-  assert.equal(copilotSettings.subagents.agents.planner.model, "gpt-6-sol");
-  assert.equal(copilotSettings.subagents.agents.spec.model, "gpt-6-sol");
+  assert.equal(copilotSettings.subagents.agents.planner.model, "gpt-6.2-sol");
+  assert.equal(copilotSettings.subagents.agents.spec.model, "gpt-6.2-sol");
 });
 
 test("shared review defaults use ordinary roles with private native selection", () => {

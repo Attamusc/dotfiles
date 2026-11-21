@@ -1288,16 +1288,16 @@ import pathlib
 import re
 import sys
 
-def check(root, gpt_provider, claude_provider, expected_extensions, planner_model="gpt-6.1-sol"):
+def check(root, gpt_provider, claude_provider, expected_extensions, planner_model="gpt-6.2-sol"):
     root = pathlib.Path(root)
     expected_models = {
         "adversarial-reviewer.md": f"{claude_provider}/claude-opus-5.5",
         "planner.md": f"{gpt_provider}/{planner_model}",
-        "researcher.md": f"{gpt_provider}/gpt-5.6-terra",
+        "researcher.md": f"{gpt_provider}/gpt-6.1-terra",
         "reviewer.md": f"{claude_provider}/claude-opus-5.5",
         "scout.md": f"{gpt_provider}/gpt-6-luna",
         "validator.md": f"{claude_provider}/claude-opus-5.5",
-        "worker.md": f"{gpt_provider}/gpt-6.1-sol",
+        "worker.md": f"{gpt_provider}/gpt-6.2-sol",
     }
     for filename, expected in expected_models.items():
         source = (root / filename).read_text()
@@ -1309,7 +1309,7 @@ def check(root, gpt_provider, claude_provider, expected_extensions, planner_mode
 
     settings = json.loads((root / "settings.json").read_text())
     assert settings["defaultProvider"] == gpt_provider
-    assert settings["defaultModel"] == "gpt-6.1-sol"
+    assert settings["defaultModel"] == "gpt-6.2-sol"
     assert settings["extensions"] == expected_extensions
     managed = "git:github.com/Attamusc/pi-workflows@193c9edf7f2104704877588cf40c4460b45c7e48"
     assert settings["packages"].count(managed) == 1

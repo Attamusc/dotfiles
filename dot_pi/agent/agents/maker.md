@@ -1,7 +1,7 @@
 ---
 name: maker
 description: maker phase for the isolated Atta workflow
-model: github-copilot/gpt-6.1-sol
+model: github-copilot/gpt-6.2-sol
 thinking: high
 tools: read, bash, edit, write, codemode, mcp__*
 spawning: false

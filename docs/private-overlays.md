@@ -87,12 +87,12 @@ live CLI enforcement or skill loading; deployment must verify those separately.
 
 ### Planner model
 
-The shared planner defaults to GPT-6.1 Sol at high effort. Override only its
+The shared planner defaults to GPT-6.2 Sol at high effort. Override only its
 model on one machine in `.data-private/pi/agent/planner.json`:
 
 ```json
 {
-  "model": "gpt-6-astra"
+  "model": "gpt-6.2-astra"
 }
 ```
 

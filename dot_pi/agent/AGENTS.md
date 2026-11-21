@@ -186,13 +186,13 @@ Slash commands are the user's to run. You have no way to invoke one; emitting `/
 
 | Agent | Purpose | Model | Effort |
 |-------|---------|-------|--------|
-| `planner` | Interactive planning collaborator when deliberately delegated; investigates facts and drafts a compact proposal and grounded tasks. | GPT-6.1-sol | high |
+| `planner` | Interactive planning collaborator when deliberately delegated; investigates facts and drafts a compact proposal and grounded tasks. | GPT-6.2-sol | high |
 | `scout` | Fast codebase reconnaissance | GPT-6-luna (fast, cheap) | low |
-| `worker` | Implements tasks from todos, makes polished commits. Reports back if a todo is missing examples/references. | GPT-6.1-sol | low |
+| `worker` | Implements tasks from todos, makes polished commits. Reports back if a todo is missing examples/references. | GPT-6.2-sol | low |
 | `reviewer` | Code review for quality, security, and correctness; Pi by default, private native selection supported | Claude Opus 5.5 (Pi) / Opus (native Claude) | high |
 | `validator` | Declared integration contracts; Pi by default, private native selection supported | Claude Opus 5.5 (Pi) / Opus (native Claude) | high |
 | `workflow-reviewer` | Explicit Pi reviewer for saved Pi-only workflows, independent of private selection | Claude Opus 5.5 | high |
-| `researcher` | Deep research — fetches external sources, analyses code and telemetry, synthesises findings | GPT-5.6-terra | high |
+| `researcher` | Deep research — fetches external sources, analyses code and telemetry, synthesises findings | GPT-6.1-terra | high |
 | `adversarial-reviewer` | Adversarial review of changes or research positions — proves the target wrong with tiered, well-cited evidence. Posture is structural, no balanced mode. | Claude Opus 5.5 — independent falsification of GPT-produced work | high |
 
 Every agent declares `thinking:` explicitly, including the native review profiles.

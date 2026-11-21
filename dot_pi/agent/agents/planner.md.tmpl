@@ -1,4 +1,4 @@
-{{- $model := "gpt-6.1-sol" -}}
+{{- $model := "gpt-6.2-sol" -}}
 {{- $privatePath := joinPath .chezmoi.sourceDir ".data-private/pi/agent/planner.json" -}}
 {{- if stat $privatePath -}}
 {{-   $private := include ".data-private/pi/agent/planner.json" | mustFromJson -}}

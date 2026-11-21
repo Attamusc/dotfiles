@@ -16,12 +16,12 @@
         "contextTier": "inherit"
       },
       "planner": {
-        "model": "gpt-6-sol",
+        "model": "gpt-6.2-sol",
         "effortLevel": "high",
         "contextTier": "inherit"
       },
       "spec": {
-        "model": "gpt-6-sol",
+        "model": "gpt-6.2-sol",
         "effortLevel": "high",
         "contextTier": "inherit"
       }
@@ -35,5 +35,5 @@
       }
     }
   },
-  "model": "gpt-6-sol"
+  "model": "gpt-6.2-sol"
 }

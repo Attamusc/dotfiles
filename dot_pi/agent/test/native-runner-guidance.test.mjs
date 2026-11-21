@@ -46,9 +46,12 @@ test('Pi worker body matches its rendered partial and committed pre-extraction g
   assert.equal(managed.some(file => /(?:^|\/)(?:worker-(?:copilot|claude)(?:-readonly)?(?:\.md)?|native-agent-definitions|worker-body)(?:\/|$)/.test(file)), false);
 });
 
-test('coding profile declares commit skill while reader has no selected skill', () => {
-  assert.match(read(staged + 'worker-copilot.md.tmpl').split('---')[1], /^skills: commit$/m);
-  assert.doesNotMatch(read(staged + 'worker-copilot-readonly.md.tmpl').split('---')[1], /^skills?:/m);
+test('staged Copilot worker profiles pin Sol, with commit skill only for coding', () => {
+  const coding = read(staged + 'worker-copilot.md.tmpl').split('---')[1];
+  const reader = read(staged + 'worker-copilot-readonly.md.tmpl').split('---')[1];
+  for (const frontmatter of [coding, reader]) assert.match(frontmatter, /^model: gpt-6\.2-sol$/m);
+  assert.match(coding, /^skills: commit$/m);
+  assert.doesNotMatch(reader, /^skills?:/m);
 });
 
 test('staged native roles render with actual contract2 parser and explicit current-host MCP binding', async t => {
@@ -63,7 +66,7 @@ test('staged native roles render with actual contract2 parser and explicit curre
     const parsed = parseAgentDefinition({ path: canonicalPath, content: text, origin: { kind: 'global-user', canonicalPath, canonicalRoot } }, { requiredFields: ['name', 'description'] });
     assert.equal(parsed.ok, true, JSON.stringify(parsed.diagnostics));
     const d = parsed.definition;
-    assert.equal(d.runner, 'copilot'); assert.equal(d.model, 'gpt-6.1-sol'); assert.equal(d.thinking, 'low');
+    assert.equal(d.runner, 'copilot'); assert.equal(d.model, 'gpt-6.2-sol'); assert.equal(d.thinking, 'low');
     assert.deepEqual(d.skills, name === 'worker-copilot' ? ['commit'] : undefined);
     assert.equal(d.native.runnerVersion, '1.0.106-3'); assert.equal(d.native.workspaceTrust, 'session');
     assert.equal(d.metadata['auto-exit'], true); assert.equal(d.metadata.interactive, false);
@@ -123,7 +126,7 @@ test('common guidance requires role/model defaults without per-call harness over
   assert.doesNotMatch(example, /model:|tools:|thinking:/);
   assert.match(skill, /MUST declare/);
   for (const row of [
-    '| caller, maker, evidence | `github-copilot/gpt-6.1-sol` | `gpt-6.1-sol` | high |',
+    '| caller, maker, evidence | `github-copilot/gpt-6.2-sol` | `gpt-6.2-sol` | high |',
     '| judge, prose-checker | `github-copilot/claude-opus-5.5` | `claude-opus-5.5` | high |',
     '| alternative facts | `github-copilot/gpt-6-luna` | `gpt-6-luna` | high |',
   ]) assert.ok(skill.includes(row), row);

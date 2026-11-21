@@ -21,7 +21,7 @@ test("Atta roles preserve models, tools and native child boundaries", () => {
     assert.match(text, new RegExp(`^name: ${role}$`, "m"));
     assert.match(text, /thinking: high\n/);
     assert.match(text, /spawning: false\nauto-exit: true\nsystem-prompt: append/);
-    assert.match(text, new RegExp(`model: github-copilot/${["judge", "prose-checker"].includes(role) ? "claude-opus-5\\.5" : "gpt-6\\.1-sol"}`));
+    assert.match(text, new RegExp(`model: github-copilot/${["judge", "prose-checker"].includes(role) ? "claude-opus-5\\.5" : "gpt-6\\.2-sol"}`));
     if (["judge", "prose-checker"].includes(role)) assert.match(text, /^tools: read$/m);
     else assert.match(text, /^tools: read, bash, (?:edit, write, )?codemode, mcp__\*$/m);
   }
@@ -88,6 +88,7 @@ test('mock: investigate and recurring prompts prioritize decision evidence and h
   for (const intent of ['investigate','recurring']) {
     const wf=fixture(args(intent)); assert.equal((await task(wf)).done,true);
     const producer=wf.calls.find(s=>s.agent===(intent==='investigate'?'evidence':'maker'));
+    assert.equal(producer.model, "github-copilot/gpt-6.2-sol");
     for (const pattern of [/existing report.*missing acceptance/i, /next distinguishing query/i, /reuse valid saved evidence/i, /compatible populations/i, /diagnostic.*causal share/i, /already-scored.*unscored.*missed customer impact/i, /no exhaustive packet/i, /requested acceptance.*unresolved required reads.*incomplete/i]) assert.match(producer.task,pattern);
     assert.match(producer.task,/suggested next checks for a human do not make an investigation incomplete/i);
     assert.ok(producer.task.includes('report/gap list (maker only) or returned evidence handoff'));
@@ -109,6 +110,7 @@ for (const intent of ['poc','implement']) test(`mock: ${intent} open uses two al
 test('mock: automatic wrapper cannot route effectful JSON and has only read',async()=> {
   const wf=fixture(args('implement','open')); assert.equal((await investigate(wf)).done,true);
   assert.equal(wf.calls.length,1); assert.deepEqual(wf.calls[0].tools,['read']); assert.equal(wf.calls[0].agent,'evidence');
+  assert.equal(wf.calls[0].model, "github-copilot/gpt-6.2-sol");
 });
 for(const [name,r] of [['execution',result('completed',{ok:false,stopReason:'timeout'})],['missing',result('completed',{taskOutcomeObservation:{kind:'unknown'}})],['status mismatch',result('completed',{taskOutcomeObservation:{kind:'reported',value:{protocol:'agent-task-outcome',version:1,status:'blocked',code:'completed',summary:'x'}}})],['blocked',result('blocked')]]) test(`mock: ${name} preserves partial proof without later phases`,async()=> {
   const wf=fixture(args('implement'),()=>r);const report=await task(wf);
@@ -173,7 +175,7 @@ for (const answer of ["DENY", "APPROVE"]) test(`mock: valid PR ${answer} preserv
     if (approved) {
       const spec = wf.calls[0];
       assert.equal(spec.agent, "maker");
-      assert.equal(spec.model, "github-copilot/gpt-6.1-sol");
+      assert.equal(spec.model, "github-copilot/gpt-6.2-sol");
       assert.equal(spec.thinking, "high");
       assert.deepEqual(spec.tools, ["read", "bash", "edit", "write", "codemode"]);
       assert.match(spec.task, /Never merge or auto-merge/);
