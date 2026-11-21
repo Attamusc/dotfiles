@@ -26,17 +26,21 @@ def nodes(node):
 
 class TwilightTests(unittest.TestCase):
     def setUp(self):
-        self.theme = json.loads((APP / "themes/twilight.json").read_text())
+        self.theme = json.loads((APP / "themes/hyrule-twilight.json").read_text())
+        self.light = json.loads((APP / "themes/hyrule-dawn.json").read_text())
         self.layout = json.loads((APP / "layouts/hyrule-twilight.json").read_text())
         self.nodes = {node["id"]: node for node in nodes(self.layout)}
         self.mod = APP / "mods/twilight-actions"
 
     def test_theme_has_valid_terminal_colors_and_full_ansi_palette(self):
-        self.assertEqual(len(self.theme["ansi"]), 16)
-        colors = [self.theme[key] for key in ("background", "foreground", "selection", "cursor")]
-        colors += self.theme["ansi"] + list(self.theme["colors"].values())
-        for color in colors:
-            self.assertRegex(color, r"^#[0-9a-f]{6}$")
+        self.assertEqual(self.light.keys(), self.theme.keys())
+        self.assertEqual(self.light["colors"].keys(), self.theme["colors"].keys())
+        for theme in (self.theme, self.light):
+            self.assertEqual(len(theme["ansi"]), 16)
+            colors = [theme[key] for key in ("background", "foreground", "selection", "cursor")]
+            colors += theme["ansi"] + list(theme["colors"].values())
+            for color in colors:
+                self.assertRegex(color, r"^#[0-9a-f]{6}$")
         self.assertEqual(self.theme["background"], "#0d0e20")
         self.assertEqual(self.theme["colors"]["accent"], "#ff9b88")
 
@@ -49,9 +53,26 @@ class TwilightTests(unittest.TestCase):
         self.assertGreaterEqual(contrast(colors["solid"], colors["solid_foreground"]), 4.5)
         self.assertEqual(len({colors[key] for key in ("working", "blocked", "done", "idle")}), 4)
 
+    def test_light_palette_is_readable_including_selected_terminal_text(self):
+        theme = self.light
+        self.assertGreater(luminance(theme["background"]), 0.8)
+        for background in (theme["background"], theme["selection"]):
+            for foreground in (theme["foreground"], theme["cursor"], *theme["ansi"]):
+                with self.subTest(background=background, foreground=foreground):
+                    self.assertGreaterEqual(contrast(foreground, background), 4.5)
+
+        colors = theme["colors"]
+        for surface in ("canvas", "chrome", "surface", "popover", "raised", "hover", "selected", "selection"):
+            for role in ("foreground", "muted", "dim", "accent", "working", "blocked", "done", "idle", "unknown"):
+                with self.subTest(surface=surface, role=role):
+                    self.assertGreaterEqual(contrast(colors[role], colors[surface]), 4.5)
+        for role in ("accent", "solid"):
+            self.assertGreaterEqual(contrast(colors[role], colors[f"{role}_foreground"]), 4.5)
+        self.assertEqual(len({colors[role] for role in ("working", "blocked", "done", "idle")}), 4)
+
     def test_personal_layout_keeps_workbench_roles_and_native_controls(self):
         self.assertFalse((APP / "layouts/jj-main.json").exists())
-        self.assertEqual(self.layout["theme"], "twilight")
+        self.assertEqual(self.layout["theme"], {"light": "hyrule-dawn", "dark": "hyrule-twilight"})
         self.assertEqual(self.layout["terminal_opacity"], 1)
         for role in ("spaces", "tabs", "files", "changes"):
             self.assertEqual(self.nodes[role]["content"], {"mod": "jj-workbench", "props": {"role": role}})
@@ -80,7 +101,7 @@ class TwilightTests(unittest.TestCase):
     def test_redundant_header_and_artwork_are_removed(self):
         self.assertNotIn("twilight-workspace", self.nodes)
         self.assertFalse((APP / "mods/twilight-workspace").exists())
-        for path in (self.mod / "main.js", APP / "themes/twilight.json"):
+        for path in (self.mod / "main.js", APP / "themes/hyrule-twilight.json", APP / "themes/hyrule-dawn.json"):
             self.assertNotRegex(path.read_text().lower(), r"zelda|hyrule|triforce|sheikah|zonai")
 
 
