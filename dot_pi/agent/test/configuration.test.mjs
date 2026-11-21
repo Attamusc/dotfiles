@@ -336,20 +336,11 @@ test("shared review defaults use ordinary roles with private native selection", 
   assert.match(instructions, /use the existing `reviewer`, `adversarial-reviewer`, or `validator` seat/);
 });
 
-test("nested utilities and code review preserve their routing boundaries", () => {
+test("answer extraction and code review preserve their routing boundaries", () => {
   const providers = modelProviders();
   const answerSource = readManagedPiFile(join("extensions", "answer", "index.ts"));
   assert.match(answerSource, new RegExp(`const PROVIDER_ID = "${providers.gpt}";`));
   assert.match(answerSource, /const EXTRACTION_MODEL_ID = "gpt-6-luna";/);
-
-  const smartSessionsSource = readManagedPiFile(join("extensions", "smart-sessions", "index.ts"));
-  assert.match(smartSessionsSource, new RegExp(`const GPT_PROVIDER_ID = "${providers.gpt}";`));
-  assert.match(smartSessionsSource, /const LUNA_MODEL_ID = "gpt-6-luna";/);
-  assert.ok(
-    smartSessionsSource.indexOf("find(GPT_PROVIDER_ID, LUNA_MODEL_ID)") <
-      smartSessionsSource.indexOf('find("anthropic", HAIKU_MODEL_ID)'),
-    "smart sessions must prefer configured Luna before the Anthropic fallback",
-  );
 
   const codeReviewSource = readFileSync(join(testDir, "..", "skills", "code-review", "SKILL.md"), "utf8");
   const reviewAgents = [...codeReviewSource.matchAll(/^\s+agent: "([^"]+)",$/gm)].map((match) => match[1]);

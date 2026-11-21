@@ -1198,7 +1198,7 @@ expected_packages=[
     "git:github.com/Attamusc/pi-workflows@193c9edf7f2104704877588cf40c4460b45c7e48",
 ]
 assert settings["packages"] == expected_packages
-assert settings["extensions"] == ["+extensions/smart-sessions/index.ts"]
+assert settings["extensions"] == []
 assert len(settings["packages"]) == len(set(settings["packages"]))
 for package in settings["packages"]:
     assert "pi-cmux" not in package
@@ -1248,8 +1248,6 @@ PY
   render_source_template darwin arm64 '' '' \
     dot_pi/agent/extensions/answer/index.ts.tmpl "$pi_routing_public/answer.ts"
   render_source_template darwin arm64 '' '' \
-    dot_pi/agent/extensions/smart-sessions/index.ts.tmpl "$pi_routing_public/smart-sessions.ts"
-  render_source_template darwin arm64 '' '' \
     dot_pi/agent/settings.json.tmpl "$pi_routing_public/settings.json"
 
   mkdir -p "$(dirname "$private_providers")"
@@ -1272,8 +1270,6 @@ EOF
   done
   render_source_template darwin arm64 '' '' \
     dot_pi/agent/extensions/answer/index.ts.tmpl "$pi_routing_private/answer.ts"
-  render_source_template darwin arm64 '' '' \
-    dot_pi/agent/extensions/smart-sessions/index.ts.tmpl "$pi_routing_private/smart-sessions.ts"
   render_source_template darwin arm64 '' '' \
     dot_pi/agent/settings.json.tmpl "$pi_routing_private/settings.json"
   cp -R "$pi_routing_private" "$pi_routing_planner_private"
@@ -1310,11 +1306,6 @@ def check(root, gpt_provider, claude_provider, expected_extensions, planner_mode
 
     answer = (root / "answer.ts").read_text()
     assert f'const PROVIDER_ID = "{gpt_provider}";' in answer
-    smart_sessions = (root / "smart-sessions.ts").read_text()
-    assert f'const GPT_PROVIDER_ID = "{gpt_provider}";' in smart_sessions
-    assert smart_sessions.index("find(GPT_PROVIDER_ID, LUNA_MODEL_ID)") < smart_sessions.index(
-        'find("anthropic", HAIKU_MODEL_ID)'
-    )
 
     settings = json.loads((root / "settings.json").read_text())
     assert settings["defaultProvider"] == gpt_provider
@@ -1330,25 +1321,19 @@ check(
     sys.argv[1],
     "github-copilot",
     "github-copilot",
-    ["+extensions/smart-sessions/index.ts"],
+    [],
 )
 check(
     sys.argv[2],
     "openai-codex",
     "anthropic",
-    [
-        "+extensions/smart-sessions/index.ts",
-        "-extensions/github-copilot-dynamic/index.ts",
-    ],
+    ["-extensions/github-copilot-dynamic/index.ts"],
 )
 check(
     sys.argv[3],
     "openai-codex",
     "anthropic",
-    [
-        "+extensions/smart-sessions/index.ts",
-        "-extensions/github-copilot-dynamic/index.ts",
-    ],
+    ["-extensions/github-copilot-dynamic/index.ts"],
     planner_model="synthetic-planner",
 )
 PY

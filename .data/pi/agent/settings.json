@@ -19,9 +19,7 @@
     "git:github.com/Attamusc/pi-lsp@c548647c1c627af33d8d62156bf88714207e0e00",
     "git:github.com/Attamusc/pi-workflows@193c9edf7f2104704877588cf40c4460b45c7e48"
   ],
-  "extensions": [
-    "+extensions/smart-sessions/index.ts"
-  ],
+  "extensions": [],
   "theme": "system",
   "hideThinkingBlock": false,
   "editorPaddingX": 2,
